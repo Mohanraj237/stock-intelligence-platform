@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Zerodha-inspired dark palette */
+  --color-bg:        #0b0e14;
+  --color-surface:   #131822;
+  --color-surface-2: #1a2030;
+  --color-border:    #232a3a;
+  --color-text:      #e6e9ef;
+  --color-text-muted:#94a3b8;
+  --color-primary:   #2563eb;   /* blue */
+  --color-success:   #1ec48a;   /* up */
+  --color-warning:   #f5c542;   /* yellow */
+  --color-danger:    #ef5350;   /* down */
+  --color-accent:    #818cf8;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Scrollbar — thin, dark */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* Focus rings */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+.up    { color: var(--color-success); }
+.down  { color: var(--color-danger); }
+.muted { color: var(--color-text-muted); }

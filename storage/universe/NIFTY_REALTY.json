@@ -1,0 +1,29 @@
+{
+  "name": "NIFTY REALTY",
+  "symbols": [
+    "ABREL",
+    "ANANTRAJ",
+    "BRIGADE",
+    "DLF",
+    "GODREJPROP",
+    "LODHA",
+    "OBEROIRLTY",
+    "PHOENIXLTD",
+    "PRESTIGE",
+    "SOBHA"
+  ],
+  "companies": {
+    "ABREL": "Aditya Birla Real Estate Ltd.",
+    "ANANTRAJ": "Anant Raj Ltd.",
+    "BRIGADE": "Brigade Enterprises Ltd.",
+    "DLF": "DLF Ltd.",
+    "GODREJPROP": "Godrej Properties Ltd.",
+    "LODHA": "Lodha Developers Ltd.",
+    "OBEROIRLTY": "Oberoi Realty Ltd.",
+    "PHOENIXLTD": "Phoenix Mills Ltd.",
+    "PRESTIGE": "Prestige Estates Projects Ltd.",
+    "SOBHA": "Sobha Ltd."
+  },
+  "count": 10,
+  "synced_at": 1779769212.9011574
+}

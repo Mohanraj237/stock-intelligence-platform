@@ -6,3 +6,5 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/reports/
+storage/config/settings.json
+.env

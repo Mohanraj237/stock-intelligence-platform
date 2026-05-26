@@ -1,0 +1,26 @@
+{
+  "holdings": [
+    {
+      "symbol": "ANGELONE",
+      "qty": 46.0,
+      "buy_price": 320.11,
+      "buy_date": "2026-04-28",
+      "notes": null
+    },
+    {
+      "symbol": "HUDCO",
+      "qty": 46.0,
+      "buy_price": 215.9,
+      "buy_date": "2026-04-28",
+      "notes": null
+    },
+    {
+      "symbol": "SAIL",
+      "qty": 54.0,
+      "buy_price": 184.4,
+      "buy_date": "2026-04-28",
+      "notes": null
+    }
+  ],
+  "updated_at": "2026-05-10T21:02:34.050589"
+}

@@ -1,0 +1,37 @@
+{
+  "name": "NIFTY BANK",
+  "symbols": [
+    "AUBANK",
+    "AXISBANK",
+    "BANKBARODA",
+    "CANBK",
+    "FEDERALBNK",
+    "HDFCBANK",
+    "ICICIBANK",
+    "IDFCFIRSTB",
+    "INDUSINDBK",
+    "KOTAKBANK",
+    "PNB",
+    "SBIN",
+    "UNIONBANK",
+    "YESBANK"
+  ],
+  "companies": {
+    "AUBANK": "AU Small Finance Bank Ltd.",
+    "AXISBANK": "Axis Bank Ltd.",
+    "BANKBARODA": "Bank of Baroda",
+    "CANBK": "Canara Bank",
+    "FEDERALBNK": "Federal Bank Ltd.",
+    "HDFCBANK": "HDFC Bank Ltd.",
+    "ICICIBANK": "ICICI Bank Ltd.",
+    "IDFCFIRSTB": "IDFC First Bank Ltd.",
+    "INDUSINDBK": "IndusInd Bank Ltd.",
+    "KOTAKBANK": "Kotak Mahindra Bank Ltd.",
+    "PNB": "Punjab National Bank",
+    "SBIN": "State Bank of India",
+    "UNIONBANK": "Union Bank of India",
+    "YESBANK": "Yes Bank Ltd."
+  },
+  "count": 14,
+  "synced_at": 1779769212.5983694
+}

@@ -1,0 +1,33 @@
+{
+  "name": "NIFTY PSU BANK",
+  "symbols": [
+    "BANKBARODA",
+    "BANKINDIA",
+    "MAHABANK",
+    "CANBK",
+    "CENTRALBK",
+    "INDIANB",
+    "IOB",
+    "PSB",
+    "PNB",
+    "SBIN",
+    "UCOBANK",
+    "UNIONBANK"
+  ],
+  "companies": {
+    "BANKBARODA": "Bank of Baroda",
+    "BANKINDIA": "Bank of India",
+    "MAHABANK": "Bank of Maharashtra",
+    "CANBK": "Canara Bank",
+    "CENTRALBK": "Central Bank of India",
+    "INDIANB": "Indian Bank",
+    "IOB": "Indian Overseas Bank",
+    "PSB": "Punjab & Sind Bank",
+    "PNB": "Punjab National Bank",
+    "SBIN": "State Bank of India",
+    "UCOBANK": "UCO Bank",
+    "UNIONBANK": "Union Bank of India"
+  },
+  "count": 12,
+  "synced_at": 1779769212.8419912
+}

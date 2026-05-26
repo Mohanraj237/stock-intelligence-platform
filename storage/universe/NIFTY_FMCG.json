@@ -1,0 +1,39 @@
+{
+  "name": "NIFTY FMCG",
+  "symbols": [
+    "BRITANNIA",
+    "COLPAL",
+    "DABUR",
+    "EMAMILTD",
+    "GODREJCP",
+    "HINDUNILVR",
+    "ITC",
+    "MARICO",
+    "NESTLEIND",
+    "PATANJALI",
+    "RADICO",
+    "TATACONSUM",
+    "UBL",
+    "UNITDSPR",
+    "VBL"
+  ],
+  "companies": {
+    "BRITANNIA": "Britannia Industries Ltd.",
+    "COLPAL": "Colgate Palmolive (India) Ltd.",
+    "DABUR": "Dabur India Ltd.",
+    "EMAMILTD": "Emami Ltd.",
+    "GODREJCP": "Godrej Consumer Products Ltd.",
+    "HINDUNILVR": "Hindustan Unilever Ltd.",
+    "ITC": "ITC Ltd.",
+    "MARICO": "Marico Ltd.",
+    "NESTLEIND": "Nestle India Ltd.",
+    "PATANJALI": "Patanjali Foods Ltd.",
+    "RADICO": "Radico Khaitan Ltd",
+    "TATACONSUM": "Tata Consumer Products Ltd.",
+    "UBL": "United Breweries Ltd.",
+    "UNITDSPR": "United Spirits Ltd.",
+    "VBL": "Varun Beverages Ltd."
+  },
+  "count": 15,
+  "synced_at": 1779769212.8308206
+}

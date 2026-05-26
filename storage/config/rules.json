@@ -1,0 +1,134 @@
+{
+  "rules": [
+    {
+      "name": "RSI",
+      "description": "",
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "rsi",
+          "op": ">",
+          "value": 0.0,
+          "value2": null
+        },
+        {
+          "field": "rsi",
+          "op": ">",
+          "value": 0.0,
+          "value2": null
+        },
+        {
+          "field": "rsi",
+          "op": ">",
+          "value": 0.0,
+          "value2": null
+        }
+      ],
+      "id": "rule_1776623627_0",
+      "created_at": "2026-04-20T00:03:47.977847"
+    },
+    {
+      "id": "rule_1776623634_1",
+      "name": "Breakout + Momentum",
+      "description": "Strong technicals with TradingView buy signal",
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "rsi",
+          "op": "between",
+          "value": 55,
+          "value2": 75
+        },
+        {
+          "field": "macd",
+          "op": ">",
+          "value": 0
+        },
+        {
+          "field": "tv_recommendation",
+          "op": ">=",
+          "value": 4
+        },
+        {
+          "field": "has_bullish_pattern",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "tags": [
+        "technical",
+        "momentum"
+      ],
+      "created_at": "2026-04-20T00:03:54.394400"
+    },
+    {
+      "id": "rule_1776623641_2",
+      "name": "Breakout + Momentum",
+      "description": "Strong technicals with TradingView buy signal",
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "rsi",
+          "op": "between",
+          "value": 55,
+          "value2": 75
+        },
+        {
+          "field": "macd",
+          "op": ">",
+          "value": 0
+        },
+        {
+          "field": "tv_recommendation",
+          "op": ">=",
+          "value": 4
+        },
+        {
+          "field": "has_bullish_pattern",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "tags": [
+        "technical",
+        "momentum"
+      ],
+      "created_at": "2026-04-20T00:04:01.191952"
+    },
+    {
+      "id": "rule_1776623691_3",
+      "name": "Breakout + Momentum",
+      "description": "Strong technicals with TradingView buy signal",
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "rsi",
+          "op": "between",
+          "value": 55,
+          "value2": 75
+        },
+        {
+          "field": "macd",
+          "op": ">",
+          "value": 0
+        },
+        {
+          "field": "tv_recommendation",
+          "op": ">=",
+          "value": 4
+        },
+        {
+          "field": "has_bullish_pattern",
+          "op": "==",
+          "value": 1
+        }
+      ],
+      "tags": [
+        "technical",
+        "momentum"
+      ],
+      "created_at": "2026-04-20T00:04:51.126834"
+    }
+  ],
+  "updated_at": "2026-05-10T21:02:39.273592"
+}

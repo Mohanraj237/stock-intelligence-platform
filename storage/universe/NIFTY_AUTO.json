@@ -1,0 +1,39 @@
+{
+  "name": "NIFTY AUTO",
+  "symbols": [
+    "ASHOKLEY",
+    "BAJAJ-AUTO",
+    "BHARATFORG",
+    "BOSCHLTD",
+    "EICHERMOT",
+    "EXIDEIND",
+    "HEROMOTOCO",
+    "M&M",
+    "MARUTI",
+    "MOTHERSON",
+    "SONACOMS",
+    "TVSMOTOR",
+    "TMPV",
+    "TIINDIA",
+    "UNOMINDA"
+  ],
+  "companies": {
+    "ASHOKLEY": "Ashok Leyland Ltd.",
+    "BAJAJ-AUTO": "Bajaj Auto Ltd.",
+    "BHARATFORG": "Bharat Forge Ltd.",
+    "BOSCHLTD": "Bosch Ltd.",
+    "EICHERMOT": "Eicher Motors Ltd.",
+    "EXIDEIND": "Exide Industries Ltd.",
+    "HEROMOTOCO": "Hero MotoCorp Ltd.",
+    "M&M": "Mahindra & Mahindra Ltd.",
+    "MARUTI": "Maruti Suzuki India Ltd.",
+    "MOTHERSON": "Samvardhana Motherson International Ltd.",
+    "SONACOMS": "Sona BLW Precision Forgings Ltd.",
+    "TVSMOTOR": "TVS Motor Company Ltd.",
+    "TMPV": "Tata Motors Passenger Vehicles Ltd.",
+    "TIINDIA": "Tube Investments of India Ltd.",
+    "UNOMINDA": "UNO Minda Ltd."
+  },
+  "count": 15,
+  "synced_at": 1779769212.7684877
+}

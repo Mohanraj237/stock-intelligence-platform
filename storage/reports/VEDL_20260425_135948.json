@@ -1,0 +1,252 @@
+{
+  "symbol": "VEDL",
+  "type": "Full Analysis",
+  "generated_at": "2026-04-25 13:59:48",
+  "company": "Vedanta Ltd",
+  "sector": "",
+  "scores": {
+    "technical": 53,
+    "fundamental": 73,
+    "tv": 50.0,
+    "final": 60.6
+  },
+  "ratios": {
+    "market_cap": 281919.0,
+    "current_price": 721.0,
+    "high_52w": 795.0,
+    "pe": 25.7,
+    "pb": 7.0,
+    "book_value": 103.0,
+    "dividend_yield": 6.03,
+    "roce": 25.3,
+    "roe": 38.5,
+    "face_value": 1.0,
+    "eps": 36.25,
+    "opm": 28.0,
+    "npm": 17.2,
+    "debt_equity": 2.12,
+    "interest_coverage": 5.0,
+    "sales_growth": 10.0,
+    "profit_growth": 10.0,
+    "promoter_holding": 56.38
+  },
+  "tv": {
+    "recommendation": "NEUTRAL",
+    "buy": null,
+    "sell": null,
+    "neutral": null
+  },
+  "checks": {
+    "tech": [
+      {
+        "check": "Price > SMA 50",
+        "passed": true,
+        "actual": "\u20b9720.95 vs \u20b9705.91",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "check": "Price > SMA 200",
+        "passed": true,
+        "actual": "\u20b9720.95 vs \u20b9561.34",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "check": "RSI Zone (55-70 ideal)",
+        "passed": false,
+        "actual": "RSI=48.8",
+        "points": 8,
+        "max": 15
+      },
+      {
+        "check": "MACD > Signal (bullish)",
+        "passed": false,
+        "actual": "MACD=16.6780, Signal=17.5940",
+        "points": 0,
+        "max": 15
+      },
+      {
+        "check": "ADX > 25 (strong trend)",
+        "passed": false,
+        "actual": "ADX=21.5",
+        "points": 5,
+        "max": 10
+      }
+    ],
+    "funda": [
+      {
+        "check": "PE Ratio (< 20 ideal)",
+        "passed": false,
+        "actual": "PE=25.7x",
+        "points": 12,
+        "max": 20
+      },
+      {
+        "check": "ROE >= 15%",
+        "passed": true,
+        "actual": "ROE=38.5%",
+        "points": 25,
+        "max": 25
+      },
+      {
+        "check": "ROCE >= 15%",
+        "passed": true,
+        "actual": "ROCE=25.3%",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "check": "Debt/Equity <= 1",
+        "passed": false,
+        "actual": "D/E=2.12x",
+        "points": 0,
+        "max": 15
+      },
+      {
+        "check": "Profit Growth > 0%",
+        "passed": true,
+        "actual": "PG=10.0%",
+        "points": 4,
+        "max": 12
+      },
+      {
+        "check": "Sales Growth > 5%",
+        "passed": true,
+        "actual": "SG=10.0%",
+        "points": 5,
+        "max": 8
+      },
+      {
+        "check": "Promoter >= 50%",
+        "passed": true,
+        "actual": "Promoter=56.4%",
+        "points": 7,
+        "max": 10
+      }
+    ],
+    "tv": [
+      {
+        "check": "TV: NEUTRAL",
+        "passed": false,
+        "actual": "NEUTRAL",
+        "points": 50,
+        "max": 100
+      }
+    ]
+  },
+  "shareholding": {
+    "promoter": 56.38,
+    "fii": 13.93,
+    "dii": 13.43,
+    "public": 16.05,
+    "pledge": null,
+    "history": {
+      "Promoters +": {
+        "Jun 2023": 68.11,
+        "Sep 2023": 63.71,
+        "Dec 2023": 63.71,
+        "Mar 2024": 61.95,
+        "Jun 2024": 59.31,
+        "Sep 2024": 56.38,
+        "Dec 2024": 56.38,
+        "Mar 2025": 56.38,
+        "Jun 2025": 56.38,
+        "Sep 2025": 56.38,
+        "Dec 2025": 56.38,
+        "Mar 2026": 56.38
+      },
+      "FIIs +": {
+        "Jun 2023": 7.48,
+        "Sep 2023": 7.82,
+        "Dec 2023": 7.74,
+        "Mar 2024": 8.77,
+        "Jun 2024": 10.23,
+        "Sep 2024": 11.45,
+        "Dec 2024": 12.02,
+        "Mar 2025": 11.15,
+        "Jun 2025": 10.6,
+        "Sep 2025": 11.08,
+        "Dec 2025": 12.15,
+        "Mar 2026": 13.93
+      },
+      "DIIs +": {
+        "Jun 2023": 9.98,
+        "Sep 2023": 10.59,
+        "Dec 2023": 11.19,
+        "Mar 2024": 13.15,
+        "Jun 2024": 14.78,
+        "Sep 2024": 16.29,
+        "Dec 2024": 15.49,
+        "Mar 2025": 16.38,
+        "Jun 2025": 16.47,
+        "Sep 2025": 16.25,
+        "Dec 2025": 15.31,
+        "Mar 2026": 13.43
+      },
+      "Government +": {
+        "Jun 2023": 0.07,
+        "Sep 2023": 0.07,
+        "Dec 2023": 0.07,
+        "Mar 2024": 0.07,
+        "Jun 2024": 0.07,
+        "Sep 2024": 0.07,
+        "Dec 2024": 0.07,
+        "Mar 2025": 0.07,
+        "Jun 2025": 0.06,
+        "Sep 2025": 0.06,
+        "Dec 2025": 0.06,
+        "Mar 2026": 0.06
+      },
+      "Public +": {
+        "Jun 2023": 14.29,
+        "Sep 2023": 17.74,
+        "Dec 2023": 17.23,
+        "Mar 2024": 15.86,
+        "Jun 2024": 15.41,
+        "Sep 2024": 15.64,
+        "Dec 2024": 15.92,
+        "Mar 2025": 15.89,
+        "Jun 2025": 16.35,
+        "Sep 2025": 16.09,
+        "Dec 2025": 16.05,
+        "Mar 2026": 16.05
+      },
+      "Others +": {
+        "Jun 2023": 0.08,
+        "Sep 2023": 0.08,
+        "Dec 2023": 0.06,
+        "Mar 2024": 0.18,
+        "Jun 2024": 0.18,
+        "Sep 2024": 0.16,
+        "Dec 2024": 0.11,
+        "Mar 2025": 0.13,
+        "Jun 2025": 0.13,
+        "Sep 2025": 0.13,
+        "Dec 2025": 0.06,
+        "Mar 2026": 0.14
+      },
+      "No. of Shareholders": {
+        "Jun 2023": 1565264.0,
+        "Sep 2023": 1942800.0,
+        "Dec 2023": 1909460.0,
+        "Mar 2024": 1785798.0,
+        "Jun 2024": 1792821.0,
+        "Sep 2024": 1866939.0,
+        "Dec 2024": 1999975.0,
+        "Mar 2025": 2046988.0,
+        "Jun 2025": 2087745.0,
+        "Sep 2025": 2074956.0,
+        "Dec 2025": 2031537.0,
+        "Mar 2026": 2110601.0
+      }
+    }
+  },
+  "pros": [
+    "Company has been maintaining a healthy dividend payout of 243%"
+  ],
+  "cons": [
+    "Stock is trading at 7.02 times its book value",
+    "Promoter holding has decreased over last 3 years: -11.7%"
+  ]
+}

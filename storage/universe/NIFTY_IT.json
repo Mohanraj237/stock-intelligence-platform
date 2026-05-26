@@ -1,0 +1,29 @@
+{
+  "name": "NIFTY IT",
+  "symbols": [
+    "COFORGE",
+    "HCLTECH",
+    "INFY",
+    "LTM",
+    "MPHASIS",
+    "OFSS",
+    "PERSISTENT",
+    "TCS",
+    "TECHM",
+    "WIPRO"
+  ],
+  "companies": {
+    "COFORGE": "Coforge Ltd.",
+    "HCLTECH": "HCL Technologies Ltd.",
+    "INFY": "Infosys Ltd.",
+    "LTM": "LTM Ltd.",
+    "MPHASIS": "MphasiS Ltd.",
+    "OFSS": "Oracle Financial Services Software Ltd.",
+    "PERSISTENT": "Persistent Systems Ltd.",
+    "TCS": "Tata Consultancy Services Ltd.",
+    "TECHM": "Tech Mahindra Ltd.",
+    "WIPRO": "Wipro Ltd."
+  },
+  "count": 10,
+  "synced_at": 1779769212.8656328
+}

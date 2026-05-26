@@ -1,0 +1,700 @@
+2026-04-25 22:25:15,409 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:25:37,142 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:26:59,912 [INFO] backend: POST /api/patterns/scan -> 200 in 66699ms
+2026-04-25 22:27:39,509 [INFO] backend: POST /api/patterns/scan -> 200 in 62255ms
+2026-04-25 22:28:41,455 [INFO] backend: Backend shutting down
+2026-04-25 22:29:04,960 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:29:18,909 [INFO] backend: GET /favicon.ico -> 404 in 1ms
+2026-04-25 22:30:29,046 [INFO] backend: POST /api/patterns/scan -> 200 in 58760ms
+2026-04-25 22:31:35,091 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:31:43,007 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 422 in 4ms
+2026-04-25 22:33:01,269 [INFO] backend: POST /api/patterns/scan -> 200 in 69001ms
+2026-04-25 22:33:11,705 [WARNING] services.market_data_service: OHLCV history failed for INVALIDSYMBOLXYZ: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/INVALIDSYMBOLXYZ.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-04-25 22:33:11,707 [INFO] backend: GET /api/stocks/INVALIDSYMBOLXYZ/chart-analysis -> 404 in 567ms
+2026-04-25 22:33:21,451 [INFO] backend: POST /api/positions/calc -> 422 in 6ms
+2026-04-25 22:33:22,162 [INFO] backend: POST /api/patterns/scan -> 200 in 66265ms
+2026-04-25 22:33:22,388 [INFO] backend: Backend shutting down
+2026-04-25 22:33:25,791 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:34:15,827 [INFO] backend: Backend shutting down
+2026-04-25 22:34:25,549 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:36:01,182 [INFO] backend: POST /api/patterns/scan -> 200 in 63643ms
+2026-04-25 22:40:45,183 [INFO] backend: POST /api/patterns/scan -> 200 in 7408ms
+2026-04-25 22:41:57,245 [INFO] backend: POST /api/patterns/scan -> 200 in 59880ms
+2026-04-25 22:43:00,326 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 22:43:00,326 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 22:43:00,329 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 22:43:02,886 [INFO] backend: GET /api/stocks/SCHNEIDER/balance-sheet -> 200 in 2578ms
+2026-04-25 22:43:03,593 [INFO] backend: GET /api/stocks/SCHNEIDER/quarterly -> 200 in 3294ms
+2026-04-25 22:43:03,720 [INFO] backend: GET /api/stocks/SCHNEIDER/fundamentals -> 200 in 3421ms
+2026-04-25 22:43:03,876 [INFO] backend: GET /api/stocks/SCHNEIDER/cash-flow -> 200 in 3491ms
+2026-04-25 22:43:03,999 [INFO] backend: GET /api/stocks/SCHNEIDER/ratios-history -> 200 in 2325ms
+2026-04-25 22:43:04,009 [INFO] backend: GET /api/stocks/SCHNEIDER/verdict -> 200 in 4119ms
+2026-04-25 22:43:04,825 [INFO] backend: GET /api/stocks/SCHNEIDER/shareholding -> 200 in 1374ms
+2026-04-25 22:43:05,134 [INFO] backend: GET /api/stocks/SCHNEIDER/peers -> 200 in 1148ms
+2026-04-25 22:43:05,666 [INFO] backend: GET /api/stocks/SCHNEIDER/chart-analysis -> 200 in 1680ms
+2026-04-25 22:43:18,446 [INFO] backend: GET /api/stocks/SCHNEIDER/chart-analysis -> 200 in 1469ms
+2026-04-25 22:43:18,450 [INFO] backend: GET /api/stocks/SCHNEIDER/verdict -> 200 in 1490ms
+2026-04-25 22:46:08,127 [INFO] backend: POST /api/patterns/scan -> 200 in 68116ms
+2026-04-25 22:54:50,857 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 22:56:56,045 [INFO] backend: POST /api/patterns/scan -> 200 in 57163ms
+2026-04-25 22:58:29,312 [INFO] backend: POST /api/patterns/scan -> 200 in 56547ms
+2026-04-25 23:01:03,542 [INFO] backend: Backend shutting down
+2026-04-25 23:01:08,768 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:01:32,768 [INFO] backend: POST /api/patterns/scan -> 200 in 7121ms
+2026-04-25 23:02:51,471 [INFO] backend: POST /api/patterns/scan -> 200 in 63777ms
+2026-04-25 23:05:02,671 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:05:02,672 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:05:05,330 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 3366ms
+2026-04-25 23:05:06,374 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 4411ms
+2026-04-25 23:05:07,325 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 4124ms
+2026-04-25 23:05:07,432 [INFO] backend: GET /api/stocks/AUBANK/ratios-history -> 200 in 3677ms
+2026-04-25 23:05:07,806 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 4465ms
+2026-04-25 23:05:08,863 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 6899ms
+2026-04-25 23:05:09,095 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 2736ms
+2026-04-25 23:05:09,107 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 2236ms
+2026-04-25 23:05:10,024 [INFO] backend: GET /api/stocks/AUBANK/chart-analysis -> 200 in 1734ms
+2026-04-25 23:08:24,336 [INFO] backend: POST /api/scans/run -> 200 in 23238ms
+2026-04-25 23:25:11,562 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:25:53,233 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:25:54,087 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 1187ms
+2026-04-25 23:29:07,737 [INFO] backend: GET /api/stocks/AUBANK/ohlcv -> 200 in 4677ms
+2026-04-25 23:29:08,173 [INFO] backend: GET /api/patterns/detect/AUBANK -> 200 in 5114ms
+2026-04-25 23:29:08,357 [INFO] backend: GET /api/stocks/AUBANK/indicators -> 200 in 5332ms
+2026-04-25 23:29:08,781 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 5746ms
+2026-04-25 23:29:09,577 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 6562ms
+2026-04-25 23:29:10,021 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 7083ms
+2026-04-25 23:29:10,065 [INFO] backend: Backend shutting down
+2026-04-25 23:29:14,421 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:29:18,517 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:29:21,198 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 3084ms
+2026-04-25 23:29:21,617 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 3502ms
+2026-04-25 23:29:21,620 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 3505ms
+2026-04-25 23:29:21,625 [INFO] backend: GET /api/stocks/AUBANK/ratios-history -> 200 in 3511ms
+2026-04-25 23:29:21,840 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 3725ms
+2026-04-25 23:29:22,973 [INFO] backend: GET /api/stocks/AUBANK/chart-analysis -> 200 in 4859ms
+2026-04-25 23:29:26,463 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:29:48,576 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:29:49,657 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 1367ms
+2026-04-25 23:32:29,162 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:32:35,945 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:32:37,073 [WARNING] urllib3.connectionpool: Connection pool is full, discarding connection: www.nseindia.com. Connection pool size: 10
+2026-04-25 23:32:37,073 [WARNING] urllib3.connectionpool: Connection pool is full, discarding connection: www.nseindia.com. Connection pool size: 10
+2026-04-25 23:32:37,079 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 1482ms
+2026-04-25 23:32:38,059 [WARNING] urllib3.connectionpool: Connection pool is full, discarding connection: www.nseindia.com. Connection pool size: 10
+2026-04-25 23:32:38,080 [WARNING] urllib3.connectionpool: Connection pool is full, discarding connection: www.nseindia.com. Connection pool size: 10
+2026-04-25 23:34:12,104 [INFO] backend: Backend shutting down
+2026-04-25 23:34:16,101 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:34:26,187 [WARNING] urllib3.connectionpool: Connection pool is full, discarding connection: www.nseindia.com. Connection pool size: 10
+2026-04-25 23:34:26,190 [WARNING] urllib3.connectionpool: Connection pool is full, discarding connection: www.nseindia.com. Connection pool size: 10
+2026-04-25 23:34:26,194 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 1019ms
+2026-04-25 23:34:42,213 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:35:08,581 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:35:10,672 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 2425ms
+2026-04-25 23:36:02,231 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 1245ms
+2026-04-25 23:36:03,864 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1126ms
+2026-04-25 23:38:24,641 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:39:14,244 [INFO] backend: Backend shutting down
+2026-04-25 23:39:17,507 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:39:51,273 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:39:52,025 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1891ms
+2026-04-25 23:40:37,453 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:40:37,457 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:40:38,969 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 2956ms
+2026-04-25 23:40:39,391 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 3379ms
+2026-04-25 23:40:40,074 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 1054ms
+2026-04-25 23:40:40,669 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 1184ms
+2026-04-25 23:40:42,032 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 1204ms
+2026-04-25 23:40:42,883 [INFO] backend: GET /api/stocks/AUBANK/ohlcv -> 200 in 6948ms
+2026-04-25 23:40:42,902 [INFO] backend: GET /api/patterns/detect/AUBANK -> 200 in 6891ms
+2026-04-25 23:40:43,102 [INFO] backend: GET /api/stocks/AUBANK/indicators -> 200 in 7090ms
+2026-04-25 23:40:43,378 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 2082ms
+2026-04-25 23:40:44,400 [INFO] backend: GET /api/stocks/AUBANK/chart-analysis -> 200 in 2231ms
+2026-04-25 23:40:44,403 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 8393ms
+2026-04-25 23:43:26,883 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 2410ms
+2026-04-25 23:43:27,178 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 2707ms
+2026-04-25 23:43:28,174 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 3052ms
+2026-04-25 23:43:28,687 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 4226ms
+2026-04-25 23:43:29,111 [INFO] backend: GET /api/stocks/AUBANK/ratios-history -> 200 in 3396ms
+2026-04-25 23:43:29,442 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 3790ms
+2026-04-25 23:43:29,675 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 2512ms
+2026-04-25 23:43:30,711 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 3113ms
+2026-04-25 23:43:30,715 [INFO] backend: GET /api/stocks/AUBANK/chart-analysis -> 200 in 1951ms
+2026-04-25 23:44:07,033 [INFO] backend: GET /api/stocks/AUBANK/ohlcv -> 200 in 1140ms
+2026-04-25 23:44:07,394 [INFO] backend: GET /api/stocks/AUBANK/indicators -> 200 in 1487ms
+2026-04-25 23:44:09,018 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 3110ms
+2026-04-25 23:44:09,378 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 3471ms
+2026-04-25 23:44:10,171 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 2778ms
+2026-04-25 23:44:10,595 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 4698ms
+2026-04-25 23:44:10,801 [INFO] backend: GET /api/stocks/AUBANK/ratios-history -> 200 in 3130ms
+2026-04-25 23:44:10,941 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 3361ms
+2026-04-25 23:44:11,632 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 2284ms
+2026-04-25 23:44:12,339 [INFO] backend: GET /api/stocks/AUBANK/chart-analysis -> 200 in 1836ms
+2026-04-25 23:44:12,458 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 2724ms
+2026-04-25 23:44:35,547 [INFO] backend: GET /api/patterns/detect/AUBANK -> 200 in 1084ms
+2026-04-25 23:44:35,736 [INFO] backend: GET /api/stocks/AUBANK/indicators -> 200 in 1296ms
+2026-04-25 23:44:35,872 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 1426ms
+2026-04-25 23:44:35,875 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 1416ms
+2026-04-25 23:44:39,035 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 3169ms
+2026-04-25 23:44:39,294 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 3431ms
+2026-04-25 23:44:39,299 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 3416ms
+2026-04-25 23:44:39,334 [INFO] backend: GET /api/stocks/AUBANK/ratios-history -> 200 in 3456ms
+2026-04-25 23:44:39,354 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 4915ms
+2026-04-25 23:44:40,366 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 4485ms
+2026-04-25 23:50:15,873 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-25 23:51:20,545 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:51:20,546 [INFO] services.screener_service: Screener.in session configured.
+2026-04-25 23:51:21,815 [INFO] backend: GET /api/stocks/AUBANK/fundamentals -> 200 in 1834ms
+2026-04-25 23:51:21,819 [INFO] backend: GET /api/stocks/AUBANK/quarterly -> 200 in 1837ms
+2026-04-25 23:51:22,949 [INFO] backend: GET /api/stocks/AUBANK/balance-sheet -> 200 in 1123ms
+2026-04-25 23:51:23,005 [INFO] backend: GET /api/stocks/AUBANK/cash-flow -> 200 in 1177ms
+2026-04-25 23:51:24,117 [INFO] backend: GET /api/stocks/AUBANK/ratios-history -> 200 in 1108ms
+2026-04-25 23:51:24,298 [INFO] backend: GET /api/stocks/AUBANK/shareholding -> 200 in 1286ms
+2026-04-25 23:51:29,836 [INFO] backend: GET /api/patterns/detect/AUBANK -> 200 in 9855ms
+2026-04-25 23:51:29,840 [INFO] backend: GET /api/stocks/AUBANK/ohlcv -> 200 in 9872ms
+2026-04-25 23:51:30,061 [INFO] backend: GET /api/stocks/AUBANK/peers -> 200 in 5833ms
+2026-04-25 23:51:30,067 [INFO] backend: GET /api/stocks/AUBANK/indicators -> 200 in 10085ms
+2026-04-25 23:51:31,212 [INFO] backend: GET /api/stocks/AUBANK/chart-analysis -> 200 in 6907ms
+2026-04-25 23:51:31,254 [INFO] backend: GET /api/stocks/AUBANK/verdict -> 200 in 11273ms
+2026-04-25 23:54:20,895 [INFO] backend: GET /api/stocks/BHEL/ohlcv -> 200 in 1321ms
+2026-04-25 23:54:21,083 [INFO] backend: GET /api/stocks/BHEL/indicators -> 200 in 1504ms
+2026-04-25 23:54:21,683 [INFO] backend: GET /api/stocks/BHEL/quarterly -> 200 in 2099ms
+2026-04-25 23:54:21,902 [INFO] backend: GET /api/stocks/BHEL/fundamentals -> 200 in 2318ms
+2026-04-25 23:54:23,695 [INFO] backend: GET /api/stocks/BHEL/verdict -> 200 in 4118ms
+2026-04-25 23:54:24,304 [INFO] backend: GET /api/stocks/BHEL/balance-sheet -> 200 in 3237ms
+2026-04-25 23:54:25,209 [INFO] backend: GET /api/stocks/BHEL/cash-flow -> 200 in 3622ms
+2026-04-25 23:54:25,399 [INFO] backend: GET /api/stocks/BHEL/ratios-history -> 200 in 3764ms
+2026-04-25 23:54:25,411 [INFO] backend: GET /api/stocks/BHEL/shareholding -> 200 in 3027ms
+2026-04-25 23:54:25,416 [INFO] backend: GET /api/stocks/BHEL/peers -> 200 in 2782ms
+2026-04-25 23:54:26,302 [INFO] backend: GET /api/stocks/BHEL/chart-analysis -> 200 in 1124ms
+2026-04-26 00:01:03,612 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 1208ms
+2026-04-26 00:03:02,245 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 00:05:29,780 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:05:30,640 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 1934ms
+2026-04-26 00:05:32,809 [INFO] backend: GET /api/stocks/TCS/verdict -> 200 in 1012ms
+2026-04-26 00:05:34,015 [INFO] backend: GET /api/stocks/HDFCBANK/verdict -> 200 in 1074ms
+2026-04-26 00:08:46,246 [INFO] backend: GET /api/stocks/BHEL/ohlcv -> 200 in 1068ms
+2026-04-26 00:08:47,130 [INFO] backend: GET /api/patterns/detect/BHEL -> 200 in 1953ms
+2026-04-26 00:08:48,725 [INFO] backend: GET /api/stocks/BHEL/indicators -> 200 in 3550ms
+2026-04-26 00:08:49,109 [INFO] backend: GET /api/stocks/BHEL/fundamentals -> 200 in 3939ms
+2026-04-26 00:08:49,113 [INFO] backend: GET /api/stocks/BHEL/quarterly -> 200 in 3940ms
+2026-04-26 00:08:49,149 [INFO] backend: GET /api/stocks/BHEL/verdict -> 200 in 3988ms
+2026-04-26 00:08:49,222 [INFO] backend: Backend shutting down
+2026-04-26 00:08:53,911 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 00:08:57,905 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:08:57,906 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:08:57,911 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:08:57,916 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:09:01,093 [INFO] backend: GET /api/stocks/BHEL/ratios-history -> 200 in 3578ms
+2026-04-26 00:09:01,341 [INFO] backend: GET /api/stocks/BHEL/shareholding -> 200 in 3825ms
+2026-04-26 00:09:01,464 [INFO] backend: GET /api/stocks/BHEL/peers -> 200 in 3949ms
+2026-04-26 00:09:01,469 [INFO] backend: GET /api/stocks/BHEL/cash-flow -> 200 in 3954ms
+2026-04-26 00:09:01,473 [INFO] backend: GET /api/stocks/BHEL/balance-sheet -> 200 in 3957ms
+2026-04-26 00:09:02,726 [INFO] backend: GET /api/stocks/BHEL/chart-analysis -> 200 in 5212ms
+2026-04-26 00:24:33,254 [INFO] backend: GET /api/stocks/BHEL/ohlcv -> 200 in 2032ms
+2026-04-26 00:24:33,926 [INFO] backend: GET /api/patterns/detect/BHEL -> 200 in 2022ms
+2026-04-26 00:24:34,114 [INFO] backend: GET /api/stocks/BHEL/indicators -> 200 in 2588ms
+2026-04-26 00:24:35,880 [INFO] backend: GET /api/stocks/BHEL/quarterly -> 200 in 3976ms
+2026-04-26 00:24:36,077 [INFO] backend: GET /api/stocks/BHEL/fundamentals -> 200 in 4552ms
+2026-04-26 00:24:36,263 [INFO] backend: GET /api/stocks/BHEL/verdict -> 200 in 4737ms
+2026-04-26 00:25:16,287 [INFO] backend: Backend shutting down
+2026-04-26 00:25:23,869 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 00:25:28,367 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:25:28,367 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:25:28,368 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 00:25:31,096 [INFO] backend: GET /api/stocks/BHEL/cash-flow -> 200 in 2751ms
+2026-04-26 00:25:31,397 [INFO] backend: GET /api/stocks/BHEL/shareholding -> 200 in 3052ms
+2026-04-26 00:25:31,399 [INFO] backend: GET /api/stocks/BHEL/balance-sheet -> 200 in 3400ms
+2026-04-26 00:25:31,403 [INFO] backend: GET /api/stocks/BHEL/ratios-history -> 200 in 3058ms
+2026-04-26 00:25:31,406 [INFO] backend: GET /api/stocks/BHEL/peers -> 200 in 3060ms
+2026-04-26 00:25:32,926 [INFO] backend: GET /api/stocks/BHEL/chart-analysis -> 200 in 4580ms
+2026-04-26 00:25:54,120 [INFO] backend: GET /api/stocks/BHEL/ohlcv -> 200 in 1219ms
+2026-04-26 00:25:54,645 [INFO] backend: GET /api/patterns/detect/BHEL -> 200 in 1713ms
+2026-04-26 00:25:54,856 [INFO] backend: GET /api/stocks/BHEL/indicators -> 200 in 1933ms
+2026-04-26 00:25:55,043 [INFO] backend: GET /api/stocks/BHEL/fundamentals -> 200 in 2120ms
+2026-04-26 00:25:55,398 [INFO] backend: GET /api/stocks/BHEL/quarterly -> 200 in 2474ms
+2026-04-26 00:25:56,919 [INFO] backend: GET /api/stocks/BHEL/verdict -> 200 in 4011ms
+2026-04-26 00:25:58,126 [INFO] backend: GET /api/stocks/BHEL/balance-sheet -> 200 in 3506ms
+2026-04-26 00:25:58,986 [INFO] backend: GET /api/stocks/BHEL/cash-flow -> 200 in 3677ms
+2026-04-26 00:25:59,081 [INFO] backend: GET /api/stocks/BHEL/ratios-history -> 200 in 3494ms
+2026-04-26 00:25:59,286 [INFO] backend: GET /api/stocks/BHEL/peers -> 200 in 3481ms
+2026-04-26 00:25:59,439 [INFO] backend: GET /api/stocks/BHEL/shareholding -> 200 in 3774ms
+2026-04-26 00:26:00,473 [INFO] backend: GET /api/stocks/BHEL/chart-analysis -> 200 in 1986ms
+2026-04-26 00:35:13,592 [INFO] backend: POST /api/patterns/scan -> 200 in 8582ms
+2026-04-26 01:36:21,150 [INFO] backend: POST /api/patterns/scan -> 200 in 157143ms
+2026-04-26 01:39:07,847 [INFO] backend: GET /api/market/indices -> 200 in 2041ms
+2026-04-26 01:39:09,413 [INFO] backend: GET /api/market/sectors -> 200 in 3606ms
+2026-04-26 01:40:29,316 [INFO] backend: POST /api/patterns/scan -> 200 in 149818ms
+2026-04-26 10:45:38,629 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 10:46:02,030 [INFO] backend: GET /api/market/indices -> 200 in 1026ms
+2026-04-26 10:46:02,942 [INFO] backend: GET /api/market/sectors -> 200 in 1937ms
+2026-04-26 10:46:28,557 [INFO] backend: GET /api/news/market -> 200 in 3655ms
+2026-04-26 10:46:43,146 [INFO] backend: GET /api/news/stock/RELIANCE -> 200 in 3760ms
+2026-04-26 10:46:54,430 [INFO] backend: GET /api/news/stock/SCHNEIDER -> 200 in 3552ms
+2026-04-26 10:47:09,507 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 10:47:09,508 [INFO] services.screener_service: Screener.in session configured.
+2026-04-26 10:47:11,122 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 2171ms
+2026-04-26 10:47:11,151 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2200ms
+2026-04-26 10:47:13,061 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1905ms
+2026-04-26 10:47:13,110 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1951ms
+2026-04-26 10:47:14,710 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 1595ms
+2026-04-26 10:47:14,782 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 1671ms
+2026-04-26 10:47:16,078 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 7156ms
+2026-04-26 10:47:16,088 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 7139ms
+2026-04-26 10:47:16,303 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 7353ms
+2026-04-26 10:47:16,848 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 2063ms
+2026-04-26 10:47:18,074 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 3285ms
+2026-04-26 10:47:18,109 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 9162ms
+2026-04-26 10:48:59,652 [INFO] backend: POST /api/patterns/scan -> 200 in 9764ms
+2026-04-26 10:52:25,516 [INFO] backend: POST /api/patterns/scan -> 200 in 27108ms
+2026-04-26 11:03:20,111 [INFO] backend: POST /api/backtests/run -> 200 in 16609ms
+2026-04-26 11:03:35,749 [INFO] backend: POST /api/backtests/run -> 200 in 15484ms
+2026-04-26 11:04:24,433 [INFO] backend: POST /api/backtests/run -> 200 in 16084ms
+2026-04-26 11:05:23,694 [INFO] backend: Backend shutting down
+2026-04-26 11:05:29,993 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 11:07:03,221 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 11:07:21,962 [INFO] backend: Backend shutting down
+2026-04-26 11:07:28,375 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 11:07:46,332 [INFO] backend: POST /api/backtests/run -> 200 in 26413ms
+2026-04-26 11:08:10,793 [INFO] backend: POST /api/backtests/run -> 200 in 24053ms
+2026-04-26 11:17:36,679 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-26 11:23:15,642 [INFO] backend: POST /api/backtests/run -> 200 in 46764ms
+2026-04-26 11:25:08,007 [INFO] backend: POST /api/backtests/run -> 200 in 38325ms
+2026-04-26 11:26:21,582 [INFO] backend: POST /api/backtests/run -> 200 in 41987ms
+2026-04-26 12:54:43,283 [INFO] backend: GET /api/patterns/library -> 200 in 1210ms
+2026-04-26 12:54:43,712 [INFO] backend: GET /api/universe/list -> 200 in 1513ms
+2026-04-28 00:51:51,479 [INFO] backend: Backend shutting down
+2026-04-28 00:52:27,486 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 00:53:04,331 [INFO] backend: GET /api/market/indices -> 200 in 1784ms
+2026-04-28 00:53:05,099 [INFO] backend: GET /api/market/sectors -> 200 in 2553ms
+2026-04-28 00:55:07,426 [INFO] backend: POST /api/patterns/scan -> 200 in 44410ms
+2026-04-28 00:55:55,886 [INFO] services.screener_service: Screener.in session configured.
+2026-04-28 00:55:56,709 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1360ms
+2026-04-28 00:58:00,451 [WARNING] services.nse_service: NSE API /api/equity-stockIndices failed: HTTPSConnectionPool(host='www.nseindia.com', port=443): Read timed out. (read timeout=15)
+2026-04-28 00:58:01,078 [INFO] backend: GET /api/market/indices -> 200 in 15705ms
+2026-04-28 11:29:31,933 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:29:46,445 [INFO] backend: GET /api/market/sectors -> 200 in 1788ms
+2026-04-28 11:32:18,365 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:32:44,563 [INFO] backend: GET /api/market/sectors -> 200 in 1081ms
+2026-04-28 11:33:50,398 [INFO] backend: POST /api/patterns/scan -> 200 in 218251ms
+2026-04-28 11:33:50,522 [INFO] backend: Backend shutting down
+2026-04-28 11:33:54,258 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:37:00,002 [INFO] backend: POST /api/patterns/scan -> 200 in 182932ms
+2026-04-28 11:38:52,578 [INFO] backend: Backend shutting down
+2026-04-28 11:39:01,426 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:39:29,732 [INFO] backend: Backend shutting down
+2026-04-28 11:39:32,912 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:43:05,681 [INFO] backend: Backend shutting down
+2026-04-28 11:43:18,223 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:43:33,364 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:52:50,556 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 11:55:42,376 [INFO] backend: GET /api/market/indices -> 200 in 1750ms
+2026-04-28 11:55:44,045 [INFO] backend: GET /api/market/sectors -> 200 in 3421ms
+2026-04-28 11:56:23,013 [INFO] services.screener_service: Screener.in session configured.
+2026-04-28 11:56:23,013 [INFO] services.screener_service: Screener.in session configured.
+2026-04-28 11:56:23,014 [INFO] services.screener_service: Screener.in session configured.
+2026-04-28 11:56:26,805 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 3845ms
+2026-04-28 11:56:27,242 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 4298ms
+2026-04-28 11:56:27,305 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 4360ms
+2026-04-28 11:56:27,398 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 4499ms
+2026-04-28 11:56:27,554 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 4429ms
+2026-04-28 11:56:30,420 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 3208ms
+2026-04-28 11:56:30,805 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 8465ms
+2026-04-28 11:56:30,881 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 3342ms
+2026-04-28 11:56:31,740 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 4048ms
+2026-04-28 11:56:31,760 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 4222ms
+2026-04-28 11:56:36,395 [INFO] backend: GET /api/stocks/ANGELONE/indicators -> 200 in 1400ms
+2026-04-28 11:56:36,876 [INFO] backend: GET /api/patterns/detect/ANGELONE -> 200 in 1872ms
+2026-04-28 11:56:37,817 [INFO] backend: GET /api/stocks/ANGELONE/fundamentals -> 200 in 2820ms
+2026-04-28 11:56:38,444 [INFO] backend: GET /api/stocks/ANGELONE/quarterly -> 200 in 3439ms
+2026-04-28 11:56:39,776 [INFO] backend: GET /api/stocks/ANGELONE/verdict -> 200 in 4783ms
+2026-04-28 11:56:41,277 [INFO] backend: GET /api/stocks/ANGELONE/cash-flow -> 200 in 4092ms
+2026-04-28 11:56:41,517 [INFO] backend: GET /api/stocks/ANGELONE/balance-sheet -> 200 in 4796ms
+2026-04-28 11:56:41,666 [INFO] backend: GET /api/stocks/ANGELONE/ratios-history -> 200 in 4479ms
+2026-04-28 11:56:41,869 [INFO] backend: GET /api/stocks/ANGELONE/shareholding -> 200 in 2752ms
+2026-04-28 11:56:42,759 [INFO] backend: GET /api/stocks/ANGELONE/chart-analysis -> 200 in 2043ms
+2026-04-28 11:56:42,796 [INFO] backend: GET /api/stocks/ANGELONE/peers -> 200 in 3461ms
+2026-04-28 12:05:39,984 [INFO] backend: Backend shutting down
+2026-04-28 12:05:47,687 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 12:05:47,763 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 12:29:09,404 [INFO] backend: GET /api/portfolio -> 200 in 1498ms
+2026-04-28 17:25:33,762 [INFO] backend: Backend shutting down
+2026-04-28 17:25:37,288 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 17:25:43,576 [INFO] backend: GET /api/market/sectors -> 200 in 1601ms
+2026-04-28 17:25:45,185 [INFO] services.screener_service: Screener.in session configured.
+2026-04-28 17:25:45,959 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1029ms
+2026-04-28 17:25:48,685 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1126ms
+2026-04-28 17:25:53,179 [INFO] backend: GET /api/news/market -> 200 in 2757ms
+2026-04-28 17:25:55,753 [INFO] backend: GET /api/news/stock/RELIANCE -> 200 in 2568ms
+2026-04-28 17:25:58,181 [WARNING] services.market_data_service: OHLCV history failed for TATAMOTORS: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/TATAMOTORS.NS?interval=1d&range=6mo&includeAdjustedClose=true
+2026-04-28 17:34:44,110 [INFO] backend: Backend shutting down
+2026-04-28 17:34:49,142 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 17:36:22,042 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-04-28 17:39:46,957 [INFO] backend: Backend shutting down
+2026-04-28 17:39:50,268 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-05 23:29:56,389 [INFO] backend: GET /api/patterns/library -> 200 in 2799ms
+2026-05-05 23:29:56,407 [INFO] backend: GET /api/universe/list -> 200 in 2835ms
+2026-05-06 10:24:27,583 [ERROR] asyncio: Task was destroyed but it is pending!
+task: <Task cancelling name='Task-2' coro=<LifespanOn.main() running at C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\lifespan\on.py:86> wait_for=<Future cancelled>>
+2026-05-06 10:24:28,520 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1' coro=<Server.serve() done, defined at C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\server.py:68> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 674, in run_until_complete
+    self.run_forever()
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 641, in run_forever
+    self._run_once()
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 1986, in _run_once
+    handle._run()
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\server.py", line 69, in serve
+    with self.capture_signals():
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\server.py", line 330, in capture_signals
+    signal.raise_signal(captured_signal)
+  File "C:\Users\mohan\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 157, in _on_sigint
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+2026-05-06 10:24:38,099 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-06 10:26:11,768 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:26:11,789 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:26:11,862 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:26:11,898 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:26:12,160 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:26:12,315 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:26:12,470 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:26:12,612 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:26:12,653 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:26:12,735 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:26:12,814 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:26:13,398 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:28:54,081 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:28:54,140 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:28:54,142 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:28:54,421 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-06 10:28:54,593 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:28:54,600 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:28:54,632 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:28:54,924 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-06 10:28:55,371 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:28:55,444 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:28:55,461 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-06 10:28:55,515 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 20:41:26,640 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 20:41:37,306 [INFO] backend: GET / -> 404 in 2ms
+2026-05-10 20:41:37,494 [INFO] backend: GET /favicon.ico -> 404 in 2ms
+2026-05-10 20:43:56,310 [INFO] backend: GET /api/market/indices -> 200 in 2053ms
+2026-05-10 20:43:56,756 [INFO] backend: GET /api/market/sectors -> 200 in 2507ms
+2026-05-10 20:56:26,570 [INFO] backend: OPTIONS /api/patterns/scan/stream -> 400 in 13ms
+2026-05-10 20:56:46,813 [INFO] backend: GET /api/news/market -> 200 in 3603ms
+2026-05-10 20:56:50,487 [INFO] backend: GET /api/news/market -> 200 in 2652ms
+2026-05-10 20:56:53,178 [INFO] backend: Backend shutting down
+2026-05-10 20:57:26,422 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 20:57:41,890 [WARNING] services.universe_sync: Failed to fetch ALL NSE from NSE: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?. Using fallback.
+2026-05-10 20:57:42,704 [INFO] services.screener_service: Screener.in session configured.
+2026-05-10 20:57:42,709 [INFO] services.screener_service: Screener.in session configured.
+2026-05-10 20:57:44,386 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2527ms
+2026-05-10 20:57:44,511 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 1868ms
+2026-05-10 20:57:46,008 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1501ms
+2026-05-10 20:57:46,010 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1496ms
+2026-05-10 20:57:47,412 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 1394ms
+2026-05-10 20:57:47,516 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 1496ms
+2026-05-10 20:57:53,991 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 12133ms
+2026-05-10 20:57:54,102 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 11444ms
+2026-05-10 20:57:54,516 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 6997ms
+2026-05-10 20:57:55,090 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 13231ms
+2026-05-10 20:57:55,793 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1686ms
+2026-05-10 20:57:58,031 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 3921ms
+2026-05-10 20:57:59,252 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 17393ms
+2026-05-10 20:57:59,374 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 3891ms
+2026-05-10 20:57:59,654 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 4578ms
+2026-05-10 20:57:59,855 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 12332ms
+2026-05-10 20:58:00,154 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 4017ms
+2026-05-10 20:58:00,319 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 1944ms
+2026-05-10 20:58:02,214 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 2091ms
+2026-05-10 20:58:02,526 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 1779ms
+2026-05-10 20:58:02,963 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1822ms
+2026-05-10 20:58:35,091 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1531ms
+2026-05-10 20:58:35,203 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 1631ms
+2026-05-10 20:58:35,426 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 1835ms
+2026-05-10 20:58:35,588 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 2006ms
+2026-05-10 20:58:35,682 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2102ms
+2026-05-10 20:58:37,121 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 3556ms
+2026-05-10 20:58:39,116 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 3574ms
+2026-05-10 20:58:39,608 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 4067ms
+2026-05-10 20:58:39,838 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 3967ms
+2026-05-10 20:58:39,840 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 4171ms
+2026-05-10 20:58:41,061 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 1161ms
+2026-05-10 20:58:42,011 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 6124ms
+2026-05-10 20:58:42,089 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 2182ms
+2026-05-10 20:58:42,294 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 4380ms
+2026-05-10 20:58:42,942 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2598ms
+2026-05-10 20:58:43,186 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1891ms
+2026-05-10 20:58:43,878 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 2600ms
+2026-05-10 20:58:50,787 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 3146ms
+2026-05-10 20:58:51,148 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 3502ms
+2026-05-10 20:58:51,225 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 3569ms
+2026-05-10 20:58:51,602 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 3941ms
+2026-05-10 20:58:51,900 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 4244ms
+2026-05-10 21:01:01,958 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 21:01:14,038 [INFO] backend: HEAD /api/universe/all-symbols -> 405 in 1ms
+2026-05-10 21:02:15,491 [INFO] backend: GET /api/market/sectors -> 200 in 1501ms
+2026-05-10 21:02:17,539 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1936ms
+2026-05-10 21:02:18,821 [INFO] services.screener_service: Screener.in session configured.
+2026-05-10 21:02:19,711 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1152ms
+2026-05-10 21:02:21,594 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 1113ms
+2026-05-10 21:02:22,758 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1159ms
+2026-05-10 21:02:23,386 [INFO] backend: Backend shutting down
+2026-05-10 21:02:27,482 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 21:02:28,151 [INFO] backend: GET /api/news/market -> 200 in 3159ms
+2026-05-10 21:02:31,004 [INFO] backend: GET /api/news/stock/RELIANCE -> 200 in 2849ms
+2026-05-10 21:02:32,530 [INFO] backend: GET /api/news/announcements -> 200 in 1522ms
+2026-05-10 21:02:38,314 [WARNING] services.market_data_service: OHLCV history failed for TATAMOTORS: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/TATAMOTORS.NS?interval=1d&range=6mo&includeAdjustedClose=true
+2026-05-10 21:02:38,317 [INFO] backend: GET /api/watchlist -> 200 in 4258ms
+2026-05-10 21:05:45,864 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 21:06:12,243 [INFO] backend: GET /api/market/sectors -> 200 in 1498ms
+2026-05-10 21:07:50,889 [INFO] backend: GET /api/market/sectors -> 200 in 1702ms
+2026-05-10 21:07:50,934 [INFO] backend: Backend shutting down
+2026-05-10 21:07:54,919 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 21:07:54,921 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-10 21:11:23,429 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:11:23,558 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:11:23,686 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:11:23,851 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:11:23,913 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:11:23,958 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:11:24,155 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:11:24,418 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:13:05,092 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:13:05,108 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:13:05,463 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:13:05,489 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:13:05,592 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:13:05,637 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:13:05,927 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:13:05,975 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:13:06,029 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:13:06,069 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:13:06,486 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:13:06,810 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:18:09,150 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:18:09,305 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:18:09,523 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:18:09,659 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:18:09,733 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:18:09,921 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:18:10,031 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:18:10,179 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:18:10,217 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:18:10,263 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:18:10,635 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:18:10,647 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:39:10,280 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:39:10,330 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:39:10,343 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:39:10,517 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-10 21:39:10,717 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:39:10,778 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:39:10,780 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:39:11,195 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:39:11,247 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-10 21:39:11,360 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:39:11,466 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-10 21:39:11,572 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:47:02,375 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-14 22:51:15,745 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:51:15,826 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:51:15,937 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:51:16,013 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:51:16,391 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:51:16,423 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:51:16,448 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:51:16,509 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:51:17,007 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:51:17,084 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:51:17,122 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:51:17,244 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:52:50,616 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:52:50,729 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:52:50,817 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:52:50,848 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:52:51,150 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:52:51,155 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:52:51,156 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:52:51,251 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:52:51,647 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:52:51,797 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:52:51,801 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:52:51,893 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:07,388 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:07,394 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:07,399 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:07,527 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:07,919 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:08,027 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:08,040 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:08,130 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:08,363 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:08,410 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:08,505 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:08,731 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:39,372 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:39,557 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:39,579 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:39,720 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:53:39,752 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:39,932 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:39,956 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:40,348 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:40,444 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:53:40,538 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:40,570 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:53:41,078 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:55:18,971 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:55:18,993 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:55:19,032 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:55:19,033 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-14 22:55:19,622 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:55:19,626 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:55:19,666 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:55:19,859 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-14 22:55:19,932 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:55:19,998 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:55:20,236 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-14 22:55:20,391 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:05:31,141 [INFO] backend: Backend shutting down
+2026-05-17 21:19:17,862 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-17 21:33:27,416 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:33:27,418 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:33:27,449 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:33:27,478 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:33:27,735 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:33:27,846 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:33:27,922 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:33:27,928 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:33:27,997 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:33:28,068 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:33:28,166 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:33:28,212 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:44:04,214 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:44:04,267 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:44:04,366 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:44:04,401 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-17 21:44:04,443 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:44:04,615 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:44:04,662 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:44:04,664 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:44:04,666 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-17 21:44:04,914 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:44:04,937 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 21:44:04,970 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-17 22:38:26,134 [INFO] backend: Backend shutting down
+2026-05-19 19:37:16,706 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-19 19:39:58,816 [INFO] backend: GET /api/market/indices -> 200 in 1029ms
+2026-05-19 19:39:59,317 [INFO] backend: GET /api/market/sectors -> 200 in 1513ms
+2026-05-24 09:32:50,695 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-24 09:39:47,975 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 09:39:47,990 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 09:39:48,012 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 09:39:48,047 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 09:39:48,375 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 09:39:48,377 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 09:39:48,397 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 09:39:48,453 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 09:39:48,663 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 09:39:48,667 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 09:39:48,723 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 09:39:48,757 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:27:03,097 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-24 11:29:00,551 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:29:00,683 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:29:00,695 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:29:00,719 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:29:01,024 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:29:01,072 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:29:01,104 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:29:01,229 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:29:01,579 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:29:01,625 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:29:01,693 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:29:01,695 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:32:53,591 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:32:53,718 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:32:53,722 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:32:53,764 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:32:53,899 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:32:54,091 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:32:54,095 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:32:54,324 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:32:54,584 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:32:54,635 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:32:54,639 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:32:54,665 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:34:14,628 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:34:14,643 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:34:14,669 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:34:14,804 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:34:14,974 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:34:15,007 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:34:15,008 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:34:15,412 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:34:15,507 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:34:15,556 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:34:15,619 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:34:16,228 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:36:28,285 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:36:28,322 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:36:28,416 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:36:28,524 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-24 11:36:28,631 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:36:28,658 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:36:28,668 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:36:28,730 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-24 11:36:29,193 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:36:29,231 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:36:29,233 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-24 11:36:29,285 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 09:50:06,581 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 09:51:58,377 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 09:51:58,399 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 09:51:58,478 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 09:51:58,613 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 09:51:58,630 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 09:51:58,738 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 09:51:58,779 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 09:51:58,847 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 09:51:58,949 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 09:51:59,032 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 09:51:59,102 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 09:51:59,103 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:04:20,992 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:04:21,005 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:04:21,049 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:04:21,078 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:04:21,271 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:04:21,284 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:04:21,349 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:04:21,399 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:04:21,643 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:04:21,692 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:04:21,856 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:04:21,938 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:05:10,373 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:05:10,373 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:05:10,412 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:05:10,558 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:05:10,606 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:05:10,767 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:05:10,845 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:05:10,950 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:05:11,157 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:05:11,414 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 10:05:11,649 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 10:05:11,892 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
