@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TestTube2, Trophy, AlertTriangle, Info } from "lucide-react";
 import { api } from "@/lib/api";
@@ -22,6 +22,7 @@ import {
   BarChart, Bar, Cell, ReferenceLine,
 } from "recharts";
 import { toast } from "sonner";
+import { useRegion } from "@/lib/region";
 
 interface BacktestApiResult {
   win_rate: number; avg_return: number; expectancy: number;
@@ -34,9 +35,10 @@ interface BacktestApiResult {
 }
 
 export default function BacktestPage() {
+  const { region, isUS } = useRegion();
   const lib = useQuery({ queryKey: ["pattern-library"], queryFn: api.patternLibrary });
   const [f, setF] = useState({
-    universe: "NIFTY 50",
+    universe: isUS ? "S&P 500" : "NIFTY 50",
     pattern_name: "Bull Flag",
     period: "2y",
     max_symbols: "25",
@@ -45,6 +47,7 @@ export default function BacktestPage() {
     step_size: "5",
     rolling_window: "120",
   });
+  useEffect(() => { setF((prev) => ({ ...prev, universe: isUS ? "S&P 500" : "NIFTY 50" })); }, [isUS]);
   const upd = (k: string, v: string) => setF({ ...f, [k]: v });
 
   const [running, setRunning] = useState(false);
@@ -62,7 +65,7 @@ export default function BacktestPage() {
       universe: f.universe, pattern_name: f.pattern_name, period: f.period,
       max_symbols: Number(f.max_symbols), min_confidence: Number(f.min_confidence),
       max_holding_bars: Number(f.max_holding_bars), step_size: Number(f.step_size),
-      rolling_window: Number(f.rolling_window),
+      rolling_window: Number(f.rolling_window), region,
     }, {
       onStart:    (e) => setProgress({ done: 0, total: e.total ?? 0, current: "" }),
       onProgress: (e) => setProgress({ done: e.done ?? 0, total: e.total ?? 0, current: e.current, elapsedMs: e.elapsed_ms }),
@@ -309,8 +312,8 @@ export default function BacktestPage() {
                     <TH>Symbol</TH>
                     <TH>Entry date</TH>
                     <TH>Exit date</TH>
-                    <TH className="text-right">Entry ₹</TH>
-                    <TH className="text-right">Exit ₹</TH>
+                    <TH className="text-right">Entry</TH>
+                    <TH className="text-right">Exit</TH>
                     <TH className="text-right">Return %</TH>
                     <TH className="text-right">Bars</TH>
                     <TH>Exit reason</TH>

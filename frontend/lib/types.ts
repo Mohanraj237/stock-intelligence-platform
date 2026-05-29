@@ -195,6 +195,7 @@ export interface PatternScanRequest {
   min_confidence: number;
   breakout_states: BreakoutState[];
   max_symbols?: number | null;
+  region?: string;
 }
 
 export interface PatternStockResult {
@@ -233,6 +234,7 @@ export interface ScanRequest {
   filters: FilterCriteria;
   enable_ai: boolean;
   max_symbols?: number | null;
+  region?: string;
 }
 
 export interface ScanRow {

@@ -10,8 +10,13 @@ import plotly.graph_objects as go
 from utils.theme import apply_theme, GREEN, RED, BLUE, CARD, BORDER, TEXT, TEXT_DIM
 apply_theme()
 
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
-from services.tradingview_service import scan_symbols_bulk, tv_score
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, scan_symbols_bulk, tv_score, fmt_currency, fmt_volume,
+    get_index_quotes,
+)
+region = get_region()
 
 st.markdown("## 🌐 Universe Explorer")
 
@@ -56,18 +61,17 @@ with st.expander("🔧 Filters & Rules", expanded=False):
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner=False)
-def _load_universe_tv(universe: str):
-    from services.nse_service import get_index_quotes
+def _load_universe_tv(universe: str, rgn: str):
     symbols = get_universe_symbols(universe)
     all_tv: dict = {}
     batches = [symbols[i:i+100] for i in range(0, len(symbols), 100)]
     for batch in batches:
         all_tv.update(scan_symbols_bulk(batch))
 
-    # If TV scanner blocked/empty, fall back to NSE live quotes
+    # Fall back to live index quotes if technical scan returned nothing
     if not all_tv:
-        nse_quotes = get_index_quotes(universe)
-        for q in nse_quotes:
+        live_quotes = get_index_quotes(universe)
+        for q in live_quotes:
             sym = q.get("symbol", "")
             if not sym:
                 continue
@@ -76,28 +80,28 @@ def _load_universe_tv(universe: str):
                 "symbol": sym,
                 "recommendation": "NEUTRAL",
                 "indicators": {
-                    "close":     q.get("price"),
-                    "change":    chg_pct,
-                    "volume":    q.get("volume"),
-                    "rsi":       None,
-                    "macd":      None,
+                    "close":       q.get("price"),
+                    "change":      chg_pct,
+                    "volume":      q.get("volume"),
+                    "rsi":         None,
+                    "macd":        None,
                     "macd_signal": None,
-                    "sma50":     None,
-                    "sma200":    None,
-                    "adx":       None,
+                    "sma50":       None,
+                    "sma200":      None,
+                    "adx":         None,
                 },
-                "_nse_source": True,
-                "_return_30d":  q.get("return_30d"),
-                "_return_365d": q.get("return_365d"),
+                "_live_source":  True,
+                "_return_30d":   q.get("return_30d"),
+                "_return_365d":  q.get("return_365d"),
             }
-        if nse_quotes and not symbols:
-            symbols = [q["symbol"] for q in nse_quotes if q.get("symbol")]
+        if live_quotes and not symbols:
+            symbols = [q["symbol"] for q in live_quotes if q.get("symbol")]
     return symbols, all_tv
 
 prev_key = st.session_state.get("_ue_key", "")
 if run_scan or sel_name != prev_key or "ue_tv_data" not in st.session_state:
     with st.spinner(f"Scanning {sel_name}…"):
-        symbols, tv_data = _load_universe_tv(sel_name)
+        symbols, tv_data = _load_universe_tv(sel_name, region)
     st.session_state.update({"ue_tv_data": tv_data, "ue_symbols": symbols, "_ue_key": sel_name})
 
 tv_data = st.session_state.get("ue_tv_data", {})
@@ -107,11 +111,12 @@ if not tv_data:
     st.warning("No data loaded. Check connection or try again.")
     st.stop()
 
-is_nse = any(v.get("_nse_source") for v in tv_data.values())
-if is_nse:
+is_live_fallback = any(v.get("_live_source") for v in tv_data.values())
+if is_live_fallback:
+    source_name = "Yahoo Finance (US live quotes)" if region == "US" else "NSE India"
     st.info(
-        "📡 **NSE India fallback active** — Yahoo Finance scan returned no data. "
-        "Technical indicators (RSI, MACD, ADX) not shown; 30D and 1Y returns sourced from NSE.",
+        f"📡 **Live quote fallback active** — Technical scan returned no data. "
+        f"Technical indicators (RSI, MACD, ADX) not shown; prices sourced from {source_name}.",
         icon=None,
     )
 
@@ -314,7 +319,7 @@ st.markdown(f'<div class="z-section">Stocks — {len(passed_sorted)} shown (of {
 if passed_sorted:
     df_disp = pd.DataFrame([{
         "Symbol":    r["Symbol"],
-        "Price":     f"₹{float(r['Price']):,.2f}" if r.get("Price") else "—",
+        "Price":     fmt_currency(r["Price"]) if r.get("Price") else "—",
         "Change %":  f"{float(r['Change %']):+.2f}%" if r.get("Change %") is not None else "—",
         "RSI":       f"{float(r['RSI']):.1f}" if r.get("RSI") is not None else "—",
         "ADX":       f"{float(r['ADX']):.1f}" if r.get("ADX") is not None else "—",
@@ -329,7 +334,7 @@ if passed_sorted:
         ),
         "30D Ret%":  f"{float(r['_ret30']):+.2f}%" if r.get("_ret30") is not None else "—",
         "1Y Ret%":   f"{float(r['_ret365']):+.2f}%" if r.get("_ret365") is not None else "—",
-        "Volume":    f"{float(r['Volume'])/1e5:.1f}L" if r.get("Volume") else "—",
+        "Volume":    fmt_volume(r["Volume"]) if r.get("Volume") else "—",
         "Signal":    r["Signal"],
         "_chg":      float(r["Change %"]) if r.get("Change %") is not None else 0,
         "_rsi":      float(r["RSI"]) if r.get("RSI") is not None else 50,

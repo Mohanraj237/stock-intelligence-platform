@@ -29,6 +29,7 @@ class ScanRequest(BaseModel):
     filters: FilterCriteria = FilterCriteria()
     enable_ai: bool = False
     max_symbols: Optional[int] = None
+    region: str = "IN"
 
 
 class ScanRow(BaseModel):

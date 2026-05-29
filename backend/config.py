@@ -11,11 +11,11 @@ class BackendSettings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8000
     cors_origins: list[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
     ]
     # Local-first dev tool — no public deployment. Allow any origin so the app
-    # works whether you open it at localhost:3000, 127.0.0.1:3000, the LAN IP
+    # works whether you open it at localhost:3001, 127.0.0.1:3001, the LAN IP
     # (192.168.x.x), or a Tailscale/ngrok hostname. Starlette will echo the
     # actual Origin back in Access-Control-Allow-Origin (compatible with
     # allow_credentials=True; the wildcard "*" wouldn't be).

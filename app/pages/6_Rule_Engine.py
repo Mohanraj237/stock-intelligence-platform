@@ -14,8 +14,12 @@ apply_theme()
 from engines.rule_engine import (Rule, RuleCondition, evaluate_rules, apply_rules_to_universe,
     PRESET_RULES, AVAILABLE_FIELDS, OPERATORS)
 from storage.file_store import get_rules, save_rules, add_rule, delete_rule
-from services.universe_sync import get_universe_symbols, universe_display_map, get_all_universe_names
-from services.tradingview_service import get_tv_analysis, tv_score
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, get_market_analysis as get_tv_analysis, tv_score, fmt_currency,
+)
+region = get_region()
 from engines.scoring_engine import build_stock_snapshot
 
 st.markdown("## ⚙️ Rule Engine")

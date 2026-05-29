@@ -19,7 +19,29 @@ router = APIRouter(prefix="/api/stocks", tags=["stocks"])
 
 
 @router.get("/{symbol}/quote", response_model=Quote)
-async def quote(symbol: str) -> Quote:
+async def quote(symbol: str, region: str = Query("IN")) -> Quote:
+    if region == "US":
+        from services.us_market_service import get_quote as us_get_quote
+        raw = await run_sync(us_get_quote, symbol)
+        if not raw:
+            raise HTTPException(status_code=404, detail=f"No quote for {symbol}")
+        return Quote(
+            symbol=symbol.upper(),
+            company=raw.get("name"),
+            last_price=float(raw.get("price") or 0),
+            change=float(raw.get("change") or 0),
+            change_pct=float(raw.get("change_pct") or 0),
+            open=raw.get("open"),
+            high=raw.get("high"),
+            low=raw.get("low"),
+            prev_close=raw.get("prev_close"),
+            volume=raw.get("volume"),
+            week52_high=raw.get("year_high"),
+            week52_low=raw.get("year_low"),
+            market_cap=raw.get("market_cap"),
+            sector=raw.get("sector"),
+            industry=raw.get("industry"),
+        )
     from services.nse_service import get_quote
     raw = await run_sync(get_quote, symbol)
     if not raw:
@@ -46,13 +68,14 @@ async def quote(symbol: str) -> Quote:
 @router.get("/{symbol}/ohlcv", response_model=OHLCVResponse)
 async def ohlcv(
     symbol: str,
+    region: str = Query("IN"),
     timeframe: Timeframe = Query(Timeframe.DAILY),
     period: Optional[str] = Query(None, description="Override default period (e.g. 6mo, 2y, max)"),
 ) -> OHLCVResponse:
     from services.market_data_service import get_ohlcv_history
     interval = TIMEFRAME_TO_YF_INTERVAL[timeframe]
     yf_period = period or TIMEFRAME_TO_YF_PERIOD[timeframe]
-    df = await run_sync(get_ohlcv_history, symbol, yf_period, interval)
+    df = await run_sync(get_ohlcv_history, symbol, yf_period, interval, region)
     if df is None or len(df) == 0:
         raise HTTPException(status_code=404, detail=f"No OHLCV for {symbol} @ {timeframe.value}")
     bars: list[OHLCVBar] = []
@@ -72,12 +95,12 @@ async def ohlcv(
 
 
 @router.get("/{symbol}/indicators", response_model=Indicators)
-async def indicators(symbol: str, timeframe: Timeframe = Query(Timeframe.DAILY)) -> Indicators:
+async def indicators(symbol: str, region: str = Query("IN"), timeframe: Timeframe = Query(Timeframe.DAILY)) -> Indicators:
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import compute_indicators_from_ohlcv
     interval = TIMEFRAME_TO_YF_INTERVAL[timeframe]
     period = TIMEFRAME_TO_YF_PERIOD[timeframe]
-    df = await run_sync(get_ohlcv_history, symbol, period, interval)
+    df = await run_sync(get_ohlcv_history, symbol, period, interval, region)
     if df is None or len(df) < 5:
         raise HTTPException(status_code=404, detail=f"Not enough data for {symbol}")
     ind = await run_sync(compute_indicators_from_ohlcv, df)
@@ -85,12 +108,48 @@ async def indicators(symbol: str, timeframe: Timeframe = Query(Timeframe.DAILY))
 
 
 @router.get("/{symbol}/fundamentals", response_model=Fundamentals)
-async def fundamentals(symbol: str) -> Fundamentals:
+async def fundamentals(symbol: str, region: str = Query("IN")) -> Fundamentals:
+    if region == "US":
+        from services.us_market_service import get_us_fundamentals
+        data = await run_sync(get_us_fundamentals, symbol)
+        data = data or {}
+        if data.get("error"):
+            return Fundamentals(error=data.get("error"))
+        # get_us_fundamentals returns ratios nested under "ratios" key
+        r = data.get("ratios") or {}
+        # Also fetch live quote for market cap and current price
+        try:
+            from services.us_market_service import get_quote as us_get_quote
+            q_raw = await run_sync(us_get_quote, symbol)
+        except Exception:
+            q_raw = {}
+        q_raw = q_raw or {}
+        return Fundamentals(
+            name=q_raw.get("name") or symbol.upper(),
+            sector=data.get("sector"),
+            industry=data.get("industry"),
+            market_cap=q_raw.get("market_cap"),
+            pe=r.get("pe"),
+            pb=r.get("pb"),
+            book_value=r.get("book_value"),
+            dividend_yield=r.get("div_yield"),
+            eps=r.get("eps"),
+            roe=r.get("roe"),
+            opm=r.get("operating_margin"),
+            npm=r.get("profit_margin"),
+            sales_growth=r.get("revenue_growth"),
+            profit_growth=r.get("earnings_growth"),
+            debt_to_equity=r.get("debt_equity"),
+            about=data.get("description"),
+            pros=[],
+            cons=[],
+            insights=[],
+            peers=[],
+        )
     from services.screener_service import get_full_screener_data
     data = await run_sync(get_full_screener_data, symbol)
     data = data or {}
     if data.get("error"):
-        # Return a partial with error so the UI can render the rest of the page
         return Fundamentals(error=data.get("error"))
     ratios = data.get("ratios", {}) or {}
     derived = data.get("derived_ratios", {}) or {}
@@ -136,7 +195,10 @@ def _pick(d: dict, *candidates: str) -> dict:
 
 
 @router.get("/{symbol}/quarterly", response_model=list[QuarterlyRow])
-async def quarterly(symbol: str, n: int = Query(8, ge=1, le=20)) -> list[QuarterlyRow]:
+async def quarterly(symbol: str, region: str = Query("IN"), n: int = Query(8, ge=1, le=20)) -> list[QuarterlyRow]:
+    if region == "US":
+        # US quarterly data not available via Screener; return empty list gracefully
+        return []
     from services.screener_service import get_full_screener_data
     data = await run_sync(get_full_screener_data, symbol)
     pq = ((data or {}).get("pl") or {}).get("quarterly") or (data or {}).get("quarterly") or {}
@@ -191,19 +253,26 @@ def _split_case(case: str | list, prefix: str) -> list[str]:
 
 
 @router.get("/{symbol}/verdict", response_model=AIVerdict)
-async def verdict(symbol: str, timeframe: Timeframe = Query(Timeframe.DAILY)) -> AIVerdict:
+async def verdict(symbol: str, region: str = Query("IN"), timeframe: Timeframe = Query(Timeframe.DAILY)) -> AIVerdict:
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import compute_indicators_from_ohlcv
-    from services.screener_service import get_full_screener_data
     from services.ai_service import analyze_stock
     from engines.pattern_engine import detect_patterns
 
     interval = TIMEFRAME_TO_YF_INTERVAL[timeframe]
     period = TIMEFRAME_TO_YF_PERIOD[timeframe]
-    df = await run_sync(get_ohlcv_history, symbol, period, interval)
+    df = await run_sync(get_ohlcv_history, symbol, period, interval, region)
     indicators = await run_sync(compute_indicators_from_ohlcv, df) if df is not None else {}
     tv = {"indicators": indicators, "recommendation": "NEUTRAL", "close": indicators.get("close")}
-    screener = await run_sync(get_full_screener_data, symbol)
+    if region == "US":
+        try:
+            from services.us_market_service import get_us_fundamentals
+            screener = await run_sync(get_us_fundamentals, symbol)
+        except Exception:
+            screener = {}
+    else:
+        from services.screener_service import get_full_screener_data
+        screener = await run_sync(get_full_screener_data, symbol)
     patterns = await run_sync(detect_patterns, df) if df is not None else []
     raw = await run_sync(analyze_stock, symbol, tv, screener, patterns)
 
@@ -300,22 +369,29 @@ def _parse_chart_analysis_markdown(md: str) -> dict:
 
 
 @router.get("/{symbol}/chart-analysis", response_model=ChartAnalysis)
-async def chart_analysis(symbol: str, timeframe: Timeframe = Query(Timeframe.DAILY)) -> ChartAnalysis:
+async def chart_analysis(symbol: str, region: str = Query("IN"), timeframe: Timeframe = Query(Timeframe.DAILY)) -> ChartAnalysis:
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import (
         compute_indicators_from_ohlcv, analyze_chart_data,
     )
-    from services.screener_service import get_full_screener_data
     from engines.pattern_engine import detect_patterns
 
     interval = TIMEFRAME_TO_YF_INTERVAL[timeframe]
     period = TIMEFRAME_TO_YF_PERIOD[timeframe]
-    df = await run_sync(get_ohlcv_history, symbol, period, interval)
+    df = await run_sync(get_ohlcv_history, symbol, period, interval, region)
     if df is None or len(df) < 30:
         raise HTTPException(status_code=404, detail="Not enough data for chart analysis")
     ind = await run_sync(compute_indicators_from_ohlcv, df)
     patterns = await run_sync(detect_patterns, df)
-    funda = await run_sync(get_full_screener_data, symbol)
+    if region == "US":
+        try:
+            from services.us_market_service import get_us_fundamentals
+            funda = await run_sync(get_us_fundamentals, symbol)
+        except Exception:
+            funda = {}
+    else:
+        from services.screener_service import get_full_screener_data
+        funda = await run_sync(get_full_screener_data, symbol)
 
     raw = await run_sync(
         analyze_chart_data, symbol, timeframe.value, df, ind, patterns, funda,
@@ -347,28 +423,36 @@ def _periodic_table(d: dict | None) -> list[dict]:
 
 
 @router.get("/{symbol}/balance-sheet")
-async def balance_sheet(symbol: str) -> dict:
+async def balance_sheet(symbol: str, region: str = Query("IN")) -> dict:
+    if region == "US":
+        return {"symbol": symbol.upper(), "rows": []}
     from services.screener_service import get_full_screener_data
     data = await run_sync(get_full_screener_data, symbol)
     return {"symbol": symbol.upper(), "rows": _periodic_table((data or {}).get("balance_sheet"))}
 
 
 @router.get("/{symbol}/cash-flow")
-async def cash_flow(symbol: str) -> dict:
+async def cash_flow(symbol: str, region: str = Query("IN")) -> dict:
+    if region == "US":
+        return {"symbol": symbol.upper(), "rows": []}
     from services.screener_service import get_full_screener_data
     data = await run_sync(get_full_screener_data, symbol)
     return {"symbol": symbol.upper(), "rows": _periodic_table((data or {}).get("cash_flow"))}
 
 
 @router.get("/{symbol}/ratios-history")
-async def ratios_history(symbol: str) -> dict:
+async def ratios_history(symbol: str, region: str = Query("IN")) -> dict:
+    if region == "US":
+        return {"symbol": symbol.upper(), "rows": []}
     from services.screener_service import get_full_screener_data
     data = await run_sync(get_full_screener_data, symbol)
     return {"symbol": symbol.upper(), "rows": _periodic_table((data or {}).get("historical_ratios"))}
 
 
 @router.get("/{symbol}/shareholding")
-async def shareholding(symbol: str) -> dict:
+async def shareholding(symbol: str, region: str = Query("IN")) -> dict:
+    if region == "US":
+        return {"symbol": symbol.upper(), "latest": {}, "history": []}
     from services.screener_service import get_full_screener_data
     data = await run_sync(get_full_screener_data, symbol) or {}
     sh = data.get("shareholding") or {}
@@ -426,10 +510,17 @@ def _resolve_sector_index(sector: str) -> Optional[str]:
 
 
 @router.get("/{symbol}/peers")
-async def peers(symbol: str) -> dict:
+async def peers(symbol: str, region: str = Query("IN")) -> dict:
     """Return peers — first try Screener's curated list, then fall back to
     same-sector mates from the corresponding NSE sector index, enriched with
     live price + change %."""
+    if region == "US":
+        try:
+            from services.us_market_service import get_us_peers
+            return await run_sync(get_us_peers, symbol)
+        except Exception:
+            return {"symbol": symbol.upper(), "sector": None, "industry": None, "source": "us", "peers": []}
+
     from backend.deps import gather_bounded
     from services.screener_service import get_full_screener_data
     from services.universe_sync import get_universe_symbols
@@ -495,22 +586,28 @@ async def peers(symbol: str) -> dict:
 
 
 @router.get("/{symbol}/snapshot", response_model=StockSnapshot)
-async def snapshot(symbol: str, timeframe: Timeframe = Query(Timeframe.DAILY)) -> StockSnapshot:
+async def snapshot(symbol: str, region: str = Query("IN"), timeframe: Timeframe = Query(Timeframe.DAILY)) -> StockSnapshot:
     """Single-shot for the Stock Analyzer page header — quote + indicators + fundamentals + verdict, in parallel."""
     import asyncio
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import compute_indicators_from_ohlcv
-    from services.screener_service import get_full_screener_data
-    from services.nse_service import get_quote as nse_get_quote
     from services.ai_service import analyze_stock
     from engines.pattern_engine import detect_patterns
 
     interval = TIMEFRAME_TO_YF_INTERVAL[timeframe]
     period = TIMEFRAME_TO_YF_PERIOD[timeframe]
 
-    quote_t = run_sync(nse_get_quote, symbol)
-    df_t = run_sync(get_ohlcv_history, symbol, period, interval)
-    funda_t = run_sync(get_full_screener_data, symbol)
+    if region == "US":
+        from services.us_market_service import get_quote as us_get_quote, get_us_fundamentals
+        quote_t = run_sync(us_get_quote, symbol)
+        funda_t = run_sync(get_us_fundamentals, symbol)
+    else:
+        from services.nse_service import get_quote as nse_get_quote
+        from services.screener_service import get_full_screener_data
+        quote_t = run_sync(nse_get_quote, symbol)
+        funda_t = run_sync(get_full_screener_data, symbol)
+
+    df_t = run_sync(get_ohlcv_history, symbol, period, interval, region)
     quote_raw, df, funda_raw = await asyncio.gather(quote_t, df_t, funda_t, return_exceptions=True)
 
     if isinstance(df, Exception) or df is None:

@@ -13,9 +13,12 @@ apply_theme()
 from services.backtest_service import (
     run_pattern_backtest, PATTERN_CATEGORIES, ALL_PATTERN_NAMES,
 )
-from services.universe_sync import (
-    get_universe_symbols, get_all_universe_names, universe_display_map,
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, fmt_currency,
 )
+region = get_region()
 
 st.markdown("## 📊 Strategy Backtest")
 st.markdown(

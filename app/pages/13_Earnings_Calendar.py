@@ -10,16 +10,34 @@ import plotly.graph_objects as go
 from utils.theme import apply_theme, GREEN, RED, BLUE, CARD, BORDER, TEXT, TEXT_DIM, YELLOW
 apply_theme()
 
-from services.earnings_service import (
-    get_upcoming_results, get_recent_earnings, get_earnings_calendar,
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols,
 )
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
+region = get_region()
 
 st.markdown("## 📅 Earnings Calendar")
-st.markdown(
-    f'<div style="color:{TEXT_DIM};font-size:0.85rem;margin-bottom:10px">'
-    f'Upcoming quarterly results from NSE board meetings + recent earnings sentiment from Screener.in</div>',
-    unsafe_allow_html=True,
+if region == "US":
+    st.markdown(
+        f'<div style="color:{TEXT_DIM};font-size:0.85rem;margin-bottom:10px">'
+        f'US earnings data — note: live US earnings calendar requires additional API integration. '
+        f'Showing available data from Yahoo Finance.</div>',
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        f'<div style="color:{TEXT_DIM};font-size:0.85rem;margin-bottom:10px">'
+        f'Upcoming quarterly results from NSE board meetings + recent earnings sentiment from Screener.in</div>',
+        unsafe_allow_html=True,
+    )
+
+if region == "US":
+    st.info("🇺🇸 Switch to Indian Markets to view the full NSE earnings calendar.")
+    st.stop()
+
+from services.earnings_service import (
+    get_upcoming_results, get_recent_earnings, get_earnings_calendar,
 )
 
 tab_upcoming, tab_recent, tab_single = st.tabs([

@@ -11,7 +11,9 @@ router = APIRouter(prefix="/api/earnings", tags=["earnings"])
 
 
 @router.get("/upcoming", response_model=List[UpcomingResult])
-async def upcoming(days_ahead: int = Query(14, ge=1, le=90)) -> List[UpcomingResult]:
+async def upcoming(region: str = Query("IN"), days_ahead: int = Query(14, ge=1, le=90)) -> List[UpcomingResult]:
+    if region == "US":
+        return []
     from services.earnings_service import get_upcoming_results
     raw = await run_sync(get_upcoming_results, days_ahead)
     out: list[UpcomingResult] = []
@@ -27,7 +29,9 @@ async def upcoming(days_ahead: int = Query(14, ge=1, le=90)) -> List[UpcomingRes
 
 
 @router.get("/recent/{symbol}", response_model=List[EarningsItem])
-async def recent(symbol: str, n: int = Query(4, ge=1, le=12)) -> List[EarningsItem]:
+async def recent(symbol: str, region: str = Query("IN"), n: int = Query(4, ge=1, le=12)) -> List[EarningsItem]:
+    if region == "US":
+        return []
     from services.earnings_service import get_recent_earnings, classify_earnings
     raw = await run_sync(get_recent_earnings, symbol, n)
     out: list[EarningsItem] = []

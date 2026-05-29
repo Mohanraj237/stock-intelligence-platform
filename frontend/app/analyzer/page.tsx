@@ -18,6 +18,7 @@ import { MarkdownBlock } from "@/components/common/markdown-block";
 import { PriceChart } from "@/components/charts/PriceChart";
 import { formatNum, formatPct, formatINR, trendClass } from "@/lib/utils";
 import type { Timeframe } from "@/lib/types";
+import { useRegion } from "@/lib/region";
 
 export default function AnalyzerPage() {
   return (
@@ -42,17 +43,18 @@ function AnalyzerInner() {
   const ohlcv = useQuery({ queryKey: ["ohlcv", symbol, tf], queryFn: () => api.ohlcv(symbol, tf) });
   const verdict = useQuery({ queryKey: ["verdict", symbol, tf], queryFn: () => api.verdict(symbol, tf) });
   const indicators = useQuery({ queryKey: ["indicators", symbol, tf], queryFn: () => api.indicators(symbol, tf) });
-  const fundamentals = useQuery({ queryKey: ["fund", symbol], queryFn: () => api.fundamentals(symbol) });
-  const quarterly = useQuery({ queryKey: ["quarterly", symbol], queryFn: () => api.quarterly(symbol, 8) });
-  const patterns = useQuery({ queryKey: ["patterns", symbol, tf], queryFn: () => api.detectPatterns(symbol, tf) });
-  const balance = useQuery({ queryKey: ["balance", symbol], queryFn: () => api.balanceSheet(symbol) });
-  const cashflow = useQuery({ queryKey: ["cashflow", symbol], queryFn: () => api.cashFlow(symbol) });
-  const ratios = useQuery({ queryKey: ["ratios", symbol], queryFn: () => api.ratiosHistory(symbol) });
-  const shareh = useQuery({ queryKey: ["shareh", symbol], queryFn: () => api.shareholding(symbol) });
-  const peers = useQuery({ queryKey: ["peers", symbol], queryFn: () => api.peers(symbol) });
+  const { region } = useRegion();
+  const fundamentals = useQuery({ queryKey: ["fund", symbol, region], queryFn: () => api.fundamentals(symbol, region) });
+  const quarterly = useQuery({ queryKey: ["quarterly", symbol, region], queryFn: () => api.quarterly(symbol, region, 8) });
+  const patterns = useQuery({ queryKey: ["patterns", symbol, tf, region], queryFn: () => api.detectPatterns(symbol, tf, region) });
+  const balance = useQuery({ queryKey: ["balance", symbol, region], queryFn: () => api.balanceSheet(symbol, region) });
+  const cashflow = useQuery({ queryKey: ["cashflow", symbol, region], queryFn: () => api.cashFlow(symbol, region) });
+  const ratios = useQuery({ queryKey: ["ratios", symbol, region], queryFn: () => api.ratiosHistory(symbol, region) });
+  const shareh = useQuery({ queryKey: ["shareh", symbol, region], queryFn: () => api.shareholding(symbol, region) });
+  const peers = useQuery({ queryKey: ["peers", symbol, region], queryFn: () => api.peers(symbol, region) });
   const chartAnalysis = useQuery({
-    queryKey: ["chart-analysis", symbol, tf],
-    queryFn: () => api.chartAnalysis(symbol, tf),
+    queryKey: ["chart-analysis", symbol, tf, region],
+    queryFn: () => api.chartAnalysis(symbol, tf, region),
   });
 
   return (

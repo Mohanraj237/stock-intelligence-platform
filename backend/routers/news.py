@@ -33,21 +33,37 @@ def _to_news(d: dict) -> NewsItem:
 
 
 @router.get("/market", response_model=List[NewsItem])
-async def market_news(limit: int = Query(60, ge=1, le=200)) -> List[NewsItem]:
+async def market_news(region: str = Query("IN"), limit: int = Query(60, ge=1, le=200)) -> List[NewsItem]:
+    if region == "US":
+        try:
+            from services.us_news_service import get_us_market_news
+            raw = await run_sync(get_us_market_news, limit)
+            return [_to_news(d) for d in (raw or [])]
+        except Exception:
+            return []
     from services.news_service import get_market_news
     raw = await run_sync(get_market_news, limit, None)
     return [_to_news(d) for d in (raw or [])]
 
 
 @router.get("/stock/{symbol}", response_model=List[NewsItem])
-async def stock_news(symbol: str, limit: int = Query(20, ge=1, le=100)) -> List[NewsItem]:
+async def stock_news(symbol: str, region: str = Query("IN"), limit: int = Query(20, ge=1, le=100)) -> List[NewsItem]:
+    if region == "US":
+        try:
+            from services.us_news_service import get_us_stock_news
+            raw = await run_sync(get_us_stock_news, symbol, limit)
+            return [_to_news(d) for d in (raw or [])]
+        except Exception:
+            return []
     from services.news_service import get_stock_news
     raw = await run_sync(get_stock_news, symbol, limit)
     return [_to_news(d) for d in (raw or [])]
 
 
 @router.get("/announcements", response_model=List[AnnouncementItem])
-async def announcements(symbol: Optional[str] = None) -> List[AnnouncementItem]:
+async def announcements(symbol: Optional[str] = None, region: str = Query("IN")) -> List[AnnouncementItem]:
+    if region == "US":
+        return []
     from services.news_service import get_nse_announcements
     raw = await run_sync(get_nse_announcements, symbol)
     out: list[AnnouncementItem] = []

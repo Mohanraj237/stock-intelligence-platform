@@ -17,7 +17,7 @@ import type {
 
 // Always hit FastAPI directly — bypasses Next.js dev-server rewrite proxy,
 // which has a hardcoded ~60s upstream timeout that breaks long-running scans.
-// CORS is configured on the backend for http://localhost:3000.
+// CORS is configured on the backend for http://localhost:3001.
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.API_URL ||
@@ -67,62 +67,71 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export type Region = "IN" | "US";
+
+function r(region: Region) {
+  return `region=${region}`;
+}
+function q(region: Region, extra?: string) {
+  return `?${r(region)}${extra ? `&${extra}` : ""}`;
+}
+
 // ── Domain helpers ──────────────────────────────────────────
 export const api = {
   health:           () => get<{ status: string; version: string }>("/api/health"),
 
   // Market
-  marketStatus:     () => get<MarketStatus>("/api/market/status"),
-  indices:          () => get<IndexPerf[]>("/api/market/indices"),
-  sectors:          () => get<SectorPerf[]>("/api/market/sectors"),
+  marketStatus:     (region: Region = "IN") => get<MarketStatus>(`/api/market/status${q(region)}`),
+  indices:          (region: Region = "IN") => get<IndexPerf[]>(`/api/market/indices${q(region)}`),
+  sectors:          (region: Region = "IN") => get<SectorPerf[]>(`/api/market/sectors${q(region)}`),
   fiiDii:           () => get<FIIDIIRow[]>("/api/market/fii-dii"),
-  universeQuotes:   (name: string) => get<UniverseRow[]>(`/api/market/universe/${encodeURIComponent(name)}/quotes`),
+  universeQuotes:   (name: string, region: Region = "IN") => get<UniverseRow[]>(`/api/market/universe/${encodeURIComponent(name)}/quotes${q(region)}`),
 
   // Universe
-  listUniverses:    () => get<Record<string, string>>("/api/universe/list"),
-  universeSymbols:  (name: string, limit?: number) =>
-    get<string[]>(`/api/universe/${encodeURIComponent(name)}/symbols${limit ? `?limit=${limit}` : ""}`),
-  syncUniverse:     (name: string) => post<unknown>(`/api/universe/${encodeURIComponent(name)}/sync`, {}),
+  listUniverses:    (region: Region = "IN") => get<Record<string, string>>(`/api/universe/list${q(region)}`),
+  universeSymbols:  (name: string, region: Region = "IN", limit?: number) =>
+    get<string[]>(`/api/universe/${encodeURIComponent(name)}/symbols${q(region, limit ? `limit=${limit}` : undefined)}`),
+  syncUniverse:     (name: string, region: Region = "IN") => post<unknown>(`/api/universe/${encodeURIComponent(name)}/sync${q(region)}`, {}),
 
   // Stocks
-  ohlcv:            (symbol: string, tf: Timeframe = "1D", period?: string) =>
-    get<OHLCVResponse>(`/api/stocks/${encodeURIComponent(symbol)}/ohlcv?timeframe=${tf}${period ? `&period=${period}` : ""}`),
-  indicators:       (symbol: string, tf: Timeframe = "1D") =>
-    get<Indicators>(`/api/stocks/${encodeURIComponent(symbol)}/indicators?timeframe=${tf}`),
-  fundamentals:     (symbol: string) => get<Fundamentals>(`/api/stocks/${encodeURIComponent(symbol)}/fundamentals`),
-  quarterly:        (symbol: string, n = 8) => get<QuarterlyRow[]>(`/api/stocks/${encodeURIComponent(symbol)}/quarterly?n=${n}`),
-  balanceSheet:     (symbol: string) => get<{ symbol: string; rows: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/balance-sheet`),
-  cashFlow:         (symbol: string) => get<{ symbol: string; rows: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/cash-flow`),
-  ratiosHistory:    (symbol: string) => get<{ symbol: string; rows: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/ratios-history`),
-  shareholding:     (symbol: string) => get<{ symbol: string; latest: Record<string, number | null>; history: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/shareholding`),
-  peers:            (symbol: string) => get<{
+  ohlcv:            (symbol: string, tf: Timeframe = "1D", region: Region = "IN", period?: string) =>
+    get<OHLCVResponse>(`/api/stocks/${encodeURIComponent(symbol)}/ohlcv${q(region, `timeframe=${tf}${period ? `&period=${period}` : ""}`)}`),
+  indicators:       (symbol: string, tf: Timeframe = "1D", region: Region = "IN") =>
+    get<Indicators>(`/api/stocks/${encodeURIComponent(symbol)}/indicators${q(region, `timeframe=${tf}`)}`),
+  fundamentals:     (symbol: string, region: Region = "IN") => get<Fundamentals>(`/api/stocks/${encodeURIComponent(symbol)}/fundamentals${q(region)}`),
+  quarterly:        (symbol: string, region: Region = "IN", n = 8) => get<QuarterlyRow[]>(`/api/stocks/${encodeURIComponent(symbol)}/quarterly${q(region, `n=${n}`)}`),
+  balanceSheet:     (symbol: string, region: Region = "IN") => get<{ symbol: string; rows: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/balance-sheet${q(region)}`),
+  cashFlow:         (symbol: string, region: Region = "IN") => get<{ symbol: string; rows: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/cash-flow${q(region)}`),
+  ratiosHistory:    (symbol: string, region: Region = "IN") => get<{ symbol: string; rows: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/ratios-history${q(region)}`),
+  shareholding:     (symbol: string, region: Region = "IN") => get<{ symbol: string; latest: Record<string, number | null>; history: Record<string, number | string | null>[] }>(`/api/stocks/${encodeURIComponent(symbol)}/shareholding${q(region)}`),
+  peers:            (symbol: string, region: Region = "IN") => get<{
     symbol: string;
     sector: string | null;
     industry: string | null;
     source: string;
     peers: Record<string, string | number | null>[];
-  }>(`/api/stocks/${encodeURIComponent(symbol)}/peers`),
-  verdict:          (symbol: string, tf: Timeframe = "1D") => get<AIVerdict>(`/api/stocks/${encodeURIComponent(symbol)}/verdict?timeframe=${tf}`),
-  chartAnalysis:    (symbol: string, tf: Timeframe = "1D") => get<ChartAnalysis>(`/api/stocks/${encodeURIComponent(symbol)}/chart-analysis?timeframe=${tf}`),
-  snapshot:         (symbol: string, tf: Timeframe = "1D") => get<unknown>(`/api/stocks/${encodeURIComponent(symbol)}/snapshot?timeframe=${tf}`),
+  }>(`/api/stocks/${encodeURIComponent(symbol)}/peers${q(region)}`),
+  verdict:          (symbol: string, tf: Timeframe = "1D", region: Region = "IN") => get<AIVerdict>(`/api/stocks/${encodeURIComponent(symbol)}/verdict${q(region, `timeframe=${tf}`)}`),
+  chartAnalysis:    (symbol: string, tf: Timeframe = "1D", region: Region = "IN") => get<ChartAnalysis>(`/api/stocks/${encodeURIComponent(symbol)}/chart-analysis${q(region, `timeframe=${tf}`)}`),
+  snapshot:         (symbol: string, tf: Timeframe = "1D", region: Region = "IN") => get<unknown>(`/api/stocks/${encodeURIComponent(symbol)}/snapshot${q(region, `timeframe=${tf}`)}`),
 
   // Patterns
   patternLibrary:   () => get<{ name: string; category: string; direction: string; description: string; best_timeframes: string }[]>("/api/patterns/library"),
   patternExample:   (name: string) => get<{ name: string; bars: { time: number; open: number; high: number; low: number; close: number; volume: number }[] }>(`/api/patterns/library/${encodeURIComponent(name)}/example`),
-  detectPatterns:   (symbol: string, tf: Timeframe = "1D") => get<PatternHit[]>(`/api/patterns/detect/${encodeURIComponent(symbol)}?timeframe=${tf}`),
-  multiTFBreakout:  (symbol: string) => get<MultiTFBreakout>(`/api/patterns/multi-tf-breakout/${encodeURIComponent(symbol)}`),
+  detectPatterns:   (symbol: string, tf: Timeframe = "1D", region: Region = "IN") => get<PatternHit[]>(`/api/patterns/detect/${encodeURIComponent(symbol)}${q(region, `timeframe=${tf}`)}`),
+  multiTFBreakout:  (symbol: string, region: Region = "IN") => get<MultiTFBreakout>(`/api/patterns/multi-tf-breakout/${encodeURIComponent(symbol)}${q(region)}`),
   patternScan:      (req: PatternScanRequest) => post<PatternScanResult>("/api/patterns/scan", req),
 
   // Scans
-  scanTypes:        () => get<{ id: string; name: string; desc: string }[]>("/api/scans/types"),
+  scanTypes:        (region: Region = "IN") => get<{ id: string; name: string; desc: string }[]>(`/api/scans/types${q(region)}`),
   runScan:          (req: ScanRequest) => post<ScanResult>("/api/scans/run", req),
 
   // News + earnings
-  marketNews:       (limit = 60) => get<NewsItem[]>(`/api/news/market?limit=${limit}`),
-  stockNews:        (symbol: string, limit = 20) => get<NewsItem[]>(`/api/news/stock/${encodeURIComponent(symbol)}?limit=${limit}`),
+  marketNews:       (region: Region = "IN", limit = 60) => get<NewsItem[]>(`/api/news/market${q(region, `limit=${limit}`)}`),
+  stockNews:        (symbol: string, region: Region = "IN", limit = 20) => get<NewsItem[]>(`/api/news/stock/${encodeURIComponent(symbol)}${q(region, `limit=${limit}`)}`),
   announcements:    (symbol?: string) => get<AnnouncementItem[]>(`/api/news/announcements${symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""}`),
-  upcomingEarnings: (days = 14) => get<UpcomingResult[]>(`/api/earnings/upcoming?days_ahead=${days}`),
-  recentEarnings:   (symbol: string, n = 4) => get<EarningsItem[]>(`/api/earnings/recent/${encodeURIComponent(symbol)}?n=${n}`),
+  upcomingEarnings: (region: Region = "IN", days = 14) => get<UpcomingResult[]>(`/api/earnings/upcoming${q(region, `days_ahead=${days}`)}`),
+  recentEarnings:   (symbol: string, region: Region = "IN", n = 4) => get<EarningsItem[]>(`/api/earnings/recent/${encodeURIComponent(symbol)}${q(region, `n=${n}`)}`),
 
   // Portfolio + watchlist
   portfolio:        () => get<PortfolioSummary>("/api/portfolio"),
@@ -136,7 +145,7 @@ export const api = {
   listRules:        () => get<Rule[]>("/api/rules"),
   createRule:       (rule: Rule) => post<Rule>("/api/rules", rule),
   deleteRule:       (id: string) => del<unknown>(`/api/rules/${encodeURIComponent(id)}`),
-  applyRules:       (req: { universe: string; ruleset: RuleSet; max_symbols?: number | null }) =>
+  applyRules:       (req: { universe: string; ruleset: RuleSet; max_symbols?: number | null; region?: Region }) =>
     post<RuleMatchRow[]>("/api/rules/apply", req),
 
   // Backtests
@@ -161,7 +170,7 @@ export const api = {
   // Settings + reports
   settings:         () => get<AppSettings>("/api/settings"),
   patchSettings:    (s: Partial<AppSettings>) => patch<AppSettings>("/api/settings", s),
-  generateReport:   (symbol: string, timeframe: Timeframe = "1D") => post<{ filename: string; path: string }>("/api/reports/generate", { symbol, timeframe }),
+  generateReport:   (symbol: string, timeframe: Timeframe = "1D", region: Region = "IN") => post<{ filename: string; path: string }>("/api/reports/generate", { symbol, timeframe, region }),
   listReports:      () => get<{ filename: string; size: number; mtime: number }[]>("/api/reports/list"),
 };
 

@@ -7,6 +7,7 @@ import {
   TestTube2, Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRegion, type Region } from "@/lib/region";
 
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; group: string };
 
@@ -31,11 +32,13 @@ const NAV: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { region, setRegion } = useRegion();
   const groups = Array.from(new Set(NAV.map((n) => n.group)));
 
   return (
     <aside className="w-60 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] py-4 sticky top-0 h-screen overflow-y-auto">
-      <div className="px-5 pb-5">
+      {/* Brand */}
+      <div className="px-5 pb-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="size-8 rounded-md bg-[var(--color-primary)] grid place-items-center text-white font-bold">SI</div>
           <div className="text-sm leading-tight">
@@ -44,6 +47,29 @@ export function Sidebar() {
           </div>
         </Link>
       </div>
+
+      {/* Market Region Toggle */}
+      <div className="mx-3 mb-4 px-3 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)]">
+        <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">Market Region</div>
+        <div className="flex gap-1">
+          {(["IN", "US"] as Region[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRegion(r)}
+              className={cn(
+                "flex-1 py-1 rounded text-[12px] font-medium transition-colors",
+                region === r
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "text-[var(--color-text-muted)] hover:text-white hover:bg-[var(--color-surface)]",
+              )}
+            >
+              {r === "IN" ? "🇮🇳 India" : "🇺🇸 US"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Navigation */}
       {groups.map((g) => (
         <div key={g} className="mb-3">
           <div className="px-5 pb-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">{g}</div>

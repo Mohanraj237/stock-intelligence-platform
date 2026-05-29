@@ -65,7 +65,11 @@ def _get_catalog() -> list[dict]:
 
 
 @router.get("/list")
-async def list_universes() -> dict:
+async def list_universes(region: str = Query("IN")) -> dict:
+    if region == "US":
+        from services.us_universe_sync import get_all_us_universe_names
+        names = await run_sync(get_all_us_universe_names)
+        return {n: n for n in (names or [])}
     from services.universe_sync import universe_display_map
     return await run_sync(universe_display_map)
 
@@ -101,14 +105,58 @@ async def search_symbols(
     return [e for _, e in out[:limit]]
 
 
+_US_CATALOG_CACHE: dict = {"data": None, "loaded_at": 0.0}
+
+
+def _build_us_catalog() -> list[dict]:
+    """Build a deduped {symbol, company} catalog from all US universes."""
+    try:
+        from services.us_universe_sync import get_all_us_universe_names, get_us_universe_symbols, get_us_universe
+    except Exception:
+        return []
+    seen: dict[str, str] = {}
+    names = get_all_us_universe_names() or []
+    for name in names:
+        try:
+            symbols = get_us_universe_symbols(name) or []
+            uni = get_us_universe(name) or {}
+            companies = uni.get("companies") or {}
+            for sym in symbols:
+                sym = (sym or "").strip().upper()
+                if not sym or sym in seen:
+                    continue
+                company = companies.get(sym, "") if isinstance(companies, dict) else ""
+                seen[sym] = company
+        except Exception:
+            continue
+    return [{"symbol": s, "company": c} for s, c in sorted(seen.items())]
+
+
+def _get_us_catalog() -> list[dict]:
+    now = time.time()
+    try:
+        if _US_CATALOG_CACHE["data"] is None or (now - _US_CATALOG_CACHE["loaded_at"]) > _CATALOG_TTL_S:
+            _US_CATALOG_CACHE["data"] = _build_us_catalog()
+            _US_CATALOG_CACHE["loaded_at"] = now
+        return _US_CATALOG_CACHE["data"] or []
+    except Exception:
+        return []
+
+
 @router.get("/all-symbols")
-async def all_symbols() -> list[dict]:
+async def all_symbols(region: str = Query("IN")) -> list[dict]:
     """Full deduped catalog. Cached server-side; client should also cache."""
+    if region == "US":
+        return await run_sync(_get_us_catalog)
     return await run_sync(_get_catalog)
 
 
 @router.get("/{name}/symbols")
-async def universe_symbols(name: str, limit: Optional[int] = Query(None)) -> List[str]:
+async def universe_symbols(name: str, region: str = Query("IN"), limit: Optional[int] = Query(None)) -> List[str]:
+    if region == "US":
+        from services.us_universe_sync import get_us_universe_symbols
+        syms = await run_sync(get_us_universe_symbols, name)
+        return syms[:limit] if limit else syms
     from services.universe_sync import get_universe_symbols
     return await run_sync(get_universe_symbols, name, limit)
 

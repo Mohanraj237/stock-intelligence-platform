@@ -11,8 +11,15 @@ from utils.theme import apply_theme
 apply_theme()
 
 from storage.file_store import get_watchlist, add_to_watchlist, remove_from_watchlist
-from services.tradingview_service import get_tv_analysis_batch, tv_score
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, scan_symbols_bulk, tv_score, fmt_currency, fmt_volume,
+)
+region = get_region()
+
+def get_tv_analysis_batch(symbols):
+    return scan_symbols_bulk(symbols)
 from app.components.chart_widget import render_mini_chart
 
 st.markdown("## ⭐ Watchlist")
@@ -74,7 +81,7 @@ if st.button("🔄 Refresh Live Data", type="primary"):
     df = pd.DataFrame(rows)
 
     def fmt_price(v):
-        try: return f"₹{float(v):,.2f}"
+        try: return fmt_currency(float(v))
         except: return "—"
     def fmt_pct(v):
         try:

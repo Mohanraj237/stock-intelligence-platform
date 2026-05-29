@@ -12,6 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useRegion } from "@/lib/region";
+import type { Region } from "@/lib/api";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -20,8 +22,8 @@ const API_BASE =
 
 interface CatalogEntry { symbol: string; company: string }
 
-async function fetchCatalog(): Promise<CatalogEntry[]> {
-  const res = await fetch(`${API_BASE}/api/universe/all-symbols`);
+async function fetchCatalog(region: Region): Promise<CatalogEntry[]> {
+  const res = await fetch(`${API_BASE}/api/universe/all-symbols?region=${region}`);
   if (!res.ok) throw new Error(`Catalog HTTP ${res.status}`);
   return res.json();
 }
@@ -46,6 +48,7 @@ export function SymbolAutocomplete({
   className, inputClassName, autoFocus, ariaLabel = "Stock symbol",
   disableSuggestions,
 }: SymbolAutocompleteProps) {
+  const { region } = useRegion();
   const listboxId = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,8 +57,8 @@ export function SymbolAutocomplete({
   const [active, setActive] = useState(0);
 
   const catalog = useQuery({
-    queryKey: ["symbol-catalog"],
-    queryFn: fetchCatalog,
+    queryKey: ["symbol-catalog", region],
+    queryFn: () => fetchCatalog(region),
     staleTime: 60 * 60_000,           // 1h
     gcTime: 24 * 60 * 60_000,         // 24h
   });

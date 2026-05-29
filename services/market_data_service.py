@@ -42,16 +42,18 @@ def get_ohlcv_history(
     symbol: str,
     period: str = "1y",
     interval: str = "1d",
+    region: str = "IN",
 ) -> Optional[Any]:
     """
     Fetch OHLCV history from Yahoo Finance.
     Returns pandas DataFrame with columns Open, High, Low, Close, Volume
     indexed by Date.
+    region="IN" appends .NS for NSE; region="US" uses symbol as-is.
     """
     try:
         import pandas as pd
         clean = normalize_symbol(symbol)
-        yahoo_sym = f"{clean}.NS"
+        yahoo_sym = clean if region == "US" else f"{clean}.NS"
 
         period_map = {"1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y",
                       "2y": "2y", "5y": "5y", "max": "max", "3mo": "3mo",
@@ -74,7 +76,8 @@ def get_ohlcv_history(
         result = data["chart"]["result"][0]
         ts = result["timestamp"]
         ohlcv = result["indicators"]["quote"][0]
-        dates = pd.to_datetime(ts, unit="s", utc=True).tz_convert("Asia/Kolkata").tz_localize(None)
+        tz_str = "America/New_York" if region == "US" else "Asia/Kolkata"
+        dates = pd.to_datetime(ts, unit="s", utc=True).tz_convert(tz_str).tz_localize(None)
         df = pd.DataFrame({
             "Open":   ohlcv.get("open", []),
             "High":   ohlcv.get("high", []),
@@ -202,22 +205,24 @@ def _derive_recommendation(ind: dict) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # Single-symbol analysis (replaces get_tv_analysis)
 # ─────────────────────────────────────────────────────────────────────────────
-def get_market_analysis(symbol: str, interval: str = "1d") -> Optional[Dict[str, Any]]:
+def get_market_analysis(symbol: str, interval: str = "1d", region: str = "IN") -> Optional[Dict[str, Any]]:
     """Fetch OHLCV for `symbol`, compute indicators, derive recommendation."""
     period = "1y" if interval == "1d" else "2y"
-    df = get_ohlcv_history(symbol, period=period, interval=interval)
+    df = get_ohlcv_history(symbol, period=period, interval=interval, region=region)
     if df is None or df.empty:
         return None
     ind = _compute_indicators(df)
     rec = _derive_recommendation(ind)
+    exchange = "NASDAQ/NYSE" if region == "US" else "NSE"
     return {
         "symbol": normalize_symbol(symbol),
-        "exchange": "NSE",
+        "exchange": exchange,
         "interval": interval,
         "recommendation": rec,
         "indicators": ind,
         "fetched_at": time.time(),
         "source": "Yahoo Finance + computed",
+        "region": region,
     }
 
 
@@ -228,10 +233,12 @@ def scan_market_bulk(
     symbols: List[str],
     exchange: str = "NSE",
     max_workers: int = 8,
+    region: str = "IN",
 ) -> Dict[str, Dict]:
     """
     Parallel OHLCV fetch + indicator computation for many symbols.
     Returns dict keyed by clean symbol, same shape as the old TV bulk scanner.
+    region="IN" → .NS suffix (NSE); region="US" → no suffix.
     """
     if not symbols:
         return {}
@@ -239,7 +246,7 @@ def scan_market_bulk(
 
     def _worker(sym: str):
         try:
-            data = get_market_analysis(sym, interval="1d")
+            data = get_market_analysis(sym, interval="1d", region=region)
             return sym, data
         except Exception as e:
             logger.debug(f"scan_market_bulk worker failed for {sym}: {e}")

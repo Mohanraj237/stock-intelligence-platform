@@ -52,22 +52,31 @@ class ApplyReq(BaseModel):
     universe: str = "NIFTY 50"
     ruleset: RuleSet
     max_symbols: int | None = None
+    region: str = "IN"
 
 
 @router.post("/apply", response_model=List[RuleMatchRow])
 async def apply(req: ApplyReq) -> List[RuleMatchRow]:
-    from services.universe_sync import get_universe_symbols
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import compute_indicators_from_ohlcv
-    from services.screener_service import get_full_screener_data
     from engines.rule_engine import apply_rules_to_universe
 
-    syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
+    if req.region == "US":
+        from services.us_universe_sync import get_us_universe_symbols
+        all_syms = await run_sync(get_us_universe_symbols, req.universe)
+        syms = (all_syms or [])[:req.max_symbols] if req.max_symbols else (all_syms or [])
+    else:
+        from services.universe_sync import get_universe_symbols
+        syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
+
+    funda_fn = None
+    if req.region != "US":
+        from services.screener_service import get_full_screener_data as funda_fn
 
     async def _gather(sym: str) -> dict | None:
-        df = await run_sync(get_ohlcv_history, sym, "1y", "1d")
+        df = await run_sync(get_ohlcv_history, sym, "1y", "1d", req.region)
         ind = await run_sync(compute_indicators_from_ohlcv, df) if df is not None else {}
-        funda = await run_sync(get_full_screener_data, sym)
+        funda = await run_sync(funda_fn, sym) if funda_fn else {}
         return {"symbol": sym, "indicators": ind, "fundamentals": funda or {}, "close": ind.get("close")}
 
     stocks = [s for s in await gather_bounded(*[_gather(s) for s in syms], limit=12) if s]

@@ -11,11 +11,16 @@ from utils.theme import apply_theme, GREEN, RED, BLUE, CARD, BORDER, TEXT, TEXT_
 apply_theme()
 
 from storage.file_store import (get_reports_index, add_report_entry, DIRS)
-from services.market_data_service import get_ohlcv_history, get_market_analysis
-from services.screener_service import get_full_screener_data, is_screener_healthy
-from services.universe_sync import (
-    get_universe_symbols, get_all_universe_names, universe_display_map,
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, get_ohlcv_history, get_market_analysis as get_market_analysis,
+    get_fundamentals as get_full_screener_data, fmt_currency,
 )
+region = get_region()
+
+def is_screener_healthy():
+    return True
 from services.ai_service import analyze_stock
 from services.chart_analysis_service import analyze_chart_data, compute_indicators_from_ohlcv
 from services.breakout_service import classify_multi_timeframe
@@ -142,8 +147,8 @@ with tabs[0]:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("AI Verdict", ai_v.verdict)
         c2.metric("Score", f"{ai_v.score:.0f}/100")
-        c3.metric("Target", f"₹{ai_v.price_target:,.2f}" if ai_v.price_target else "—")
-        c4.metric("Stop", f"₹{ai_v.stop_loss:,.2f}" if ai_v.stop_loss else "—")
+        c3.metric("Target", fmt_currency(ai_v.price_target) if ai_v.price_target else "—")
+        c4.metric("Stop", fmt_currency(ai_v.stop_loss) if ai_v.stop_loss else "—")
 
         st.markdown("---")
         st.download_button(

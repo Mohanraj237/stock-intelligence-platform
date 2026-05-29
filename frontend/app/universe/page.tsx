@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import Link from "next/link";
@@ -12,19 +12,22 @@ import { ErrorState } from "@/components/ui/empty-state";
 import { UniverseSelect } from "@/components/common/universe-select";
 import { PageHeader } from "@/components/common/page-header";
 import { formatNum, formatPct, trendClass } from "@/lib/utils";
+import { useRegion } from "@/lib/region";
 import type { UniverseRow } from "@/lib/types";
 
 type SortKey = keyof Pick<UniverseRow, "symbol" | "last_price" | "change_pct" | "volume" | "return_30d" | "return_1y">;
 
 export default function UniverseExplorerPage() {
-  const [universe, setUniverse] = useState("NIFTY 50");
+  const { region, isUS } = useRegion();
+  const [universe, setUniverse] = useState(isUS ? "S&P 500" : "NIFTY 50");
+  useEffect(() => { setUniverse(isUS ? "S&P 500" : "NIFTY 50"); }, [isUS]);
   const [filter, setFilter] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("change_pct");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const q = useQuery({
-    queryKey: ["universe-quotes", universe],
-    queryFn: () => api.universeQuotes(universe),
+    queryKey: ["universe-quotes", universe, region],
+    queryFn: () => api.universeQuotes(universe, region),
   });
 
   const rows = useMemo(() => {

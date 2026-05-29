@@ -14,8 +14,13 @@ apply_theme()
 from services.position_sizing_service import (
     calculate_position, kelly_position, ai_allocate_capital,
 )
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
-from services.market_data_service import scan_market_bulk
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, scan_symbols_bulk as scan_market_bulk, fmt_currency, currency_symbol,
+)
+region = get_region()
+_cs = currency_symbol()
 from services.ai_service import analyze_stock
 
 st.markdown("## 💰 Position Sizing & Capital Allocation")
@@ -36,8 +41,9 @@ with tab_single:
 
     s1, s2, s3 = st.columns(3)
     with s1:
-        symbol_in = st.text_input("Symbol (optional)", value="RELIANCE", key="ps_sym")
-        total_cap = st.number_input("Total Capital (₹)", min_value=1000.0,
+        _default_sym = "AAPL" if region == "US" else "RELIANCE"
+        symbol_in = st.text_input("Symbol (optional)", value=_default_sym, key="ps_sym")
+        total_cap = st.number_input(f"Total Capital ({_cs})", min_value=1000.0,
                                      value=500000.0, step=10000.0, key="ps_cap")
     with s2:
         risk_pct = st.number_input("Risk per Trade (%)", min_value=0.1, max_value=10.0,
@@ -45,9 +51,9 @@ with tab_single:
         max_pos_pct = st.number_input("Max Position (% of capital)", min_value=5.0,
                                        max_value=100.0, value=25.0, step=5.0, key="ps_max")
     with s3:
-        entry = st.number_input("Entry Price (₹)", min_value=0.0, value=2500.0, step=1.0, key="ps_entry")
-        stop = st.number_input("Stop Loss (₹)", min_value=0.0, value=2400.0, step=1.0, key="ps_stop")
-        target = st.number_input("Target (₹, optional)", min_value=0.0, value=2700.0, step=1.0, key="ps_tgt")
+        entry = st.number_input(f"Entry Price ({_cs})", min_value=0.0, value=2500.0, step=1.0, key="ps_entry")
+        stop = st.number_input(f"Stop Loss ({_cs})", min_value=0.0, value=2400.0, step=1.0, key="ps_stop")
+        target = st.number_input(f"Target ({_cs}, optional)", min_value=0.0, value=2700.0, step=1.0, key="ps_tgt")
 
     if st.button("🧮 Calculate Position Size", type="primary", key="ps_calc"):
         pos = calculate_position(
@@ -60,11 +66,11 @@ with tab_single:
         st.markdown("### Position Plan")
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Quantity", f"{pos.qty:,}")
-        m2.metric("Capital Deployed", f"₹{pos.capital_deployed:,.0f}",
+        m2.metric("Capital Deployed", fmt_currency(pos.capital_deployed, decimals=0),
                   f"{pos.capital_deployed/total_cap*100:.1f}% of capital")
-        m3.metric("Capital at Risk", f"₹{pos.capital_at_risk:,.0f}",
+        m3.metric("Capital at Risk", fmt_currency(pos.capital_at_risk, decimals=0),
                   f"{pos.risk_pct_of_total:.2f}% of capital")
-        m4.metric("Risk per Share", f"₹{pos.risk_per_share:,.2f}")
+        m4.metric("Risk per Share", fmt_currency(pos.risk_per_share))
         m5.metric("R:R Ratio", f"1 : {pos.rr_ratio:.2f}" if pos.rr_ratio else "—")
 
         st.markdown("---")
@@ -78,7 +84,7 @@ with tab_single:
             levels.append(("Target", pos.target, GREEN))
         for label, val, color in levels:
             fig.add_hline(y=val, line_color=color, line_width=2,
-                          annotation_text=f"{label}: ₹{val:,.2f}",
+                          annotation_text=f"{label}: {fmt_currency(val)}",
                           annotation_position="right",
                           annotation_font=dict(color=color))
         fig.add_trace(go.Scatter(
@@ -90,7 +96,7 @@ with tab_single:
             template="plotly_dark", paper_bgcolor=CARD, plot_bgcolor=CARD,
             height=300, showlegend=False,
             xaxis=dict(visible=False),
-            yaxis=dict(title="Price (₹)", gridcolor=BORDER),
+            yaxis=dict(title=f"Price ({_cs})", gridcolor=BORDER),
             margin=dict(l=10, r=120, t=10, b=10),
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -109,12 +115,12 @@ with tab_single:
             "Field": "Symbol",          "Value": pos.symbol or "—"},
             {"Field": "Action",          "Value": "BUY"},
             {"Field": "Quantity",        "Value": f"{pos.qty:,} shares"},
-            {"Field": "Entry Price",     "Value": f"₹{pos.entry:,.2f}"},
-            {"Field": "Stop Loss",       "Value": f"₹{pos.stop_loss:,.2f}"},
-            {"Field": "Target",          "Value": f"₹{pos.target:,.2f}" if pos.target else "—"},
-            {"Field": "Capital Used",    "Value": f"₹{pos.capital_deployed:,.0f}"},
-            {"Field": "Max Loss if SL",  "Value": f"₹{pos.capital_at_risk:,.0f} ({pos.risk_pct_of_total:.2f}% of capital)"},
-            {"Field": "Reward if Target","Value": f"₹{(pos.reward_per_share or 0)*pos.qty:,.0f}" if pos.reward_per_share else "—"},
+            {"Field": "Entry Price",     "Value": fmt_currency(pos.entry)},
+            {"Field": "Stop Loss",       "Value": fmt_currency(pos.stop_loss)},
+            {"Field": "Target",          "Value": fmt_currency(pos.target) if pos.target else "—"},
+            {"Field": "Capital Used",    "Value": fmt_currency(pos.capital_deployed, decimals=0)},
+            {"Field": "Max Loss if SL",  "Value": f"{fmt_currency(pos.capital_at_risk, decimals=0)} ({pos.risk_pct_of_total:.2f}% of capital)"},
+            {"Field": "Reward if Target","Value": fmt_currency((pos.reward_per_share or 0)*pos.qty, decimals=0) if pos.reward_per_share else "—"},
         ])
         st.dataframe(order_df, use_container_width=True, hide_index=True)
 
@@ -131,7 +137,7 @@ with tab_kelly:
 
     k1, k2, k3 = st.columns(3)
     with k1:
-        k_cap     = st.number_input("Total Capital (₹)", min_value=1000.0,
+        k_cap     = st.number_input(f"Total Capital ({_cs})", min_value=1000.0,
                                      value=500000.0, step=10000.0, key="kelly_cap")
         k_winrate = st.slider("Historical Win Rate (%)", 30, 90, 55, key="kelly_wr") / 100.0
     with k2:
@@ -149,7 +155,7 @@ with tab_kelly:
         kp1, kp2, kp3 = st.columns(3)
         kp1.metric("Full Kelly %", f"{k_res['kelly_full']:.2f}%")
         kp2.metric("Used Kelly %", f"{k_res['kelly_used_pct']:.2f}%")
-        kp3.metric("Capital to Deploy", f"₹{k_res['capital_to_deploy']:,.0f}")
+        kp3.metric("Capital to Deploy", fmt_currency(k_res['capital_to_deploy'], decimals=0))
         st.markdown(
             f'<div style="background:rgba(33,150,243,0.08);border-left:3px solid {BLUE};'
             f'padding:10px 14px;margin-top:10px;font-size:0.88rem">{k_res["note"]}</div>',
@@ -178,7 +184,7 @@ with tab_ai:
         ai_label = st.selectbox("Universe to scan", labels, key="alloc_uni")
         ai_uni   = all_names[labels.index(ai_label)]
     with a2:
-        ai_cap   = st.number_input("Total Capital (₹)", min_value=10000.0,
+        ai_cap   = st.number_input(f"Total Capital ({_cs})", min_value=10000.0,
                                     value=500000.0, step=10000.0, key="alloc_cap")
         risk_pt  = st.number_input("Risk % per trade", min_value=0.25, max_value=5.0,
                                     value=1.0, step=0.25, key="alloc_risk")
@@ -258,11 +264,11 @@ with tab_ai:
             # Summary metrics
             sm1, sm2, sm3, sm4 = st.columns(4)
             sm1.metric("Stocks Allocated", len(result["allocations"]))
-            sm2.metric("Capital Deployed", f"₹{result['total_deployed']:,.0f}",
+            sm2.metric("Capital Deployed", fmt_currency(result['total_deployed'], decimals=0),
                        f"{result['total_deployed']/ai_cap*100:.1f}%")
-            sm3.metric("Total at Risk", f"₹{result['total_at_risk']:,.0f}",
+            sm3.metric("Total at Risk", fmt_currency(result['total_at_risk'], decimals=0),
                        f"{result['total_at_risk']/ai_cap*100:.2f}% of capital")
-            sm4.metric("Cash Buffer", f"₹{result['capital_left']:,.0f}")
+            sm4.metric("Cash Buffer", fmt_currency(result['capital_left'], decimals=0))
 
             st.markdown("---")
 
@@ -276,12 +282,12 @@ with tab_ai:
                     "Verdict":  a.get("verdict", ""),
                     "Weight %": f"{a.get('weight_pct', 0):.1f}%",
                     "Qty":      f"{a['qty']:,}",
-                    "Entry":    f"₹{a['entry']:,.2f}",
-                    "Stop":     f"₹{a['stop_loss']:,.2f}",
-                    "Target":   f"₹{a['target']:,.2f}" if a.get("target") else "—",
+                    "Entry":    fmt_currency(a['entry']),
+                    "Stop":     fmt_currency(a['stop_loss']),
+                    "Target":   fmt_currency(a['target']) if a.get("target") else "—",
                     "R:R":      f"1:{rr:.2f}" if rr else "—",
-                    "Deployed": f"₹{a['capital_deployed']:,.0f}",
-                    "At Risk":  f"₹{a['capital_at_risk']:,.0f}",
+                    "Deployed": fmt_currency(a['capital_deployed'], decimals=0),
+                    "At Risk":  fmt_currency(a['capital_at_risk'], decimals=0),
                 })
             df_alloc = pd.DataFrame(rows)
 
@@ -324,11 +330,11 @@ with tab_ai:
                     x=[a["symbol"] for a in result["allocations"]],
                     y=[a["capital_at_risk"] for a in result["allocations"]],
                     marker_color=RED,
-                    text=[f"₹{a['capital_at_risk']:,.0f}" for a in result["allocations"]],
+                    text=[fmt_currency(a['capital_at_risk'], decimals=0) for a in result["allocations"]],
                     textposition="outside",
                 ))
                 fig_risk.update_layout(
-                    title="Risk per Position (₹)",
+                    title=f"Risk per Position ({_cs})",
                     template="plotly_dark", paper_bgcolor=CARD, plot_bgcolor=CARD,
                     height=380, margin=dict(l=10, r=10, t=40, b=10),
                     xaxis=dict(gridcolor=BORDER), yaxis=dict(gridcolor=BORDER),

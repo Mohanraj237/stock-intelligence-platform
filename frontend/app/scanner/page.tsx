@@ -17,10 +17,12 @@ import { formatNum, formatPct, trendClass } from "@/lib/utils";
 import { streamPost } from "@/lib/sse";
 import type { ScanResult } from "@/lib/types";
 import { toast } from "sonner";
+import { useRegion } from "@/lib/region";
 
 export default function ScannerPage() {
-  const types = useQuery({ queryKey: ["scan-types"], queryFn: api.scanTypes });
-  const [universe, setUniverse] = useState("NIFTY 50");
+  const { region, isUS } = useRegion();
+  const types = useQuery({ queryKey: ["scan-types", region], queryFn: () => api.scanTypes(region) });
+  const [universe, setUniverse] = useState(isUS ? "S&P 500" : "NIFTY 50");
   const [scanType, setScanType] = useState("breakout_ready");
 
   const [scanning, setScanning] = useState(false);
@@ -35,7 +37,7 @@ export default function ScannerPage() {
     const ctl = new AbortController();
     abortRef.current = ctl;
     await streamPost<ScanResult>("/api/scans/run/stream", {
-      universe, scan_type: scanType, filters: {}, enable_ai: false, max_symbols: null,
+      universe, scan_type: scanType, filters: {}, enable_ai: false, max_symbols: null, region,
     }, {
       onStart:    (e) => setProgress({ done: 0, total: e.total ?? 0, matched: 0, current: "" }),
       onProgress: (e) => setProgress({ done: e.done ?? 0, total: e.total ?? 0, matched: e.matched ?? 0, current: e.current, elapsedMs: e.elapsed_ms }),

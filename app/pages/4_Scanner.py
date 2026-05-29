@@ -11,10 +11,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils.theme import apply_theme, GREEN, RED, BLUE, YELLOW, ORANGE, CARD, BORDER, TEXT, TEXT_DIM
 apply_theme()
 
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
-from services.tradingview_service import scan_symbols_bulk, tv_score
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, scan_symbols_bulk, tv_score, fmt_currency, fmt_volume,
+    get_index_quotes,
+)
 from services.ai_service import analyze_stock, AIVerdict
 from engines.filter_engine import FilterCriteria, apply_filters, FILTER_PRESETS
+
+region = get_region()
 
 st.markdown("## 📡 Stock Scanner")
 
@@ -160,7 +166,8 @@ if not do_scan:
 # ── Fetch all symbols (NO limit) ──────────────────────────────────────────────
 symbols = get_universe_symbols(sel_name)
 st.info(f"Scanning **{len(symbols)}** stocks from **{sel_label}**…")
-prog = st.progress(0.0, text="Fetching market data (Yahoo + NSE)…")
+data_source = "Yahoo Finance (US)" if region == "US" else "Yahoo Finance + NSE"
+prog = st.progress(0.0, text=f"Fetching market data ({data_source})…")
 
 all_tv: dict = {}
 batches = [symbols[i:i+100] for i in range(0, len(symbols), 100)]
@@ -169,12 +176,12 @@ for bi, batch in enumerate(batches):
     prog.progress((bi + 1) / len(batches), text=f"Fetched {len(all_tv)}/{len(symbols)}…")
 prog.empty()
 
-# Fall back to NSE index quotes when TV scanner is blocked
+# Fall back to live index quotes when technical scan is blocked
 if not all_tv:
-    from services.nse_service import get_index_quotes
-    st.warning("⚠️ Market data scan returned no results — falling back to NSE live quotes only. Technical indicators (RSI, MACD, ADX) will not be available.", icon=None)
-    nse_quotes = get_index_quotes(sel_name)
-    for q in nse_quotes:
+    st.warning("⚠️ Market data scan returned no results — falling back to live quotes only. "
+               "Technical indicators (RSI, MACD, ADX) will not be available.", icon=None)
+    live_quotes = get_index_quotes(sel_name)
+    for q in live_quotes:
         sym_q = q.get("symbol", "")
         if not sym_q:
             continue
@@ -190,7 +197,7 @@ if not all_tv:
             },
         }
     if not all_tv:
-        st.error("No data available from Yahoo Finance or NSE. Check network connection.")
+        st.error("No data available. Check network connection.")
         st.stop()
 
 # ── Build results + audit trail ───────────────────────────────────────────────
@@ -310,15 +317,15 @@ audit_log.append(f"**Final count: {len(filtered)} / {len(results_raw)} passed al
 
 # ── Optional AI Scoring — fetch screener first for consistency with Stock Analyzer ─
 if run_ai and filtered:
-    from services.screener_service import get_full_screener_data
+    from services.market_router import get_fundamentals as _get_fundamentals
 
-    # Step 1: parallel screener fetch for all matched stocks
+    # Step 1: parallel fundamentals fetch for all matched stocks (routes to Yahoo for US, Screener for India)
     screener_map: dict = {}
     scr_prog = st.progress(0.0, text="Fetching fundamental data for AI…")
 
     def _safe_screener(sym: str):
         try:
-            return sym, get_full_screener_data(sym) or {}
+            return sym, _get_fundamentals(sym) or {}
         except Exception:
             return sym, {}
 
@@ -438,7 +445,7 @@ for s in filtered:
         pass
     row_d = {
         "Symbol":     s["Symbol"],
-        "Price (₹)":  f"{float(s['Price']):,.2f}" if s.get("Price") else "—",
+        "Price":  fmt_currency(s["Price"]) if s.get("Price") else "—",
         "Change %":   f"{float(chg):+.2f}%" if chg is not None else "—",
         "RSI":        f"{float(rsi):.1f}" if rsi is not None else "—",
         "ADX":        f"{float(s.get('ADX',0)):.1f}" if s.get("ADX") else "—",
@@ -523,7 +530,7 @@ for i, s in enumerate(filtered[:10], 1):
         f'<div class="z-stock-row">'
         f'<span style="color:{TEXT_DIM};font-size:0.78rem;min-width:28px">#{i}</span>'
         f'<span style="color:{TEXT};font-weight:700;min-width:110px">{s["Symbol"]}</span>'
-        f'<span style="color:{TEXT_DIM};font-size:0.83rem;min-width:90px">₹{float(s.get("Price",0)):,.2f}</span>'
+        f'<span style="color:{TEXT_DIM};font-size:0.83rem;min-width:90px">{fmt_currency(s.get("Price",0))}</span>'
         f'<span style="color:{chg_c};font-weight:600;min-width:70px">{float(chg):+.2f}%</span>'
         f'<span style="color:{TEXT_DIM};font-size:0.82rem;min-width:70px">RSI:{f"{float(rsi):.0f}" if rsi else "—"}</span>'
         f'<span style="color:{TEXT_DIM};font-size:0.82rem;min-width:65px">ADX:{f"{float(adx):.0f}" if adx else "—"}</span>'

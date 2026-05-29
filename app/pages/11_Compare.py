@@ -12,10 +12,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils.theme import apply_theme, GREEN, RED, BLUE, CARD, BORDER, TEXT, TEXT_DIM, SYM_COLORS, SYM_COLORS_A
 apply_theme()
 
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
-from services.tradingview_service import scan_symbols_bulk, get_tv_ohlcv_history
-from services.screener_service import get_full_screener_data
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, scan_symbols_bulk,
+    get_ohlcv_history as get_tv_ohlcv_history,
+    get_fundamentals as get_full_screener_data,
+    fmt_currency, fmt_volume,
+)
 from storage.cache_manager import get_cached, set_cached, TTL
+region = get_region()
 
 st.markdown("## ⚖️ Stock Comparator")
 
@@ -285,7 +291,7 @@ try:
         rec      = tv.get("recommendation", "—")
         tech_rows.append({
             "Symbol":    sym,
-            "Price":     f"₹{price_v:,.2f}" if price_v else "—",
+            "Price":     fmt_currency(price_v) if price_v else "—",
             "Change %":  f"{ind.get('change', 0):+.2f}%" if ind.get("change") is not None else "—",
             "RSI":       f"{rsi_v:.1f}" if rsi_v else "—",
             "vs SMA50":  _pct_vs(price_v, ind.get("sma50")),

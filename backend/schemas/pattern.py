@@ -50,6 +50,7 @@ class PatternScanRequest(BaseModel):
     min_confidence: float = 60
     breakout_states: List[BreakoutState] = []  # empty = all
     max_symbols: Optional[int] = None
+    region: str = "IN"
 
 
 class PatternStockResult(BaseModel):

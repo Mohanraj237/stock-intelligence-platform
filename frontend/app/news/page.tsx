@@ -11,6 +11,7 @@ import { ErrorState, EmptyState } from "@/components/ui/empty-state";
 import { SymbolInput } from "@/components/common/symbol-input";
 import { PageHeader } from "@/components/common/page-header";
 import type { Sentiment } from "@/lib/types";
+import { useRegion } from "@/lib/region";
 
 const SENT_VARIANT: Record<Sentiment, "success" | "info" | "warning" | "danger" | "default"> = {
   POSITIVE: "success",
@@ -39,7 +40,8 @@ export default function NewsPage() {
 }
 
 function MarketNews() {
-  const q = useQuery({ queryKey: ["news-market"], queryFn: () => api.marketNews(60) });
+  const { region } = useRegion();
+  const q = useQuery({ queryKey: ["news-market", region], queryFn: () => api.marketNews(region, 60) });
   if (q.isLoading) return <Skeleton className="h-96" />;
   if (q.error) return <ErrorState message={(q.error as Error).message} retry={() => q.refetch()} />;
   if (!q.data?.length) return <EmptyState icon={Newspaper} title="No headlines" />;
@@ -47,8 +49,9 @@ function MarketNews() {
 }
 
 function StockNews() {
-  const [sym, setSym] = useState("RELIANCE");
-  const q = useQuery({ queryKey: ["news-stock", sym], queryFn: () => api.stockNews(sym, 25) });
+  const { region, isUS } = useRegion();
+  const [sym, setSym] = useState(isUS ? "AAPL" : "RELIANCE");
+  const q = useQuery({ queryKey: ["news-stock", sym, region], queryFn: () => api.stockNews(sym, region, 25) });
   return (
     <div className="space-y-4">
       <SymbolInput initial={sym} onSubmit={setSym} />

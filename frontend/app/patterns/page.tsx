@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Beaker } from "lucide-react";
@@ -20,10 +20,13 @@ import { TIMEFRAMES, TIMEFRAME_LABEL } from "@/lib/types";
 import { formatNum, formatPct, trendClass } from "@/lib/utils";
 import { streamPost } from "@/lib/sse";
 import { toast } from "sonner";
+import { useRegion } from "@/lib/region";
 
 export default function PatternsPage() {
+  const { region, isUS } = useRegion();
   const lib = useQuery({ queryKey: ["pattern-library"], queryFn: api.patternLibrary });
-  const [universe, setUniverse] = useState("NIFTY 50");
+  const [universe, setUniverse] = useState(isUS ? "S&P 500" : "NIFTY 50");
+  useEffect(() => { setUniverse(isUS ? "S&P 500" : "NIFTY 50"); }, [isUS]);
   const [direction, setDirection] = useState<"all" | Direction>("all");
   const [tfs, setTfs] = useState<Timeframe[]>(["1D", "1W", "1M"]);
   const [minConf, setMinConf] = useState("60");
@@ -45,7 +48,7 @@ export default function PatternsPage() {
       universe, pattern_names: selectedPatterns,
       direction: direction === "all" ? null : direction,
       timeframes: tfs, min_confidence: Number(minConf),
-      breakout_states: [], max_symbols: null,
+      breakout_states: [], max_symbols: null, region,
     }, {
       onStart:    (e) => setProgress({ done: 0, total: e.total ?? 0, matched: 0, current: "" }),
       onProgress: (e) => setProgress({ done: e.done ?? 0, total: e.total ?? 0, matched: e.matched ?? 0, current: e.current, elapsedMs: e.elapsed_ms }),

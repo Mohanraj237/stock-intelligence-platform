@@ -1,7 +1,7 @@
 """Market-wide endpoints: status, indices, sectors, FII/DII, universe quotes."""
 from __future__ import annotations
 from typing import List
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from backend.deps import run_sync
 from backend.schemas import (
@@ -27,7 +27,22 @@ def _coerce_index_perf(d: dict) -> IndexPerf:
 
 
 @router.get("/status", response_model=MarketStatus)
-async def market_status() -> MarketStatus:
+async def market_status(region: str = Query("IN")) -> MarketStatus:
+    if region == "US":
+        from services.us_market_service import get_market_status as us_status
+        raw = await run_sync(us_status)
+        raw = raw or {}
+        status_str = str(raw.get("status") or "UNKNOWN")
+        return MarketStatus(
+            status=status_str,
+            is_open=(status_str == "OPEN"),
+            trade_date=raw.get("trade_date"),
+            nifty=raw.get("sp500"),
+            nifty_change_pct=raw.get("pct"),
+            market_cap_lakh_cr=None,
+            gift_nifty=raw.get("nasdaq"),
+            gift_nifty_change_pct=raw.get("nasdaq_pct"),
+        )
     from services.nse_service import get_market_status
     raw = await run_sync(get_market_status)
     raw = raw or {}
@@ -44,22 +59,43 @@ async def market_status() -> MarketStatus:
 
 
 @router.get("/indices", response_model=List[IndexPerf])
-async def indices() -> List[IndexPerf]:
+async def indices(region: str = Query("IN")) -> List[IndexPerf]:
+    if region == "US":
+        from services.us_market_service import get_index_performance as us_indices
+        raw = await run_sync(us_indices)
+        return [_coerce_index_perf(d) for d in (raw or [])]
     from services.nse_service import get_index_performance
     raw = await run_sync(get_index_performance)
     return [_coerce_index_perf(d) for d in (raw or [])]
 
 
 @router.get("/sectors", response_model=List[SectorPerf])
-async def sectors() -> List[SectorPerf]:
+async def sectors(region: str = Query("IN")) -> List[SectorPerf]:
+    if region == "US":
+        from services.us_market_service import get_sector_performance as us_sectors
+        raw = await run_sync(us_sectors)
+        out = []
+        for d in (raw or []):
+            name = (d.get("sector") or d.get("name") or "").strip()
+            if not name:
+                continue
+            out.append(SectorPerf(
+                name=name,
+                symbol=d.get("etf") or d.get("symbol") or name,
+                last_price=d.get("last") or d.get("last_price") or d.get("price"),
+                change_pct=float(d.get("pct") or d.get("change_pct") or 0),
+                advances=int(d.get("advances") or 0),
+                declines=int(d.get("declines") or 0),
+                unchanged=int(d.get("unchanged") or 0),
+            ))
+        return out
     from services.nse_service import get_sector_performance
     raw = await run_sync(get_sector_performance)
     out = []
     for d in (raw or []):
-        # NSE service returns: index, sector, last, pct, change, advancing, declining, stocks
         name = (d.get("index") or d.get("sector") or d.get("name") or d.get("indexName") or "").strip()
         if not name:
-            continue  # Skip malformed entries — would otherwise cause duplicate empty React keys
+            continue
         out.append(SectorPerf(
             name=name,
             symbol=(d.get("symbol") or d.get("indexSymbol") or name),
@@ -91,13 +127,35 @@ async def fii_dii() -> List[FIIDIIRow]:
 
 
 @router.get("/universe/{name}/quotes", response_model=List[UniverseRow])
-async def universe_quotes(name: str) -> List[UniverseRow]:
+async def universe_quotes(name: str, region: str = Query("IN")) -> List[UniverseRow]:
+    if region == "US":
+        from services.us_market_service import get_index_quotes as us_quotes
+        try:
+            raw = await run_sync(us_quotes, name)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"US market fetch failed: {e}") from e
+        out: List[UniverseRow] = []
+        for d in (raw or []):
+            out.append(UniverseRow(
+                symbol=d.get("symbol") or "",
+                company=d.get("name") or d.get("company") or d.get("shortName"),
+                last_price=d.get("price") or d.get("last_price") or d.get("regularMarketPrice"),
+                change_pct=d.get("change_pct") or d.get("regularMarketChangePercent"),
+                open=d.get("open"),
+                high=d.get("high"),
+                low=d.get("low"),
+                prev_close=d.get("prev_close"),
+                week52_high=d.get("year_high") or d.get("week52_high"),
+                week52_low=d.get("year_low") or d.get("week52_low"),
+                volume=d.get("volume"),
+            ))
+        return out
     from services.nse_service import get_index_quotes
     try:
         raw = await run_sync(get_index_quotes, name)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"NSE fetch failed: {e}") from e
-    out: List[UniverseRow] = []
+    out = []
     for d in (raw or []):
         out.append(UniverseRow(
             symbol=d.get("symbol") or d.get("Symbol") or "",

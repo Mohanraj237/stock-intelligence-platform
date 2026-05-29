@@ -176,12 +176,12 @@ async def pattern_example(name: str) -> dict:
 
 
 @router.get("/detect/{symbol}", response_model=List[PatternHit])
-async def detect_for_symbol(symbol: str, timeframe: Timeframe = Query(Timeframe.DAILY)) -> List[PatternHit]:
+async def detect_for_symbol(symbol: str, region: str = Query("IN"), timeframe: Timeframe = Query(Timeframe.DAILY)) -> List[PatternHit]:
     from services.market_data_service import get_ohlcv_history
     from engines.pattern_engine import detect_patterns
     interval = TIMEFRAME_TO_YF_INTERVAL[timeframe]
     period = TIMEFRAME_TO_YF_PERIOD[timeframe]
-    df = await run_sync(get_ohlcv_history, symbol, period, interval)
+    df = await run_sync(get_ohlcv_history, symbol, period, interval, region)
     if df is None or len(df) < 30:
         return []
     raw = await run_sync(detect_patterns, df)
@@ -189,7 +189,7 @@ async def detect_for_symbol(symbol: str, timeframe: Timeframe = Query(Timeframe.
 
 
 @router.get("/multi-tf-breakout/{symbol}", response_model=MultiTFBreakout)
-async def multi_tf_breakout(symbol: str) -> MultiTFBreakout:
+async def multi_tf_breakout(symbol: str, region: str = Query("IN")) -> MultiTFBreakout:
     from services.market_data_service import get_ohlcv_history
     from services.breakout_service import classify_breakout
     out: dict[str, BreakoutClassification] = {}
@@ -199,7 +199,7 @@ async def multi_tf_breakout(symbol: str) -> MultiTFBreakout:
         (Timeframe.MONTHLY, "max", "1mo"),
     ]
     async def _one(tf: Timeframe, period: str, interval: str):
-        df = await run_sync(get_ohlcv_history, symbol, period, interval)
+        df = await run_sync(get_ohlcv_history, symbol, period, interval, region)
         if df is None or len(df) < 30:
             return tf, None
         cls = await run_sync(classify_breakout, df)
@@ -242,7 +242,7 @@ def _build_scanner(req: PatternScanRequest):
             tfs_present: list[Timeframe] = []
             for tf, period, interval in tf_plans:
                 try:
-                    df = await run_sync(get_ohlcv_history, sym, period, interval)
+                    df = await run_sync(get_ohlcv_history, sym, period, interval, req.region)
                 except Exception as e:
                     log.debug("OHLCV failed %s @%s: %s", sym, tf.value, e)
                     continue
@@ -303,10 +303,14 @@ def _build_scanner(req: PatternScanRequest):
 @router.post("/scan", response_model=PatternScanResult)
 async def scan(req: PatternScanRequest) -> PatternScanResult:
     """Bulk pattern scan — synchronous, returns full result. Use /scan/stream for live progress."""
-    from services.universe_sync import get_universe_symbols
-
     t0 = time.perf_counter()
-    syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
+    if req.region == "US":
+        from services.us_universe_sync import get_us_universe_symbols
+        all_syms = await run_sync(get_us_universe_symbols, req.universe)
+        syms = (all_syms or [])[:req.max_symbols] if req.max_symbols else (all_syms or [])
+    else:
+        from services.universe_sync import get_universe_symbols
+        syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
     if not syms:
         return PatternScanResult(request=req, rows=[], total_scanned=0, total_matched=0, duration_ms=0)
 
@@ -332,7 +336,6 @@ async def scan_stream(req: PatternScanRequest):
       data: {"type":"done"}
     """
     from fastapi.responses import StreamingResponse
-    from services.universe_sync import get_universe_symbols
     import asyncio
     import json
 
@@ -341,7 +344,13 @@ async def scan_stream(req: PatternScanRequest):
             return f"data: {json.dumps(payload, default=str)}\n\n"
 
         t0 = time.perf_counter()
-        syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
+        if req.region == "US":
+            from services.us_universe_sync import get_us_universe_symbols
+            all_syms = await run_sync(get_us_universe_symbols, req.universe)
+            syms = (all_syms or [])[:req.max_symbols] if req.max_symbols else (all_syms or [])
+        else:
+            from services.universe_sync import get_universe_symbols
+            syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
         total = len(syms)
         yield sse({"type": "started", "total": total, "universe": req.universe})
 

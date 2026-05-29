@@ -50,12 +50,17 @@ async def run_scan(req: ScanRequest) -> ScanResult:
     """
     Pull universe → bulk OHLCV → compute indicators → apply filters → optional AI scoring.
     """
-    from services.universe_sync import get_universe_symbols
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import compute_indicators_from_ohlcv
 
     t0 = time.perf_counter()
-    syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
+    if req.region == "US":
+        from services.us_universe_sync import get_us_universe_symbols
+        all_syms = await run_sync(get_us_universe_symbols, req.universe)
+        syms = (all_syms or [])[:req.max_symbols] if req.max_symbols else (all_syms or [])
+    else:
+        from services.universe_sync import get_universe_symbols
+        syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
     if not syms:
         return ScanResult(request=req, rows=[], total_scanned=0, total_matched=0, duration_ms=0)
 
@@ -66,7 +71,7 @@ async def run_scan(req: ScanRequest) -> ScanResult:
 
     async def _one(sym: str) -> dict | None:
         try:
-            df = await run_sync(get_ohlcv_history, sym, "1y", "1d")
+            df = await run_sync(get_ohlcv_history, sym, "1y", "1d", req.region)
             if df is None or len(df) < 50:
                 return {"_audit": (sym, "fail", "no_ohlcv")}
             ind = await run_sync(compute_indicators_from_ohlcv, df)
@@ -119,7 +124,6 @@ async def run_scan(req: ScanRequest) -> ScanResult:
 async def run_scan_stream(req: ScanRequest):
     """Streaming scan with live progress (SSE). Same shape as /run + progress events."""
     from fastapi.responses import StreamingResponse
-    from services.universe_sync import get_universe_symbols
     from services.market_data_service import get_ohlcv_history
     from services.chart_analysis_service import compute_indicators_from_ohlcv
     import asyncio
@@ -131,7 +135,7 @@ async def run_scan_stream(req: ScanRequest):
 
     async def _one(sym: str) -> dict | None:
         try:
-            df = await run_sync(get_ohlcv_history, sym, "1y", "1d")
+            df = await run_sync(get_ohlcv_history, sym, "1y", "1d", req.region)
             if df is None or len(df) < 50:
                 return {"_audit": (sym, "fail", "no_ohlcv")}
             ind = await run_sync(compute_indicators_from_ohlcv, df)
@@ -163,7 +167,13 @@ async def run_scan_stream(req: ScanRequest):
         def sse(p): return f"data: {json.dumps(p, default=str)}\n\n"
 
         t0 = time.perf_counter()
-        syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
+        if req.region == "US":
+            from services.us_universe_sync import get_us_universe_symbols
+            all_syms = await run_sync(get_us_universe_symbols, req.universe)
+            syms = (all_syms or [])[:req.max_symbols] if req.max_symbols else (all_syms or [])
+        else:
+            from services.universe_sync import get_universe_symbols
+            syms = await run_sync(get_universe_symbols, req.universe, req.max_symbols)
         total = len(syms)
         yield sse({"type": "started", "total": total, "universe": req.universe})
 

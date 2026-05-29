@@ -16,6 +16,21 @@ export function formatINR(n: number | null | undefined, opts: { maxFrac?: number
   }).format(n);
 }
 
+export function formatCurrency(
+  n: number | null | undefined,
+  region: "IN" | "US",
+  opts: { maxFrac?: number } = {},
+): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  const maxFrac = opts.maxFrac ?? 2;
+  return new Intl.NumberFormat(region === "US" ? "en-US" : "en-IN", {
+    style: "currency",
+    currency: region === "US" ? "USD" : "INR",
+    maximumFractionDigits: maxFrac,
+    minimumFractionDigits: 0,
+  }).format(n);
+}
+
 export function formatNum(n: number | null | undefined, opts: { maxFrac?: number; compact?: boolean } = {}): string {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   const maxFrac = opts.maxFrac ?? 2;

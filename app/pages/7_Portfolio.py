@@ -12,9 +12,14 @@ from utils.theme import apply_theme
 apply_theme()
 
 from storage.file_store import get_holdings, add_holding, remove_holding
-from services.tradingview_service import get_tv_analysis
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, get_market_analysis as get_tv_analysis, fmt_currency,
+)
 from app.components.metrics_card import render_kpi_row
+
+region = get_region()
 
 st.markdown("## 💼 Portfolio Tracker")
 
@@ -32,17 +37,18 @@ with st.expander("➕ Add New Holding"):
 
     with st.form("add_holding"):
         col1, col2, col3, col4 = st.columns(4)
+        curr_sym = "$" if region == "US" else "₹"
         with col1:
-            new_sym = st.selectbox("Symbol (NSE)", _syms, key="port_sym")
+            new_sym = st.selectbox("Symbol", _syms, key="port_sym")
         with col2:
             new_qty = st.number_input("Quantity", min_value=1, value=10, step=1)
         with col3:
-            new_price = st.number_input("Buy Price (₹)", min_value=0.0, value=0.0, step=1.0)
+            new_price = st.number_input(f"Buy Price ({curr_sym})", min_value=0.0, value=0.0, step=1.0)
         with col4:
             new_date = st.date_input("Buy Date", value=datetime.now().date())
         if st.form_submit_button("Add Holding", type="primary"):
             add_holding(new_sym, new_qty, new_price, str(new_date))
-            st.success(f"Added {new_qty} shares of {new_sym} @ ₹{new_price}")
+            st.success(f"Added {new_qty} shares of {new_sym} @ {fmt_currency(new_price)}")
             st.rerun()
 
 if not holdings:
@@ -79,12 +85,12 @@ for h in holdings:
     rows.append({
         "Symbol": sym,
         "Qty": int(qty),
-        "Buy Price": f"₹{buy:,.2f}",
-        "CMP": f"₹{cmp:,.2f}" if cmp else "—",
+        "Buy Price": fmt_currency(buy),
+        "CMP": fmt_currency(cmp) if cmp else "—",
         "Today %": f"{change_pct:+.2f}%" if change_pct else "—",
-        "Invested": f"₹{invested:,.0f}",
-        "Current Val": f"₹{current_val:,.0f}" if current_val else "—",
-        "P&L": f"₹{pnl:,.0f}" if current_val else "—",
+        "Invested": fmt_currency(invested, decimals=0),
+        "Current Val": fmt_currency(current_val, decimals=0) if current_val else "—",
+        "P&L": fmt_currency(pnl, decimals=0) if current_val else "—",
         "P&L %": f"{pnl_pct:+.1f}%" if current_val else "—",
         "Signal": rec,
         "Buy Date": h.get("buy_date", ""),
@@ -93,10 +99,11 @@ for h in holdings:
 # KPI summary
 total_pnl = total_current - total_invested
 total_pnl_pct = (total_pnl / total_invested * 100) if total_invested > 0 else 0
+curr_sym = "$" if region == "US" else "₹"
 render_kpi_row([
-    {"label": "Total Invested", "value": total_invested, "prefix": "₹", "decimals": 0},
-    {"label": "Current Value", "value": total_current, "prefix": "₹", "decimals": 0},
-    {"label": "Total P&L", "value": total_pnl, "prefix": "₹", "decimals": 0,
+    {"label": "Total Invested", "value": total_invested, "prefix": curr_sym, "decimals": 0},
+    {"label": "Current Value", "value": total_current, "prefix": curr_sym, "decimals": 0},
+    {"label": "Total P&L", "value": total_pnl, "prefix": curr_sym, "decimals": 0,
      "delta": f"{total_pnl_pct:+.1f}%"},
     {"label": "Holdings", "value": len(holdings)},
 ], cols=4)

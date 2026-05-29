@@ -14,6 +14,7 @@ import { SymbolInput } from "@/components/common/symbol-input";
 import { PageHeader } from "@/components/common/page-header";
 import { formatNum, formatPct, trendClass } from "@/lib/utils";
 import type { Sentiment } from "@/lib/types";
+import { useRegion } from "@/lib/region";
 
 const SENT_VARIANT: Record<Sentiment, "success" | "info" | "warning" | "danger" | "default"> = {
   POSITIVE: "success",
@@ -40,8 +41,9 @@ export default function EarningsPage() {
 }
 
 function Upcoming() {
+  const { region } = useRegion();
   const [days, setDays] = useState("14");
-  const q = useQuery({ queryKey: ["earnings-upcoming", days], queryFn: () => api.upcomingEarnings(Number(days)) });
+  const q = useQuery({ queryKey: ["earnings-upcoming", days, region], queryFn: () => api.upcomingEarnings(region, Number(days)) });
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -82,8 +84,9 @@ function Upcoming() {
 }
 
 function Recent() {
-  const [sym, setSym] = useState("RELIANCE");
-  const q = useQuery({ queryKey: ["earnings-recent", sym], queryFn: () => api.recentEarnings(sym, 8) });
+  const { region, isUS } = useRegion();
+  const [sym, setSym] = useState(isUS ? "AAPL" : "RELIANCE");
+  const q = useQuery({ queryKey: ["earnings-recent", sym, region], queryFn: () => api.recentEarnings(sym, region, 8) });
   return (
     <div className="space-y-4">
       <SymbolInput initial={sym} onSubmit={setSym} />

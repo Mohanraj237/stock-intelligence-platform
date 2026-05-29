@@ -86,7 +86,9 @@ _SETTINGS_PATH = DIRS["config"] / "settings.json"
 _DEFAULT_SETTINGS = {
     "refresh_interval": 300,
     "theme": "dark",
+    "market_region": "IN",
     "default_universe": "NIFTY 50",
+    "default_us_universe": "S&P 500",
     "max_workers": 8,
     "cache_ttl_screener": 21600,
     "cache_ttl_tv": 900,

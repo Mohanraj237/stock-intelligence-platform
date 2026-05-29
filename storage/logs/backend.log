@@ -698,3 +698,539 @@ KeyboardInterrupt
 2026-05-26 10:05:11,414 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
 2026-05-26 10:05:11,649 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
 2026-05-26 10:05:11,892 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 10:51:06,238 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 10:51:26,028 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,070 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,073 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,150 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,176 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,225 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,225 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,276 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,303 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,326 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,387 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,417 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,473 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,524 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,570 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,619 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:26,671 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 10:51:38,603 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:08:37,323 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:09:43,590 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:43,593 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:43,884 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:43,939 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,178 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,233 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,323 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,337 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,378 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,409 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,443 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,464 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,467 [INFO] backend: GET /api/market/indices -> 200 in 1100ms
+2026-05-26 11:09:44,533 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,587 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,660 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,728 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,777 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:09:44,778 [INFO] backend: GET /api/market/sectors -> 200 in 1411ms
+2026-05-26 11:10:30,793 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:30,796 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:30,822 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:30,888 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:30,965 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,021 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,037 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,062 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,077 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,137 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,191 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,253 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,304 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,364 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,427 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,493 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:10:31,555 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,559 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,609 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,669 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,721 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,793 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,876 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:04,882 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,233 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,260 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,321 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,393 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,453 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,536 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,584 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,648 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,701 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,762 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:05,763 [INFO] backend: GET /api/market/sectors -> 200 in 1247ms
+2026-05-26 11:11:46,347 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:11:50,095 [INFO] backend: GET /api/news/market -> 200 in 1710ms
+2026-05-26 11:11:53,723 [WARNING] services.universe_sync: Failed to fetch ALL NSE from NSE: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?. Using fallback.
+2026-05-26 11:11:54,073 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:11:54,933 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 1164ms
+2026-05-26 11:11:56,075 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1004ms
+2026-05-26 11:12:00,420 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 6693ms
+2026-05-26 11:12:00,472 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 6382ms
+2026-05-26 11:12:00,562 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 6792ms
+2026-05-26 11:12:01,399 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 7629ms
+2026-05-26 11:12:01,404 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 5327ms
+2026-05-26 11:12:01,407 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 4660ms
+2026-05-26 11:12:16,291 [INFO] backend: GET /api/stocks/ANGELONE/verdict -> 200 in 2377ms
+2026-05-26 11:12:16,293 [INFO] backend: GET /api/stocks/ANGELONE/balance-sheet -> 200 in 1628ms
+2026-05-26 11:12:16,294 [INFO] backend: GET /api/stocks/ANGELONE/shareholding -> 200 in 1619ms
+2026-05-26 11:12:16,296 [INFO] backend: GET /api/stocks/ANGELONE/cash-flow -> 200 in 1629ms
+2026-05-26 11:12:16,725 [INFO] backend: GET /api/stocks/ANGELONE/ratios-history -> 200 in 2054ms
+2026-05-26 11:12:17,131 [INFO] backend: GET /api/stocks/ANGELONE/peers -> 200 in 2455ms
+2026-05-26 11:13:35,129 [INFO] backend: Backend shutting down
+2026-05-26 11:13:37,055 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:15:42,323 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,413 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,524 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,542 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,573 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,587 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,601 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,631 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,680 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,691 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,731 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:42,754 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:43,120 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:43,207 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:43,308 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:43,390 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:43,477 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:15:43,478 [INFO] backend: GET /api/market/sectors -> 200 in 1270ms
+2026-05-26 11:15:48,969 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:03,328 [INFO] backend: GET /api/news/market -> 200 in 1487ms
+2026-05-26 11:16:21,717 [INFO] backend: Backend shutting down
+2026-05-26 11:16:25,619 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:16:34,688 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:34,767 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:34,851 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:34,917 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:35,070 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:35,151 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:35,741 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:35,792 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:35,826 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:35,878 [INFO] backend: GET /api/market/status -> 200 in 1322ms
+2026-05-26 11:16:35,933 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:36,521 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,313 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,401 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,467 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,532 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,599 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,642 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:37,644 [INFO] backend: GET /api/market/sectors -> 200 in 3082ms
+2026-05-26 11:16:40,017 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:16:43,133 [INFO] backend: GET /api/news/market -> 200 in 2265ms
+2026-05-26 11:16:45,139 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:16:45,139 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:16:46,052 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1238ms
+2026-05-26 11:16:47,812 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 3017ms
+2026-05-26 11:16:47,937 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 2688ms
+2026-05-26 11:16:48,226 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 3412ms
+2026-05-26 11:16:49,060 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 4248ms
+2026-05-26 11:16:49,064 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1463ms
+2026-05-26 11:16:49,435 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 2016ms
+2026-05-26 11:25:08,711 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 1101ms
+2026-05-26 11:25:08,811 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 1200ms
+2026-05-26 11:25:08,815 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 1214ms
+2026-05-26 11:25:08,818 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1207ms
+2026-05-26 11:25:09,700 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1120ms
+2026-05-26 11:25:10,528 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1710ms
+2026-05-26 11:25:10,959 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 2135ms
+2026-05-26 11:25:10,961 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 3352ms
+2026-05-26 11:25:10,972 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 2151ms
+2026-05-26 11:25:11,411 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1302ms
+2026-05-26 11:25:11,866 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 3037ms
+2026-05-26 11:25:43,076 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 1149ms
+2026-05-26 11:25:44,433 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1535ms
+2026-05-26 11:25:45,359 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 2406ms
+2026-05-26 11:25:45,364 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 3445ms
+2026-05-26 11:25:45,365 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 2412ms
+2026-05-26 11:25:45,368 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 2352ms
+2026-05-26 11:25:46,085 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 3005ms
+2026-05-26 11:26:38,474 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 1014ms
+2026-05-26 11:26:38,476 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 1011ms
+2026-05-26 11:26:38,478 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1024ms
+2026-05-26 11:26:40,384 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1902ms
+2026-05-26 11:26:40,446 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 2989ms
+2026-05-26 11:26:40,469 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 1986ms
+2026-05-26 11:26:40,474 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1991ms
+2026-05-26 11:26:40,476 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 1990ms
+2026-05-26 11:26:41,154 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 2667ms
+2026-05-26 11:28:42,394 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1836ms
+2026-05-26 11:28:43,088 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 2547ms
+2026-05-26 11:28:43,120 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2596ms
+2026-05-26 11:28:43,122 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 2563ms
+2026-05-26 11:28:43,124 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 2578ms
+2026-05-26 11:28:44,819 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 4266ms
+2026-05-26 11:28:44,912 [INFO] backend: Backend shutting down
+2026-05-26 11:28:48,056 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:28:52,020 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:28:53,786 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 2051ms
+2026-05-26 11:28:53,791 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 2055ms
+2026-05-26 11:28:53,795 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 2059ms
+2026-05-26 11:28:53,798 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 2063ms
+2026-05-26 11:28:54,616 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 2881ms
+2026-05-26 11:28:54,652 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 2916ms
+2026-05-26 11:30:11,076 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1217ms
+2026-05-26 11:30:11,128 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 1275ms
+2026-05-26 11:30:11,135 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 1278ms
+2026-05-26 11:30:11,138 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 1280ms
+2026-05-26 11:30:11,139 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1279ms
+2026-05-26 11:30:13,256 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 2118ms
+2026-05-26 11:30:13,414 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 3556ms
+2026-05-26 11:30:13,415 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 2274ms
+2026-05-26 11:30:13,416 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 2272ms
+2026-05-26 11:30:13,418 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 2272ms
+2026-05-26 11:30:15,020 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 3874ms
+2026-05-26 11:30:40,242 [INFO] backend: GET /api/universe/all-symbols -> 200 in 2223ms
+2026-05-26 11:30:40,505 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 1434ms
+2026-05-26 11:30:40,540 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 1464ms
+2026-05-26 11:30:40,540 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1467ms
+2026-05-26 11:30:40,565 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 2451ms
+2026-05-26 11:30:41,277 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 2216ms
+2026-05-26 11:30:41,695 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1135ms
+2026-05-26 11:30:41,898 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 1337ms
+2026-05-26 11:33:31,676 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:33:53,599 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:33:53,599 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:33:53,602 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:33:53,603 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:33:53,606 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 11:33:54,703 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 1422ms
+2026-05-26 11:33:55,722 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 2442ms
+2026-05-26 11:33:55,725 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 2144ms
+2026-05-26 11:33:55,727 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 2386ms
+2026-05-26 11:33:56,197 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 2917ms
+2026-05-26 11:33:56,724 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 3142ms
+2026-05-26 11:33:56,726 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1462ms
+2026-05-26 11:34:01,412 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,445 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,463 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,509 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,527 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,571 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,572 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,649 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,710 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,716 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,772 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,794 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,833 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,885 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:01,938 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:02,011 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:02,079 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:08,387 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 11:34:38,009 [WARNING] services.universe_sync: Failed to fetch S&P 500 from NSE: Invalid URL 'None': No scheme supplied. Perhaps you meant https://None?. Using fallback.
+2026-05-26 11:45:27,181 [INFO] backend: Backend shutting down
+2026-05-26 11:45:31,018 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:45:36,258 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:48:46,088 [INFO] backend: Backend shutting down
+2026-05-26 11:48:50,209 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:50:46,925 [INFO] backend: Backend shutting down
+2026-05-26 11:50:52,224 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 11:52:18,193 [INFO] backend: GET /api/market/universe/S&P 500/quotes -> 200 in 1410ms
+2026-05-26 12:06:01,686 [INFO] backend: Backend shutting down
+2026-05-26 12:06:03,881 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 12:06:06,449 [INFO] services.us_market_service: YF session refreshed, crumb=EQylC8…
+2026-05-26 12:06:07,984 [INFO] backend: GET /api/market/indices -> 200 in 2415ms
+2026-05-26 12:06:28,863 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:06:28,865 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 305ms
+2026-05-26 12:06:29,050 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:06:29,051 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 167ms
+2026-05-26 12:08:03,938 [INFO] backend: Backend shutting down
+2026-05-26 12:08:26,046 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 12:08:41,578 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,597 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,603 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,648 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,650 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,699 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,718 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,766 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,772 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,825 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,826 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,891 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:41,945 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:42,003 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:42,055 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:42,104 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:42,161 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 12:08:42,331 [INFO] services.us_market_service: YF session refreshed, crumb=Ij3f0m…
+2026-05-26 12:08:42,554 [INFO] backend: GET /api/market/status -> 200 in 1113ms
+2026-05-26 12:08:43,805 [INFO] backend: GET /api/market/indices -> 200 in 2365ms
+2026-05-26 12:09:25,234 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 12:09:25,691 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 1328ms
+2026-05-26 12:09:35,000 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:35,050 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:35,051 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 300ms
+2026-05-26 12:09:35,152 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:35,153 [INFO] backend: GET /api/stocks/AAPL/chart-analysis -> 404 in 150ms
+2026-05-26 12:09:35,271 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:35,273 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 520ms
+2026-05-26 12:09:35,459 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:36,219 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:36,221 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 157ms
+2026-05-26 12:09:36,327 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:36,329 [INFO] backend: GET /api/stocks/AAPL/chart-analysis -> 404 in 171ms
+2026-05-26 12:09:36,515 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 12:09:36,517 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 239ms
+2026-05-26 13:22:24,122 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:22:24,140 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:22:24,220 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:22:24,224 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:22:24,237 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 867ms
+2026-05-26 13:22:24,257 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 989ms
+2026-05-26 13:22:24,364 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:22:24,377 [INFO] backend: GET /api/stocks/AAPL/chart-analysis -> 404 in 190ms
+2026-05-26 13:22:24,525 [INFO] services.us_market_service: YF session refreshed, crumb=0Benf6…
+2026-05-26 13:22:24,981 [INFO] backend: GET /api/stocks/AAPL/fundamentals -> 200 in 1570ms
+2026-05-26 13:24:43,239 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:24:43,243 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:24:43,245 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 212ms
+2026-05-26 13:24:43,249 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 202ms
+2026-05-26 13:24:43,360 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 13:24:43,363 [INFO] backend: GET /api/stocks/AAPL/chart-analysis -> 404 in 315ms
+2026-05-26 13:24:48,196 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,199 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,232 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,263 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,309 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,317 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,369 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,381 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,414 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,444 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,473 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,493 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,516 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,576 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,638 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,698 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:48,743 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 13:24:49,500 [INFO] backend: GET /api/market/indices -> 200 in 1540ms
+2026-05-26 13:25:10,400 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1452ms
+2026-05-26 13:25:10,853 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 1904ms
+2026-05-26 13:25:11,662 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2713ms
+2026-05-26 13:25:11,694 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 2745ms
+2026-05-26 13:25:11,942 [INFO] backend: GET /api/universe/all-symbols -> 200 in 3016ms
+2026-05-26 13:25:12,488 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 1729ms
+2026-05-26 13:25:13,410 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 4462ms
+2026-05-26 13:25:15,255 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 3360ms
+2026-05-26 13:25:16,080 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 4186ms
+2026-05-26 13:25:16,157 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 3905ms
+2026-05-26 13:25:16,295 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 4648ms
+2026-05-26 13:25:17,667 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 2884ms
+2026-05-26 13:25:18,680 [INFO] backend: GET /api/stocks/ANGELONE/ohlcv -> 200 in 1632ms
+2026-05-26 13:25:18,928 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 5937ms
+2026-05-26 13:25:19,272 [INFO] backend: GET /api/stocks/ANGELONE/fundamentals -> 200 in 2195ms
+2026-05-26 13:25:19,489 [INFO] backend: GET /api/stocks/ANGELONE/indicators -> 200 in 2413ms
+2026-05-26 13:25:20,018 [INFO] backend: GET /api/stocks/ANGELONE/quarterly -> 200 in 2347ms
+2026-05-26 13:25:21,447 [INFO] backend: GET /api/patterns/detect/ANGELONE -> 200 in 2331ms
+2026-05-26 13:25:22,592 [INFO] backend: GET /api/stocks/ANGELONE/verdict -> 200 in 5516ms
+2026-05-26 13:25:22,867 [INFO] backend: GET /api/stocks/ANGELONE/ratios-history -> 200 in 3010ms
+2026-05-26 13:25:23,015 [INFO] backend: GET /api/stocks/ANGELONE/balance-sheet -> 200 in 3811ms
+2026-05-26 13:25:23,511 [INFO] backend: GET /api/stocks/ANGELONE/cash-flow -> 200 in 3771ms
+2026-05-26 13:25:23,929 [INFO] backend: GET /api/stocks/ANGELONE/shareholding -> 200 in 2582ms
+2026-05-26 13:25:24,980 [INFO] backend: GET /api/stocks/ANGELONE/chart-analysis -> 200 in 1528ms
+2026-05-26 13:25:24,982 [INFO] backend: GET /api/stocks/ANGELONE/peers -> 200 in 3106ms
+2026-05-26 13:26:43,957 [INFO] backend: GET /api/stocks/HUDCO/ohlcv -> 200 in 1423ms
+2026-05-26 13:26:44,413 [INFO] backend: GET /api/patterns/detect/HUDCO -> 200 in 1849ms
+2026-05-26 13:26:44,507 [INFO] backend: GET /api/stocks/HUDCO/indicators -> 200 in 1962ms
+2026-05-26 13:26:44,661 [INFO] backend: GET /api/stocks/HUDCO/quarterly -> 200 in 2097ms
+2026-05-26 13:26:44,760 [INFO] backend: GET /api/stocks/HUDCO/fundamentals -> 200 in 2195ms
+2026-05-26 13:26:45,496 [INFO] backend: GET /api/stocks/HUDCO/verdict -> 200 in 2957ms
+2026-05-26 13:26:46,940 [INFO] backend: GET /api/stocks/HUDCO/balance-sheet -> 200 in 2322ms
+2026-05-26 13:26:47,987 [INFO] backend: GET /api/stocks/HUDCO/cash-flow -> 200 in 3102ms
+2026-05-26 13:26:48,423 [INFO] backend: GET /api/stocks/HUDCO/shareholding -> 200 in 3475ms
+2026-05-26 13:26:48,603 [INFO] backend: GET /api/stocks/HUDCO/ratios-history -> 200 in 3655ms
+2026-05-26 13:26:49,504 [INFO] backend: GET /api/stocks/HUDCO/chart-analysis -> 200 in 3033ms
+2026-05-26 13:26:49,507 [INFO] backend: GET /api/stocks/HUDCO/peers -> 200 in 4558ms
+2026-05-26 13:43:22,293 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 1783ms
+2026-05-26 13:43:22,936 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 2397ms
+2026-05-26 13:43:23,342 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 2809ms
+2026-05-26 13:43:23,404 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 2878ms
+2026-05-26 13:43:23,466 [INFO] backend: GET /api/stocks/RELIANCE/quarterly -> 200 in 2943ms
+2026-05-26 13:43:26,450 [INFO] backend: GET /api/stocks/RELIANCE/balance-sheet -> 200 in 3560ms
+2026-05-26 13:43:27,095 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 6557ms
+2026-05-26 13:43:27,656 [INFO] backend: GET /api/stocks/RELIANCE/cash-flow -> 200 in 4259ms
+2026-05-26 13:43:27,743 [INFO] backend: GET /api/stocks/RELIANCE/ratios-history -> 200 in 4292ms
+2026-05-26 13:43:27,888 [INFO] backend: GET /api/stocks/RELIANCE/shareholding -> 200 in 4051ms
+2026-05-26 13:43:28,591 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 4754ms
+2026-05-26 13:43:28,903 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 1248ms
+2026-05-26 13:43:30,811 [INFO] backend: GET /api/stocks/VEDL/ohlcv -> 200 in 1038ms
+2026-05-26 13:43:31,465 [INFO] backend: GET /api/stocks/VEDL/indicators -> 200 in 1663ms
+2026-05-26 13:43:31,529 [INFO] backend: GET /api/patterns/detect/VEDL -> 200 in 1711ms
+2026-05-26 13:43:32,001 [INFO] backend: GET /api/stocks/VEDL/fundamentals -> 200 in 2199ms
+2026-05-26 13:43:32,381 [INFO] backend: GET /api/stocks/VEDL/quarterly -> 200 in 2578ms
+2026-05-26 13:43:35,722 [INFO] backend: GET /api/stocks/VEDL/balance-sheet -> 200 in 4272ms
+2026-05-26 13:43:37,127 [INFO] backend: GET /api/stocks/VEDL/verdict -> 200 in 7347ms
+2026-05-26 13:43:37,300 [INFO] backend: GET /api/stocks/VEDL/cash-flow -> 200 in 5347ms
+2026-05-26 13:43:37,501 [INFO] backend: GET /api/stocks/VEDL/shareholding -> 200 in 4742ms
+2026-05-26 13:43:37,503 [INFO] backend: GET /api/stocks/VEDL/ratios-history -> 200 in 5549ms
+2026-05-26 13:43:37,671 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 13:43:37,679 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 13:43:37,721 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 13:43:37,846 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 13:43:38,358 [INFO] backend: GET /api/stocks/VEDL/peers -> 200 in 5535ms
+2026-05-26 13:43:38,550 [INFO] backend: GET /api/stocks/VEDL/chart-analysis -> 200 in 1454ms
+2026-05-26 15:30:29,982 [INFO] backend: GET /api/stocks/VEDL/ohlcv -> 200 in 2487ms
+2026-05-26 15:30:31,083 [INFO] backend: GET /api/stocks/VEDL/indicators -> 200 in 3581ms
+2026-05-26 15:30:33,459 [INFO] backend: GET /api/stocks/VEDL/fundamentals -> 200 in 5975ms
+2026-05-26 15:30:33,962 [INFO] backend: GET /api/stocks/VEDL/shareholding -> 200 in 6487ms
+2026-05-26 15:30:34,875 [INFO] backend: GET /api/patterns/detect/VEDL -> 200 in 3245ms
+2026-05-26 15:30:35,927 [INFO] backend: GET /api/stocks/VEDL/verdict -> 200 in 8431ms
+2026-05-26 15:30:36,114 [INFO] backend: GET /api/stocks/VEDL/chart-analysis -> 200 in 7749ms
+2026-05-26 15:30:36,824 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 15:30:36,863 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 15:30:36,934 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 15:30:36,975 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=3mo&includeAdjustedClose=true
+2026-05-26 15:30:37,749 [INFO] backend: GET /api/stocks/VEDL/quarterly -> 200 in 3362ms
+2026-05-26 15:30:38,603 [INFO] backend: GET /api/stocks/VEDL/balance-sheet -> 200 in 3132ms
+2026-05-26 15:30:38,682 [INFO] backend: GET /api/stocks/VEDL/cash-flow -> 200 in 4040ms
+2026-05-26 15:30:38,935 [INFO] backend: GET /api/stocks/VEDL/peers -> 200 in 8391ms
+2026-05-26 15:30:39,154 [INFO] backend: GET /api/stocks/VEDL/ratios-history -> 200 in 2806ms
+2026-05-26 15:40:15,083 [INFO] backend: Backend shutting down
+2026-05-26 15:40:21,364 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 15:42:12,963 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-26 15:43:04,060 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,088 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,113 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,133 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,173 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,192 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,219 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,239 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,265 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,313 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,326 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,360 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,428 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,486 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,561 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,630 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:04,699 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 15:43:14,168 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-26 16:17:04,090 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:04,092 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:04,110 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 540ms
+2026-05-26 16:17:04,114 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 542ms
+2026-05-26 16:17:04,270 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:04,426 [INFO] services.us_market_service: YF session refreshed, crumb=Y4ZTen…
+2026-05-26 16:17:04,763 [INFO] services.screener_service: Screener.in session configured.
+2026-05-26 16:17:04,911 [INFO] backend: GET /api/stocks/AAPL/verdict -> 200 in 1331ms
+2026-05-26 16:17:05,044 [INFO] backend: GET /api/stocks/AAPL/fundamentals -> 200 in 1472ms
+2026-05-26 16:17:05,266 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:05,268 [INFO] backend: GET /api/stocks/AAPL/indicators -> 404 in 141ms
+2026-05-26 16:17:05,285 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:05,287 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 162ms
+2026-05-26 16:17:08,416 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:08,418 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 160ms
+2026-05-26 16:17:09,567 [WARNING] services.market_data_service: OHLCV history failed for AAPL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/AAPL.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:17:09,569 [INFO] backend: GET /api/stocks/AAPL/ohlcv -> 404 in 142ms
+2026-05-26 16:38:45,972 [WARNING] services.market_data_service: OHLCV history failed for HES: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HES?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:38:46,120 [WARNING] services.market_data_service: OHLCV history failed for MRO: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/MRO?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:38:46,213 [WARNING] services.market_data_service: OHLCV history failed for PXD: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/PXD?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:38:46,240 [WARNING] services.market_data_service: OHLCV history failed for HES: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HES?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 16:38:46,439 [WARNING] services.market_data_service: OHLCV history failed for MRO: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/MRO?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 16:38:46,453 [WARNING] services.market_data_service: OHLCV history failed for PXD: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/PXD?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-26 16:38:46,661 [WARNING] services.market_data_service: OHLCV history failed for HES: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HES?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 16:38:46,778 [WARNING] services.market_data_service: OHLCV history failed for MRO: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/MRO?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 16:38:46,795 [WARNING] services.market_data_service: OHLCV history failed for PXD: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/PXD?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-26 16:38:52,535 [WARNING] services.market_data_service: OHLCV history failed for RELIANCE: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:38:52,728 [WARNING] services.market_data_service: OHLCV history failed for RELIANCE: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:38:52,730 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 404 in 189ms
+2026-05-26 16:38:53,902 [WARNING] services.market_data_service: OHLCV history failed for RELIANCE: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:38:53,904 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 404 in 138ms
+2026-05-26 16:50:24,498 [INFO] backend: GET /api/market/universe/S&P 500/quotes -> 200 in 1415ms
+2026-05-26 16:51:06,155 [WARNING] services.market_data_service: OHLCV history failed for HPQ: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HPQ.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:51:06,160 [INFO] backend: GET /api/stocks/HPQ/indicators -> 404 in 220ms
+2026-05-26 16:51:06,238 [WARNING] services.market_data_service: OHLCV history failed for HPQ: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HPQ.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:51:06,424 [WARNING] services.market_data_service: OHLCV history failed for HPQ: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HPQ.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:51:06,469 [INFO] backend: GET /api/stocks/HPQ/ohlcv -> 404 in 567ms
+2026-05-26 16:51:07,299 [WARNING] services.market_data_service: OHLCV history failed for HPQ: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HPQ.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:51:07,301 [INFO] backend: GET /api/stocks/HPQ/indicators -> 404 in 132ms
+2026-05-26 16:51:07,646 [WARNING] services.market_data_service: OHLCV history failed for HPQ: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/HPQ.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-26 16:51:07,648 [INFO] backend: GET /api/stocks/HPQ/ohlcv -> 404 in 146ms
+2026-05-26 16:52:39,916 [INFO] backend: GET /api/market/universe/S&P 500/quotes -> 200 in 1267ms
+2026-05-26 18:01:54,434 [INFO] services.us_market_service: YF session refreshed, crumb=WJHsxo…
+2026-05-26 18:01:55,918 [INFO] backend: GET /api/market/universe/S&P 500/quotes -> 200 in 2824ms
+2026-05-27 21:51:28,584 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-27 21:55:04,614 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-27 21:58:42,373 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-05-27 21:59:45,978 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:45,983 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,053 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,256 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,325 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,348 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,412 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,458 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,506 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,550 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,561 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,564 [INFO] backend: GET /api/market/indices -> 200 in 1317ms
+2026-05-27 21:59:46,601 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,650 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,708 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,755 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:46,799 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,331 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,351 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,358 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,378 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,380 [INFO] backend: GET /api/market/indices -> 200 in 1924ms
+2026-05-27 21:59:47,430 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,463 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:47,512 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:48,097 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:48,134 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:48,949 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,129 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,295 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,328 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,514 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,520 [INFO] backend: GET /api/market/sectors -> 200 in 3501ms
+2026-05-27 21:59:49,661 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,693 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,714 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,762 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-05-27 21:59:49,762 [INFO] backend: GET /api/market/sectors -> 200 in 4523ms
+2026-05-27 22:03:40,440 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-27 22:03:40,588 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-27 22:03:40,672 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-27 22:03:40,740 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-27 22:03:40,823 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-27 22:03:40,853 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-27 22:03:40,904 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-27 22:03:40,968 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL4: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL4.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-27 22:03:41,021 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-27 22:03:41,063 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL1: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL1.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-27 22:03:41,350 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-27 22:03:41,488 [WARNING] services.market_data_service: OHLCV history failed for DUMMYVEDL2: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/DUMMYVEDL2.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-27 22:07:13,341 [WARNING] services.market_data_service: OHLCV history failed for TKO: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-27 22:07:13,468 [WARNING] services.market_data_service: OHLCV history failed for TYL: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-27 22:19:18,518 [WARNING] services.market_data_service: OHLCV history failed for WBA: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/WBA?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-27 22:19:18,758 [WARNING] services.market_data_service: OHLCV history failed for WBA: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/WBA?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-27 22:19:19,223 [WARNING] services.market_data_service: OHLCV history failed for WBA: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/WBA?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-27 22:33:56,928 [WARNING] services.market_data_service: OHLCV history failed for ESSEN-RE3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/ESSEN-RE3.NS?interval=1d&range=1y&includeAdjustedClose=true
+2026-05-27 22:33:57,224 [WARNING] services.market_data_service: OHLCV history failed for ESSEN-RE3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/ESSEN-RE3.NS?interval=1wk&range=5y&includeAdjustedClose=true
+2026-05-27 22:33:57,708 [WARNING] services.market_data_service: OHLCV history failed for ESSEN-RE3: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/ESSEN-RE3.NS?interval=1mo&range=max&includeAdjustedClose=true
+2026-05-27 22:36:01,488 [WARNING] services.market_data_service: OHLCV history failed for TCIEXP: HTTPSConnectionPool(host='query1.finance.yahoo.com', port=443): Read timed out. (read timeout=15)
+2026-05-27 22:40:16,413 [INFO] backend: Backend shutting down

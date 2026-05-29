@@ -7,11 +7,13 @@ import { MarketStatusBanner } from "@/components/market-status-banner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatNum, formatPct, trendClass } from "@/lib/utils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ComposedChart, Line, ReferenceLine } from "recharts";
+import { useRegion } from "@/lib/region";
 
 export default function DashboardPage() {
-  const indices = useQuery({ queryKey: ["indices"], queryFn: api.indices, refetchInterval: 60_000 });
-  const sectors = useQuery({ queryKey: ["sectors"], queryFn: api.sectors, refetchInterval: 120_000 });
-  const fii = useQuery({ queryKey: ["fii-dii"], queryFn: api.fiiDii, refetchInterval: 5 * 60_000 });
+  const { region, isUS } = useRegion();
+  const indices = useQuery({ queryKey: ["indices", region], queryFn: () => api.indices(region), refetchInterval: 60_000 });
+  const sectors = useQuery({ queryKey: ["sectors", region], queryFn: () => api.sectors(region), refetchInterval: 120_000 });
+  const fii = useQuery({ queryKey: ["fii-dii"], queryFn: api.fiiDii, refetchInterval: 5 * 60_000, enabled: !isUS });
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -58,7 +60,7 @@ export default function DashboardPage() {
       <Tabs defaultValue="sectors">
         <TabsList>
           <TabsTrigger value="sectors">Sectors</TabsTrigger>
-          <TabsTrigger value="fii-dii">FII/DII</TabsTrigger>
+          {!isUS && <TabsTrigger value="fii-dii">FII/DII</TabsTrigger>}
           <TabsTrigger value="movers">Top Movers</TabsTrigger>
         </TabsList>
 

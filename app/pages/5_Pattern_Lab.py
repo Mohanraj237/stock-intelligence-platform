@@ -25,10 +25,12 @@ apply_theme()
 from utils.tv_chart import render_tv_chart
 
 from engines.pattern_engine import detect_patterns
-from services.universe_sync import (
-    get_universe_symbols, get_all_universe_names, universe_display_map,
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, get_ohlcv_history, currency_symbol,
 )
-from services.market_data_service import get_ohlcv_history
+region = get_region()
 from services.ai_service import analyze_stock
 from services.pattern_examples import all_pattern_names, get_pattern_by_name
 from services.breakout_service import (
@@ -85,9 +87,9 @@ def _render_studio_chart(symbol, df, patterns, timeframe, row_meta, key_suffix="
     render_tv_chart(
         df=df, symbol=symbol, height=520, show_volume=True,
         show_emas=(20, 50, 200),
-        entry=row_meta.get("Entry ₹"),
-        target=row_meta.get("Target ₹"),
-        stop=row_meta.get("Stop ₹"),
+        entry=row_meta.get("Entry"),
+        target=row_meta.get("Target"),
+        stop=row_meta.get("Stop"),
         key_levels=key_levels or None,
         pattern_lines=pat_lines,
         title=f"{symbol} — {timeframe}",
@@ -102,8 +104,9 @@ def _render_pattern_card(p: dict, container):
     name = p.get("name", "—")
     desc = (p.get("description") or "")[:140]
     kl   = p.get("key_levels") or {}
-    tgt  = f"₹{kl['target']:,.0f}" if kl.get("target") else "—"
-    stp  = f"₹{kl['stop']:,.0f}" if kl.get("stop") else "—"
+    _cs  = currency_symbol()
+    tgt  = f"{_cs}{kl['target']:,.0f}" if kl.get("target") else "—"
+    stp  = f"{_cs}{kl['stop']:,.0f}" if kl.get("stop") else "—"
     bk   = p.get("breakout") or {}
     bk_label = bk.get("label", "—")
     bk_color = bk.get("color", TEXT_DIM)
@@ -306,9 +309,9 @@ with tab_scan:
                 "# Patterns":    len(filtered),
                 "Best Pattern":  best.get("name", "—"),
                 "Conf %":        best.get("confidence", 0),
-                "Entry ₹":       best_break_obj.get("current_price"),
-                "Target ₹":      round(kl["target"], 2) if kl.get("target") else None,
-                "Stop ₹":        round(kl["stop"],   2) if kl.get("stop")   else None,
+                "Entry":         best_break_obj.get("current_price"),
+                "Target":        round(kl["target"], 2) if kl.get("target") else None,
+                "Stop":          round(kl["stop"],   2) if kl.get("stop")   else None,
                 "Vol✓":          "Y" if best_break_obj.get("volume_confirmed") else "—",
             })
             details[sym] = {
@@ -502,7 +505,7 @@ with tab_single:
                     f'padding:8px 12px"><div style="color:{TEXT_DIM};font-size:0.72rem">{tf}</div>'
                     f'<div style="color:{color};font-weight:700;font-size:0.85rem">{d_.get("label","—")}</div>'
                     f'<div style="color:{TEXT_DIM};font-size:0.7rem">'
-                    f'lvl ₹{d_.get("level") or "—"} · '
+                    f'lvl {currency_symbol()}{d_.get("level") or "—"} · '
                     f'{d_.get("distance_pct") or 0:+.2f}% · '
                     f'vol✓ {"Y" if d_.get("volume_confirmed") else "—"}'
                     f'</div></div>',
@@ -537,9 +540,9 @@ with tab_single:
             tf_df   = per_tf.get(chosen, {}).get("df")
             best_kl = (max(tf_pats, key=lambda p: p.get("confidence", 0)) if tf_pats else {}).get("key_levels", {}) or {}
             row_meta = {
-                "Entry ₹":  ai_v.price_target and ((ai_v.price_target + ai_v.stop_loss) / 2) if ai_v else None,
-                "Target ₹": (ai_v.price_target if ai_v else None) or best_kl.get("target"),
-                "Stop ₹":   (ai_v.stop_loss   if ai_v else None) or best_kl.get("stop"),
+                "Entry":  ai_v.price_target and ((ai_v.price_target + ai_v.stop_loss) / 2) if ai_v else None,
+                "Target": (ai_v.price_target if ai_v else None) or best_kl.get("target"),
+                "Stop":   (ai_v.stop_loss   if ai_v else None) or best_kl.get("stop"),
             }
             _render_studio_chart(sym_r, tf_df, tf_pats, chosen, row_meta, key_suffix=f"single_{sym_r}")
 

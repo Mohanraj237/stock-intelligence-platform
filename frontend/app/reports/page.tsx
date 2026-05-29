@@ -12,16 +12,18 @@ import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import { TimeframeSelector } from "@/components/timeframe-selector";
 import { PageHeader } from "@/components/common/page-header";
 import type { Timeframe } from "@/lib/types";
+import { useRegion } from "@/lib/region";
 import { toast } from "sonner";
 
 export default function ReportsPage() {
+  const { region, isUS } = useRegion();
   const qc = useQueryClient();
-  const [sym, setSym] = useState("RELIANCE");
+  const [sym, setSym] = useState(isUS ? "AAPL" : "RELIANCE");
   const [tf, setTf] = useState<Timeframe>("1D");
   const list = useQuery({ queryKey: ["reports-list"], queryFn: api.listReports });
 
   const gen = useMutation({
-    mutationFn: () => api.generateReport(sym.toUpperCase(), tf),
+    mutationFn: () => api.generateReport(sym.toUpperCase(), tf, region),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["reports-list"] }); toast.success("Report generated"); },
     onError: (e) => toast.error((e as Error).message),
   });

@@ -15,15 +15,28 @@ from services.news_service import (
     get_market_news, get_stock_news, get_nse_announcements,
     RSS_FEEDS, classify_sentiment,
 )
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols,
+)
+region = get_region()
 
 st.markdown("## 📰 News Feed")
-st.markdown(
-    f'<div style="color:{TEXT_DIM};font-size:0.85rem;margin-bottom:10px">'
-    f'Aggregated headlines from Moneycontrol · Economic Times · Business Standard · LiveMint '
-    f'· NSE corporate announcements. All feeds are free and require no API key.</div>',
-    unsafe_allow_html=True,
-)
+if region == "US":
+    st.markdown(
+        f'<div style="color:{TEXT_DIM};font-size:0.85rem;margin-bottom:10px">'
+        f'Aggregated news from Reuters · Bloomberg · CNBC · MarketWatch · Yahoo Finance RSS. '
+        f'All feeds are free and require no API key.</div>',
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        f'<div style="color:{TEXT_DIM};font-size:0.85rem;margin-bottom:10px">'
+        f'Aggregated headlines from Moneycontrol · Economic Times · Business Standard · LiveMint '
+        f'· NSE corporate announcements. All feeds are free and require no API key.</div>',
+        unsafe_allow_html=True,
+    )
 
 tab_market, tab_stock, tab_announce = st.tabs([
     "🌐 Market News", "🔍 Stock-Specific", "📢 NSE Announcements"

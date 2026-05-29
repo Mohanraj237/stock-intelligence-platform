@@ -16,17 +16,17 @@ apply_theme()
 from utils.advanced_chart import render_ohlcv_chart
 from utils.tv_chart import render_tv_chart
 
-from services.universe_sync import get_universe_symbols, get_all_universe_names, universe_display_map
-from services.market_data_service import scan_market_bulk as scan_symbols_bulk, get_ohlcv_history as get_tv_ohlcv_history
-from services.screener_service import get_full_screener_data
+from services.market_router import (
+    get_region, get_universe_names as get_all_universe_names,
+    get_universe_display_map as universe_display_map,
+    get_universe_symbols, scan_symbols_bulk, get_ohlcv_history as get_tv_ohlcv_history,
+    get_quote as nse_get_quote, get_fundamentals, fmt_currency, fmt_volume, fmt_market_cap,
+    currency_symbol,
+)
 from services.ai_service import analyze_stock
 from engines.pattern_engine import detect_patterns
 
-try:
-    from services.nse_service import get_quote as nse_get_quote
-except Exception:
-    def nse_get_quote(_):
-        return {}
+region = get_region()
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.markdown("## 🔍 Stock Analyzer")
@@ -70,7 +70,7 @@ def fetch_tv(symbol):
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_screener(symbol):
-    return get_full_screener_data(symbol)
+    return get_fundamentals(symbol)
 
 @st.cache_data(ttl=600, show_spinner=False)
 def fetch_ohlcv(symbol, period):
@@ -93,7 +93,8 @@ _TIMEOUTS = {"ohlcv": 20, "tv": 12, "nse": 10, "screener": 12}
 _cache_key = f"{sym}_{timeframe}"
 if st.session_state.get("_sa_cache_key") != _cache_key:
     status_bar = st.empty()
-    status_bar.info(f"⏳ Loading {sym} from Yahoo Finance · Screener · NSE simultaneously...")
+    source_desc = "Yahoo Finance · Yahoo Finance (US)" if region == "US" else "Yahoo Finance · Screener · NSE"
+    status_bar.info(f"⏳ Loading {sym} from {source_desc} simultaneously...")
 
     _results = {"tv": {}, "screener": {}, "nse": {}, "ohlcv": None}
     with ThreadPoolExecutor(max_workers=4) as _ex:
@@ -129,23 +130,29 @@ screener = st.session_state.get("_sa_screener", {})
 nse_q    = st.session_state.get("_sa_nse", {})
 df_ohlcv = st.session_state.get("_sa_ohlcv")
 
-# ── Screener health banner (non-blocking — chart/technicals always usable) ────
+# ── Fundamentals health banner ────────────────────────────────────────────────
 if screener.get("error"):
-    from services.screener_service import is_screener_healthy, reset_circuit_breaker
-    _hb1, _hb2 = st.columns([5, 1])
-    with _hb1:
-        st.warning(
-            "⚠️ **Screener.in is currently unreachable** — fundamentals, P&L, balance sheet, "
-            "shareholding, peers, and ratio history will be unavailable for this session. "
-            "**Charts, technical indicators, patterns, and AI Chart Analysis still work fine.**",
-            icon=None,
-        )
-    with _hb2:
-        if not is_screener_healthy() and st.button("🔄 Retry Screener", key="sa_retry_screener"):
-            reset_circuit_breaker()
-            for k in ["_sa_cache_key", "_sa_screener"]:
-                st.session_state.pop(k, None)
-            st.rerun()
+    if region == "IN":
+        try:
+            from services.screener_service import is_screener_healthy, reset_circuit_breaker
+            _hb1, _hb2 = st.columns([5, 1])
+            with _hb1:
+                st.warning(
+                    "⚠️ **Screener.in is currently unreachable** — fundamentals, P&L, balance sheet, "
+                    "shareholding, peers, and ratio history will be unavailable for this session. "
+                    "**Charts, technical indicators, patterns, and AI Chart Analysis still work fine.**",
+                    icon=None,
+                )
+            with _hb2:
+                if not is_screener_healthy() and st.button("🔄 Retry Screener", key="sa_retry_screener"):
+                    reset_circuit_breaker()
+                    for k in ["_sa_cache_key", "_sa_screener"]:
+                        st.session_state.pop(k, None)
+                    st.rerun()
+        except Exception:
+            st.warning("⚠️ Fundamentals unavailable for this session.")
+    else:
+        st.warning("⚠️ Yahoo Finance fundamentals unavailable — charts and technicals still work.")
 
 # If TV scanner blocked, compute indicators from OHLCV
 _ind = tv.get("indicators") or {}
@@ -220,15 +227,15 @@ c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
 with c1:
     st.markdown(f"""<div class="z-card">
       <div class="z-card-title">Price</div>
-      <div class="z-val" style="color:{price_color}">₹{close:,.2f}</div>
+      <div class="z-val" style="color:{price_color}">{fmt_currency(close)}</div>
       <div style="font-size:0.8rem;color:{price_color}">{change_pct:+.2f}%</div>
     </div>""", unsafe_allow_html=True)
 with c2:
-    st.markdown(metric_card("52W High", f"₹{high_52:,.0f}" if high_52 else "—"), unsafe_allow_html=True)
+    st.markdown(metric_card("52W High", fmt_currency(high_52, decimals=0) if high_52 else "—"), unsafe_allow_html=True)
 with c3:
-    st.markdown(metric_card("52W Low", f"₹{low_52:,.0f}" if low_52 else "—"), unsafe_allow_html=True)
+    st.markdown(metric_card("52W Low", fmt_currency(low_52, decimals=0) if low_52 else "—"), unsafe_allow_html=True)
 with c4:
-    st.markdown(metric_card("Market Cap", fmt_cr(market_cap)), unsafe_allow_html=True)
+    st.markdown(metric_card("Market Cap", fmt_market_cap(market_cap) if market_cap else "—"), unsafe_allow_html=True)
 with c5:
     st.markdown(metric_card("P/E", f"{pe:.1f}x" if pe else "—"), unsafe_allow_html=True)
 with c6:
@@ -250,12 +257,12 @@ vc1, vc2, vc3, vc4, vc5 = st.columns([2, 1, 1, 1, 1])
 with vc1:
     st.markdown(verdict_card(verdict.verdict, verdict.score, f"{verdict.confidence} confidence"), unsafe_allow_html=True)
 with vc2:
-    tgt_str = f"₹{verdict.price_target:,.2f}" if verdict.price_target else "—"
+    tgt_str = fmt_currency(verdict.price_target) if verdict.price_target else "—"
     upsid_str = f"{verdict.upside_pct:+.1f}%" if verdict.upside_pct is not None else ""
     up_color = GREEN if (verdict.upside_pct or 0) >= 0 else RED
     st.markdown(metric_card("Price Target", tgt_str, upsid_str, up_color), unsafe_allow_html=True)
 with vc3:
-    sl_str = f"₹{verdict.stop_loss:,.2f}" if verdict.stop_loss else "—"
+    sl_str = fmt_currency(verdict.stop_loss) if verdict.stop_loss else "—"
     st.markdown(metric_card("Stop Loss", sl_str, "", RED), unsafe_allow_html=True)
 with vc4:
     st.markdown(f"""<div class="z-card">
@@ -430,7 +437,8 @@ with tabs[2]:
             with st.expander(f"{name} — {conf:.0f}% confidence"):
                 st.markdown(f'<span style="color:{dc}">Direction: {d.title()}</span>', unsafe_allow_html=True)
                 if kl.get("target"):
-                    st.markdown(f'Target: ₹{kl["target"]:,.2f} | Stop: ₹{kl.get("stop",0):,.2f}')
+                    _cs = currency_symbol()
+                    st.markdown(f'Target: {_cs}{kl["target"]:,.2f} | Stop: {_cs}{kl.get("stop",0):,.2f}')
                 if desc:
                     st.markdown(desc)
 
@@ -472,7 +480,7 @@ with tabs[3]:
             else:
                 c = GREEN if close_v > val else RED
                 arr = "↑" if close_v > val else "↓"
-                tbl2 += f'<tr><td style="color:{TEXT_DIM};padding:3px 6px">{lbl}</td><td style="color:{c};font-weight:600">₹{val:,.2f} {arr}</td></tr>'
+                tbl2 += f'<tr><td style="color:{TEXT_DIM};padding:3px 6px">{lbl}</td><td style="color:{c};font-weight:600">{currency_symbol()}{val:,.2f} {arr}</td></tr>'
         tbl2 += "</table>"
         st.markdown(tbl2, unsafe_allow_html=True)
 
@@ -503,12 +511,12 @@ with tabs[4]:
             ftbl1 = f'<table {tbl_style}>'
             for lbl, val in [
                 ("Market Cap", fmt_cr(r.get("market_cap"))),
-                ("Current Price", f"₹{r.get('current_price'):,.2f}" if r.get("current_price") else "—"),
+                ("Current Price", fmt_currency(r.get("current_price")) if r.get("current_price") else "—"),
                 ("P/E Ratio", f"{r.get('pe'):.1f}x" if r.get("pe") else "—"),
                 ("P/B Ratio", f"{r.get('pb'):.2f}x" if r.get("pb") else "—"),
-                ("Book Value/Share", f"₹{r.get('book_value'):.2f}" if r.get("book_value") else "—"),
+                ("Book Value/Share", fmt_currency(r.get("book_value")) if r.get("book_value") else "—"),
                 ("Dividend Yield", f"{r.get('dividend_yield'):.2f}%" if r.get("dividend_yield") else "—"),
-                ("EPS", f"₹{r.get('eps'):.2f}" if r.get("eps") else "—"),
+                ("EPS", fmt_currency(r.get("eps")) if r.get("eps") else "—"),
             ]:
                 ftbl1 += _frow(lbl, val)
             ftbl1 += "</table>"
@@ -749,7 +757,7 @@ with tabs[10]:
         _rsi_v = ca_indicators.get("rsi")
         _adx_v = ca_indicators.get("adx")
         prev1.metric("Candles", f"{len(df_tf) if df_tf is not None else 0}")
-        prev2.metric(f"Close ({ca_timeframe})", f"₹{_last_close:,.2f}")
+        prev2.metric(f"Close ({ca_timeframe})", fmt_currency(_last_close))
         prev3.metric("RSI", f"{_rsi_v:.1f}" if _rsi_v else "—")
         prev4.metric("Patterns", f"{len(ca_patterns)}")
 

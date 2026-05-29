@@ -232,7 +232,8 @@ def color_val(v, pos_green: bool = True) -> str:
         return f'<span style="color:{TEXT_DIM}">—</span>'
     try:
         f = float(v)
-        c = GREEN if (f >= 0 if pos_green else f <= 0) else RED
+        is_positive = f >= 0 if pos_green else f <= 0
+        c = GREEN if is_positive else RED
         return f'<span style="color:{c}">{v}</span>'
     except Exception:
         return f'<span style="color:{TEXT}">{v}</span>'
@@ -286,6 +287,51 @@ def fmt_cr(v) -> str:
         return f"₹{float(v):,.0f} Cr"
     except Exception:
         return str(v)
+
+
+# ── Region-aware formatting helpers ───────────────────────────────────────────
+# These are thin wrappers so pages can import from theme without needing router.
+
+def fmt_currency_region(v, region: str = "IN", decimals: int = 2) -> str:
+    """Format price with region's currency symbol."""
+    sym = "$" if region == "US" else "₹"
+    try:
+        return f"{sym}{float(v):,.{decimals}f}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def fmt_volume_region(v, region: str = "IN") -> str:
+    """Format volume with region-appropriate units (L/Cr vs K/M/B)."""
+    try:
+        f = float(v)
+        if region == "US":
+            if f >= 1e9: return f"{f/1e9:.2f}B"
+            if f >= 1e6: return f"{f/1e6:.2f}M"
+            if f >= 1e3: return f"{f/1e3:.1f}K"
+            return str(int(f))
+        else:
+            if f >= 1e7: return f"{f/1e7:.2f}Cr"
+            if f >= 1e5: return f"{f/1e5:.2f}L"
+            return str(int(f))
+    except (TypeError, ValueError):
+        return "—"
+
+
+def fmt_market_cap_region(v, region: str = "IN") -> str:
+    """Format market cap with region-appropriate scale."""
+    try:
+        f = float(v)
+        if region == "US":
+            if f >= 1e12: return f"${f/1e12:.2f}T"
+            if f >= 1e9:  return f"${f/1e9:.2f}B"
+            if f >= 1e6:  return f"${f/1e6:.2f}M"
+            return f"${f:,.0f}"
+        else:
+            if f >= 1e5:  return f"₹{f/1e5:.2f}L Cr"
+            return f"₹{f:,.0f} Cr"
+    except (TypeError, ValueError):
+        return "—"
 
 
 def metric_card(label: str, value: str, delta: str = "", color: str = TEXT) -> str:

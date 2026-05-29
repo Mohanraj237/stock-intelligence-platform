@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useRegion } from "@/lib/region";
 
 export function UniverseSelect({
   value, onChange, className,
@@ -10,9 +11,10 @@ export function UniverseSelect({
   onChange: (v: string) => void;
   className?: string;
 }) {
+  const { region } = useRegion();
   const { data, isLoading } = useQuery({
-    queryKey: ["universe-list"],
-    queryFn: api.listUniverses,
+    queryKey: ["universe-list", region],
+    queryFn: () => api.listUniverses(region),
     staleTime: 60 * 60_000,
   });
   const items = Object.keys(data ?? {});

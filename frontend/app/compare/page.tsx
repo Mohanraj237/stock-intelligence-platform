@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { api } from "@/lib/api";
@@ -10,16 +10,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { PageHeader } from "@/components/common/page-header";
 import { formatNum, formatPct, trendClass } from "@/lib/utils";
+import { useRegion } from "@/lib/region";
 import type { Fundamentals } from "@/lib/types";
 
+const IN_DEFAULTS = ["RELIANCE", "TCS", "INFY"];
+const US_DEFAULTS = ["AAPL", "MSFT", "GOOGL"];
+
 export default function ComparePage() {
-  const [symbols, setSymbols] = useState<string[]>(["RELIANCE", "TCS", "INFY"]);
+  const { region, isUS } = useRegion();
+  const [symbols, setSymbols] = useState<string[]>(isUS ? US_DEFAULTS : IN_DEFAULTS);
+  useEffect(() => { setSymbols(isUS ? US_DEFAULTS : IN_DEFAULTS); }, [isUS]);
   const [draft, setDraft] = useState("");
 
   const queries = useQueries({
     queries: symbols.map((s) => ({
-      queryKey: ["fund", s],
-      queryFn: () => api.fundamentals(s),
+      queryKey: ["fund", s, region],
+      queryFn: () => api.fundamentals(s, region),
     })),
   });
 

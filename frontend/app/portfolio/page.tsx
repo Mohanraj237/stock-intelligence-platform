@@ -13,10 +13,12 @@ import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import { KPI } from "@/components/common/kpi";
 import { PageHeader } from "@/components/common/page-header";
-import { formatINR, formatNum, formatPct, trendClass } from "@/lib/utils";
+import { formatCurrency, formatNum, formatPct, trendClass } from "@/lib/utils";
+import { useRegion } from "@/lib/region";
 import { toast } from "sonner";
 
 export default function PortfolioPage() {
+  const { region, currencySymbol } = useRegion();
   const qc = useQueryClient();
   const portfolio = useQuery({ queryKey: ["portfolio"], queryFn: api.portfolio });
   const [form, setForm] = useState({ symbol: "", qty: "", buy_price: "", buy_date: "" });
@@ -50,11 +52,11 @@ export default function PortfolioPage() {
       {portfolio.data && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KPI label="Holdings" value={portfolio.data.holdings_count} />
-          <KPI label="Invested" value={formatINR(portfolio.data.total_invested)} />
-          <KPI label="Current value" value={formatINR(portfolio.data.current_value)} />
+          <KPI label="Invested" value={formatCurrency(portfolio.data.total_invested, region)} />
+          <KPI label="Current value" value={formatCurrency(portfolio.data.current_value, region)} />
           <KPI
             label="P&L"
-            value={`${formatINR(portfolio.data.total_pnl)} (${formatPct(portfolio.data.total_pnl_pct, { sign: true })})`}
+            value={`${formatCurrency(portfolio.data.total_pnl, region)} (${formatPct(portfolio.data.total_pnl_pct, { sign: true })})`}
             trend={portfolio.data.total_pnl >= 0 ? "up" : "down"}
           />
         </div>
@@ -80,7 +82,7 @@ export default function PortfolioPage() {
               <Input type="number" min={0} step="0.0001" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label>Buy price (INR)</Label>
+              <Label>Buy price ({currencySymbol})</Label>
               <Input type="number" min={0} step="0.01" value={form.buy_price} onChange={(e) => setForm({ ...form, buy_price: e.target.value })} />
             </div>
             <div className="space-y-1">
@@ -118,12 +120,12 @@ export default function PortfolioPage() {
                     <TR key={r.symbol}>
                       <TD className="font-medium text-white">{r.symbol}</TD>
                       <TD className="text-right tnum">{r.qty}</TD>
-                      <TD className="text-right tnum muted">{formatINR(r.buy_price)}</TD>
-                      <TD className="text-right tnum">{formatINR(r.cmp)}</TD>
+                      <TD className="text-right tnum muted">{formatCurrency(r.buy_price, region)}</TD>
+                      <TD className="text-right tnum">{formatCurrency(r.cmp, region)}</TD>
                       <TD className={`text-right tnum ${trendClass(r.today_change_pct)}`}>{formatPct(r.today_change_pct, { sign: true })}</TD>
-                      <TD className="text-right tnum muted">{formatINR(r.invested)}</TD>
-                      <TD className="text-right tnum">{formatINR(r.current_value)}</TD>
-                      <TD className={`text-right tnum ${trendClass(r.pnl)}`}>{formatINR(r.pnl)}</TD>
+                      <TD className="text-right tnum muted">{formatCurrency(r.invested, region)}</TD>
+                      <TD className="text-right tnum">{formatCurrency(r.current_value, region)}</TD>
+                      <TD className={`text-right tnum ${trendClass(r.pnl)}`}>{formatCurrency(r.pnl, region)}</TD>
                       <TD className={`text-right tnum ${trendClass(r.pnl_pct)}`}>{formatPct(r.pnl_pct, { sign: true })}</TD>
                       <TD className="text-right">
                         <Button variant="ghost" size="icon" aria-label={`Remove ${r.symbol}`} onClick={() => rm.mutate(r.symbol)}>

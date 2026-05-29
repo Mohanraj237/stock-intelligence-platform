@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Sliders } from "lucide-react";
 import { api } from "@/lib/api";
@@ -15,6 +15,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { UniverseSelect } from "@/components/common/universe-select";
 import { PageHeader } from "@/components/common/page-header";
 import type { Rule, RuleCondition, RuleOp } from "@/lib/types";
+import { useRegion } from "@/lib/region";
 import { toast } from "sonner";
 
 const FIELDS = ["close", "rsi", "adx", "macd_hist", "sma50", "sma200", "pe", "pb", "roe", "roce", "debt_to_equity", "promoter_holding", "sales_growth", "profit_growth"];
@@ -35,12 +36,14 @@ export default function RulesPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["rules"] }); toast.success("Deleted"); },
   });
 
-  const [universe, setUniverse] = useState("NIFTY 50");
+  const { region, isUS } = useRegion();
+  const [universe, setUniverse] = useState(isUS ? "S&P 500" : "NIFTY 50");
+  useEffect(() => { setUniverse(isUS ? "S&P 500" : "NIFTY 50"); }, [isUS]);
   const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>([]);
 
   const apply = useMutation({
     mutationFn: () => api.applyRules({
-      universe, max_symbols: 50,
+      universe, max_symbols: 50, region,
       ruleset: {
         rules: (list.data ?? []).filter((r) => selectedRuleIds.includes(r.id ?? "")),
         cross_logic: "AND",
