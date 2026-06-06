@@ -1,13 +1,13 @@
 {
   "symbols": [
+    "TSLA",
+    "ADBE",
+    "DXCM",
+    "MSFT",
+    "PLTR",
+    "AAPL",
     "RELIANCE",
-    "TCS",
-    "INFY",
-    "HDFCBANK",
-    "ICICIBANK",
-    "TATAMOTORS",
-    "WIPRO",
-    "AXISBANK"
+    "TEST_WL_SYMBOL"
   ],
-  "updated_at": "2026-05-10T21:02:38.349530"
+  "updated_at": "2026-05-30T22:49:06.044757"
 }

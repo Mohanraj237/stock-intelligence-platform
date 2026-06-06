@@ -38,16 +38,67 @@ DOW_30 = [
 ]
 
 SP500_FALLBACK = [
+    # Mega-cap / Top 50
     "AAPL", "MSFT", "NVDA", "AMZN", "META", "GOOGL", "GOOG", "BRK-B", "TSLA", "LLY",
     "JPM", "UNH", "XOM", "V", "AVGO", "MA", "JNJ", "PG", "COST", "MRK",
     "HD", "ORCL", "CVX", "ABBV", "BAC", "NFLX", "CRM", "ADBE", "AMD", "TMO",
     "PEP", "CSCO", "WMT", "KO", "ABT", "MCD", "DIS", "ACN", "INTC", "IBM",
     "GE", "CAT", "UBER", "NOW", "INTU", "AMAT", "QCOM", "SPGI", "GS", "LOW",
+    # 51-100
     "AXP", "T", "RTX", "BKNG", "AMGN", "DHR", "SYK", "MS", "TXN", "PFE",
     "C", "NEE", "PANW", "ADP", "COP", "ISRG", "DE", "BMY", "ETN", "SCHW",
     "VRTX", "REGN", "CI", "CB", "BX", "ADI", "LRCX", "MDT", "KLAC", "MMC",
     "CEG", "SHW", "UPS", "PLD", "TJX", "HCA", "ICE", "GILD", "ELV", "NKE",
     "SBUX", "SO", "CME", "WM", "MO", "FI", "DUK", "FCX", "MCO", "WELL",
+    # 101-150
+    "BSX", "APH", "AON", "ITW", "PH", "EMR", "NSC", "WFC", "USB", "TRV",
+    "PCAR", "CARR", "CMG", "SLB", "HLT", "NEM", "BDX", "CTAS", "DELL", "HPQ",
+    "MSI", "PAYX", "AIG", "PSA", "AMT", "EQIX", "CCI", "O", "WELL", "VTR",
+    "EXC", "PEG", "D", "AEP", "EIX", "PPL", "ES", "XEL", "EW", "DXCM",
+    "IDXX", "ILMN", "BIIB", "MRNA", "ZTS", "HOLX", "ALGN", "IQV", "CRL", "MTD",
+    # 151-200
+    "COF", "GPN", "FIS", "PYPL", "FISV", "NDAQ", "MSCI", "FRT", "REG", "SPG",
+    "CBRE", "ARE", "MAA", "EQR", "AVB", "UDR", "ESS", "CPT", "VNO", "BXP",
+    "WBA", "CVS", "MCK", "ABC", "CAH", "HUM", "MOH", "CNC", "WCG", "ELV",
+    "FDX", "UPS", "EXPD", "CHRW", "JBHT", "ODFL", "XPO", "GWW", "FAST", "WW",
+    "LIN", "APD", "PPG", "SHW", "ECL", "FMC", "CF", "MOS", "ALB", "EMN",
+    # 201-250
+    "NUE", "STLD", "RS", "CMC", "X", "CLF", "AA", "FCX", "NEM", "AEM",
+    "HAL", "SLB", "BKR", "DVN", "EOG", "FANG", "OXY", "MPC", "PSX", "VLO",
+    "HES", "APA", "MRO", "PXD", "COP", "XOM", "CVX", "OKE", "WMB", "KMI",
+    "TRGP", "LNG", "EQT", "AR", "RRC", "CNX", "SWN", "CRC", "MGY", "PDCE",
+    "LMT", "RTX", "NOC", "GD", "BA", "HII", "LHX", "TDG", "LDOS", "SAIC",
+    # 251-300
+    "F", "GM", "TM", "HON", "MMM", "GE", "ROK", "ETN", "EMR", "ROP",
+    "GNRC", "OTIS", "CARR", "AME", "PNR", "IR", "IEX", "FLOW", "ARIS", "XYL",
+    "WCN", "RSG", "WM", "CWST", "CLH", "GFL", "US", "AOS", "MWA", "WTRG",
+    "AWK", "CWT", "SJW", "MSEX", "YORW", "ARTNA", "ARTW", "GWRS", "PCRX", "CLW",
+    "K", "GIS", "CPB", "SJM", "HRL", "MKC", "CAG", "HSY", "MDLZ", "MNST",
+    # 301-350
+    "STZ", "BF-B", "TAP", "SAM", "BREW", "WINE", "ABV", "DEO", "HEINY", "BUDX",
+    "PM", "MO", "BTI", "ITC", "VGR", "SWMAY", "UVV", "TPB", "STG", "COKE",
+    "PG", "CL", "CHD", "CLX", "KMB", "ENR", "VSTA", "RCUS", "UNF", "SCI",
+    "LOW", "HD", "ORLY", "AZO", "TSCO", "WSO", "POOL", "FBHS", "MAS", "AWI",
+    "NVR", "PHM", "DHI", "LEN", "MDC", "KBH", "TOL", "MTH", "TMHC", "TPH",
+    # 351-400
+    "JPM", "BAC", "WFC", "C", "GS", "MS", "USB", "PNC", "TFC", "KEY",
+    "CFG", "HBAN", "FITB", "RF", "MTB", "ZION", "CMA", "PBCT", "SIVB", "WAL",
+    "BK", "STT", "NTRS", "SCHW", "RJF", "AMTD", "ETFC", "IBKR", "SF", "LPLA",
+    "MET", "PRU", "AFL", "ALL", "TRV", "CB", "AIG", "HIG", "CINF", "GL",
+    "AMP", "BEN", "IVZ", "TROW", "BLK", "STT", "NTRS", "SEIC", "FHN", "SNV",
+    # 401-450
+    "AMZN", "EBAY", "ETSY", "W", "OSTK", "CHWY", "PRTS", "FLXS", "BURL", "TJX",
+    "ROST", "DLTR", "DG", "BIG", "FND", "RH", "WSM", "BBBY", "PIR", "KIRK",
+    "DIS", "NFLX", "PARA", "WBD", "FOX", "FOXA", "VIAC", "AMCX", "TWX", "T",
+    "CMCSA", "CHTR", "CABO", "LBRDA", "LBRDK", "WOW", "ATUS", "CNSL", "LUMN", "UNIT",
+    "GOOGL", "GOOG", "META", "SNAP", "PINS", "TWTR", "MTCH", "BMBL", "MOMO", "YY",
+    # 451-503
+    "CRM", "NOW", "WDAY", "VEEV", "HUBS", "ZEN", "DDOG", "NET", "SNOW", "MDB",
+    "CRWD", "S", "PANW", "FTNT", "OKTA", "ZS", "CYBR", "SAIL", "QLYS", "TENB",
+    "ADBE", "ANSS", "CDNS", "SNPS", "NXPI", "MRVL", "MCHP", "SWKS", "QRVO", "MPWR",
+    "ENPH", "SEDG", "RUN", "FSLR", "SPWR", "NEP", "BEP", "AES", "CWEN", "NOVA",
+    "NDAQ", "ICE", "CME", "CBOE", "MSCI", "SPGI", "MCO", "FDS", "VRSK", "MKSI",
+    "IRM", "VICI", "GLPI", "MGM", "LVS", "WYNN", "CZR", "RCL", "CCL", "NCLH",
 ]
 
 NASDAQ100_FALLBACK = [
@@ -216,7 +267,9 @@ def get_us_universe(name: str, force_refresh: bool = False) -> dict:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             age = time.time() - data.get("synced_at", 0)
-            if age < 86400:
+            # Retry fallback data every hour; accept live data for 24 hours
+            ttl = 3600 if data.get("fallback") else 86400
+            if age < ttl:
                 return data
         except Exception:
             pass

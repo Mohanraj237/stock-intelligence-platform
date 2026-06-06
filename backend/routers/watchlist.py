@@ -32,22 +32,24 @@ async def get_watchlist() -> List[WatchlistRow]:
 
     async def _enrich(it: dict) -> WatchlistRow:
         sym = it.get("symbol", "")
+        q = None
         try:
             q = await run_sync(get_quote, sym)
         except Exception:
             q = None
-        df = await run_sync(get_ohlcv_history, sym, "6mo", "1d")
+        region = "IN" if q is not None else "US"
+        df = await run_sync(get_ohlcv_history, sym, "6mo", "1d", region)
         ind = await run_sync(compute_indicators_from_ohlcv, df) if df is not None else {}
         return WatchlistRow(
             symbol=sym,
-            company=q.get("companyName") if q else None,
-            last_price=q.get("lastPrice") if q else ind.get("close"),
-            change_pct=q.get("pChange") if q else ind.get("change_pct"),
+            company=q.get("name") if q else None,
+            last_price=q.get("price") if q else ind.get("close"),
+            change_pct=q.get("change_pct") if q else ind.get("change_pct"),
             rsi=ind.get("rsi"),
             macd_hist=ind.get("macd_hist"),
             sma50=ind.get("sma50"),
             sma200=ind.get("sma200"),
-            volume=q.get("totalTradedVolume") if q else None,
+            volume=None,
             added_at=it.get("added_at"),
         )
 

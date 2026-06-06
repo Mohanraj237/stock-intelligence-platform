@@ -363,4 +363,5 @@ export interface AppSettings {
   screener_cache_ttl_hours: number;
   market_cache_ttl_min: number;
   universe_cache_ttl_hours: number;
+  anthropic_api_key?: string | null;
 }

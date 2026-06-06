@@ -97,11 +97,10 @@ _DEFAULT_SETTINGS = {
     "screener_session": "",
 }
 
-_LEGACY_SETTINGS_KEYS = {"anthropic_api_key", "tv_session"}
+_LEGACY_SETTINGS_KEYS = {"tv_session"}
 
 def get_settings() -> dict:
     data = read_json(_SETTINGS_PATH, {})
-    # Drop legacy keys carried over from earlier app versions
     data = {k: v for k, v in data.items() if k not in _LEGACY_SETTINGS_KEYS}
     return {**_DEFAULT_SETTINGS, **data}
 
@@ -109,6 +108,18 @@ def save_settings(settings: dict):
     cleaned = {k: v for k, v in settings.items() if k not in _LEGACY_SETTINGS_KEYS}
     cleaned["updated_at"] = datetime.now().isoformat()
     write_json(_SETTINGS_PATH, cleaned)
+
+
+def get_anthropic_key() -> str:
+    """Return stored Anthropic API key (empty string if not set)."""
+    return get_settings().get("anthropic_api_key", "")
+
+
+def save_anthropic_key(key: str):
+    """Persist Anthropic API key in settings (never logged)."""
+    s = get_settings()
+    s["anthropic_api_key"] = key.strip()
+    save_settings(s)
 
 # ── Rules ──────────────────────────────────────────────────────────────────
 _RULES_PATH = DIRS["config"] / "rules.json"

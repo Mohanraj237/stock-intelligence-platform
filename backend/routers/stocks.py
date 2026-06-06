@@ -125,6 +125,7 @@ async def fundamentals(symbol: str, region: str = Query("IN")) -> Fundamentals:
             q_raw = {}
         q_raw = q_raw or {}
         return Fundamentals(
+            symbol=symbol.upper(),
             name=q_raw.get("name") or symbol.upper(),
             sector=data.get("sector"),
             industry=data.get("industry"),
@@ -155,6 +156,7 @@ async def fundamentals(symbol: str, region: str = Query("IN")) -> Fundamentals:
     derived = data.get("derived_ratios", {}) or {}
     sh = (data.get("shareholding", {}) or {}).get("latest", {})
     return Fundamentals(
+        symbol=symbol.upper(),
         name=data.get("name"),
         sector=data.get("sector"),
         industry=data.get("industry"),

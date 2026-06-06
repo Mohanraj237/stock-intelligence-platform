@@ -151,7 +151,10 @@ def get_universe(name: str, force_refresh: bool = False) -> dict:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             age = time.time() - data.get("synced_at", 0)
-            if age < 86400:
+            # Empty fallback data retries every hour; non-empty live data caches for 24 hours
+            is_fallback = data.get("fallback") or data.get("count", 0) == 0
+            ttl = 3600 if is_fallback else 86400
+            if age < ttl:
                 return data
         except Exception:
             pass

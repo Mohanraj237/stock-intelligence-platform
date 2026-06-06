@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { AppSettings } from "@/lib/types";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -47,6 +48,7 @@ export default function SettingsPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="data">Data Sources</TabsTrigger>
           <TabsTrigger value="cache">Cache</TabsTrigger>
+          <TabsTrigger value="ai">AI Agent</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -104,7 +106,87 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="ai">
+          <AIAgentTab draft={draft} upd={upd} onSave={() => m.mutate(draft)} saving={m.isPending} />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function AIAgentTab({
+  draft,
+  upd,
+  onSave,
+  saving,
+}: {
+  draft: AppSettings;
+  upd: <K extends keyof AppSettings>(k: K, v: AppSettings[K]) => void;
+  onSave: () => void;
+  saving: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  const key = draft.anthropic_api_key ?? "";
+  const hasKey = key.startsWith("sk-ant-");
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Claude AI (Anthropic)</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            Powers the F&amp;O AI Advisor feature. Your key is stored locally and never sent anywhere except Anthropic's API.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Field label="Anthropic API Key">
+            <div className="relative">
+              <Input
+                type={show ? "text" : "password"}
+                placeholder="sk-ant-api03-…"
+                value={key}
+                onChange={(e) => upd("anthropic_api_key", e.target.value)}
+                className="pr-10 font-mono text-sm"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShow((s) => !s)}
+              >
+                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </Field>
+
+          {hasKey && (
+            <p className="text-xs text-green-500">Key configured — Claude AI features are active.</p>
+          )}
+          {key && !hasKey && (
+            <p className="text-xs text-yellow-500">Key doesn't look right — should start with <code>sk-ant-</code>.</p>
+          )}
+          {!key && (
+            <p className="text-xs text-muted-foreground">No key set — AI Advisor will return an error until you add one.</p>
+          )}
+
+          <div className="rounded-md bg-muted/50 p-4 text-sm space-y-2">
+            <p className="font-medium">How to get your API key:</p>
+            <ol className="list-decimal list-inside space-y-1 text-muted-foreground text-xs">
+              <li>Go to <strong>console.anthropic.com</strong> and sign in (or create a free account).</li>
+              <li>Click <strong>API Keys</strong> in the left sidebar.</li>
+              <li>Click <strong>Create Key</strong>, give it a name, then copy the <code>sk-ant-…</code> value.</li>
+              <li>Paste it in the field above and click <strong>Save</strong>.</li>
+            </ol>
+            <p className="text-xs text-muted-foreground pt-1">
+              New accounts get free credits. Usage is billed per token — a typical F&amp;O analysis costs ~$0.01.
+            </p>
+          </div>
+
+          <Button onClick={onSave} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

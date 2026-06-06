@@ -1,5 +1,9 @@
 """Market-wide endpoints: status, indices, sectors, FII/DII, universe quotes."""
 from __future__ import annotations
+import json
+import logging
+import pathlib
+from concurrent.futures import ThreadPoolExecutor, as_completed as _as_completed
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
 
@@ -7,6 +11,91 @@ from backend.deps import run_sync
 from backend.schemas import (
     MarketStatus, IndexPerf, SectorPerf, FIIDIIRow, UniverseRow,
 )
+
+logger = logging.getLogger(__name__)
+
+_YAHOO_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "application/json",
+}
+
+# Resolved once at import time — always correct regardless of CWD
+_UNIVERSE_DIR = pathlib.Path(__file__).parent.parent.parent / "storage" / "universe"
+
+
+def _universe_yf_fallback(name: str) -> list[dict]:
+    """Load stored index JSON and parallel-fetch live prices via Yahoo Finance v8 chart API."""
+    import requests
+
+    json_name = name.replace(" ", "_").upper()
+    json_file = _UNIVERSE_DIR / f"{json_name}.json"
+    if not json_file.exists():
+        logger.warning("Universe fallback: JSON file not found: %s", json_file)
+        return []
+    try:
+        data = json.loads(json_file.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning("Universe fallback: failed to parse JSON: %s", exc)
+        return []
+    symbols: list[str] = data.get("symbols", [])
+    companies: dict = data.get("companies", {})
+    if not symbols:
+        return []
+
+    def _fetch_one(sym: str) -> dict | None:
+        try:
+            resp = requests.get(
+                f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}.NS",
+                params={"interval": "1d", "range": "5d"},
+                headers=_YAHOO_HEADERS,
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                return None
+            result = resp.json()["chart"]["result"][0]
+            meta = result.get("meta", {})
+            q = result["indicators"]["quote"][0]
+
+            price = meta.get("regularMarketPrice")
+            prev = meta.get("previousClose") or meta.get("chartPreviousClose")
+
+            def _last(lst: list) -> float | None:
+                vals = [v for v in (lst or []) if v is not None]
+                return vals[-1] if vals else None
+
+            close = _last(q.get("close", []))
+            pct = None
+            if price and prev and prev > 0:
+                pct = round((price - prev) / prev * 100, 2)
+
+            return {
+                "symbol": sym,
+                "company": companies.get(sym),
+                "price": price or close,
+                "change_pct": pct,
+                "open": _last(q.get("open", [])),
+                "high": _last(q.get("high", [])),
+                "low": _last(q.get("low", [])),
+                "prev_close": prev,
+                "year_high": meta.get("fiftyTwoWeekHigh"),
+                "year_low": meta.get("fiftyTwoWeekLow"),
+                "volume": _last(q.get("volume", [])),
+            }
+        except Exception as exc:
+            logger.debug("Universe fallback fetch failed for %s: %s", sym, exc)
+            return None
+
+    out: list[dict] = []
+    with ThreadPoolExecutor(max_workers=15) as ex:
+        futures = {ex.submit(_fetch_one, s): s for s in symbols}
+        for fut in _as_completed(futures):
+            r = fut.result()
+            if r:
+                out.append(r)
+
+    sym_order = {s: i for i, s in enumerate(symbols)}
+    out.sort(key=lambda d: sym_order.get(d["symbol"], 999))
+    return out
 
 router = APIRouter(prefix="/api/market", tags=["market"])
 
@@ -155,19 +244,23 @@ async def universe_quotes(name: str, region: str = Query("IN")) -> List[Universe
         raw = await run_sync(get_index_quotes, name)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"NSE fetch failed: {e}") from e
+
+    if not raw:
+        raw = await run_sync(_universe_yf_fallback, name)
+
     out = []
     for d in (raw or []):
         out.append(UniverseRow(
             symbol=d.get("symbol") or d.get("Symbol") or "",
             company=d.get("company") or d.get("companyName"),
-            last_price=d.get("lastPrice") or d.get("last_price") or d.get("last"),
+            last_price=d.get("lastPrice") or d.get("last_price") or d.get("last") or d.get("price"),
             change_pct=d.get("pChange") or d.get("change_pct"),
             open=d.get("open"),
             high=d.get("dayHigh") or d.get("high"),
             low=d.get("dayLow") or d.get("low"),
             prev_close=d.get("previousClose") or d.get("prev_close"),
-            week52_high=d.get("yearHigh") or d.get("week52_high"),
-            week52_low=d.get("yearLow") or d.get("week52_low"),
+            week52_high=d.get("yearHigh") or d.get("week52_high") or d.get("year_high"),
+            week52_low=d.get("yearLow") or d.get("week52_low") or d.get("year_low"),
             volume=d.get("totalTradedVolume") or d.get("volume"),
             return_30d=d.get("perChange30d") or d.get("return_30d"),
             return_1y=d.get("perChange365d") or d.get("return_1y"),

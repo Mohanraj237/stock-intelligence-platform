@@ -294,9 +294,13 @@ function FIIDIIPanel({ data, loading }: { data: FIIDIIRow[]; loading: boolean })
 }
 
 function TopMovers() {
+  const { region, isUS } = useRegion();
+  const indexName  = isUS ? "DOW 30"   : "NIFTY 50";
+  const indexLabel = isUS ? "DOW 30"   : "NIFTY 50";
+
   const universe = useQuery({
-    queryKey: ["universe-quotes", "NIFTY 50"],
-    queryFn: () => api.universeQuotes("NIFTY 50"),
+    queryKey: ["universe-quotes", indexName, region],
+    queryFn: () => api.universeQuotes(indexName, region),
     refetchInterval: 60_000,
   });
   if (universe.isLoading) return <div className="h-72 rounded-md bg-[var(--color-surface)] animate-pulse" />;
@@ -306,13 +310,13 @@ function TopMovers() {
   return (
     <div className="grid md:grid-cols-2 gap-4">
       <Card>
-        <CardHeader><CardTitle>Top Gainers · NIFTY 50</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Top Gainers · {indexLabel}</CardTitle></CardHeader>
         <CardContent>
           <MoverList rows={gainers} positive />
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Top Losers · NIFTY 50</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Top Losers · {indexLabel}</CardTitle></CardHeader>
         <CardContent>
           <MoverList rows={losers} positive={false} />
         </CardContent>

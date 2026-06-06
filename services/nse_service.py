@@ -248,31 +248,29 @@ def get_index_performance() -> list[dict]:
 
 
 def get_sector_performance() -> list[dict]:
-    """Fetch performance of all major sector indices."""
-    sector_indices = [
+    """Fetch performance of all major sector indices using /api/allIndices."""
+    data = _api_get("/api/allIndices")
+    if not data:
+        return []
+    sector_names = {
         "NIFTY BANK", "NIFTY IT", "NIFTY PHARMA", "NIFTY AUTO",
         "NIFTY FMCG", "NIFTY METAL", "NIFTY ENERGY", "NIFTY PSU BANK",
         "NIFTY REALTY", "NIFTY MEDIA", "NIFTY INFRA",
-    ]
+    }
     results = []
-    for idx in sector_indices:
-        api_name = NSE_INDEX_MAP.get(idx, idx)
-        data = _api_get("/api/equity-stockIndices", {"index": api_name})
-        if data:
-            meta = data.get("metadata", {})
-            stocks = data.get("data", [])
-            adv = sum(1 for s in stocks if (s.get("pChange") or 0) > 0)
-            dec = sum(1 for s in stocks if (s.get("pChange") or 0) < 0)
-            results.append({
-                "sector": idx.replace("NIFTY ", ""),
-                "index": idx,
-                "last": meta.get("last"),
-                "pct": _safe_pct(meta),
-                "change": meta.get("change"),
-                "advancing": adv,
-                "declining": dec,
-                "stocks": len(stocks),
-            })
+    for item in data.get("data", []):
+        idx_name = item.get("index", "")
+        if idx_name not in sector_names:
+            continue
+        results.append({
+            "sector": idx_name.replace("NIFTY ", ""),
+            "index": idx_name,
+            "last": float(item.get("last") or 0),
+            "pct": float(item.get("percentChange") or 0),
+            "change": float(item.get("variation") or 0),
+            "advancing": int(item.get("advances") or 0),
+            "declining": int(item.get("declines") or 0),
+        })
     return results
 
 

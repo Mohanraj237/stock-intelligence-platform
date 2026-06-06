@@ -38,6 +38,7 @@ class Indicators(BaseModel):
 
 
 class Fundamentals(BaseModel):
+    symbol: Optional[str] = None
     name: Optional[str] = None
     sector: Optional[str] = None
     industry: Optional[str] = None

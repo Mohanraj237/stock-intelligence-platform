@@ -13,3 +13,4 @@ class AppSettings(BaseModel):
     screener_cache_ttl_hours: int = 6
     market_cache_ttl_min: int = 5
     universe_cache_ttl_hours: int = 24
+    anthropic_api_key: Optional[str] = None

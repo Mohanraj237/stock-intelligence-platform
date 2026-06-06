@@ -5,10 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Cached formatter instances — Intl.NumberFormat creation is expensive per-call
+const _fmtCache = new Map<string, Intl.NumberFormat>();
+function _fmt(locale: string, opts: Intl.NumberFormatOptions): Intl.NumberFormat {
+  const key = `${locale}:${JSON.stringify(opts)}`;
+  if (!_fmtCache.has(key)) _fmtCache.set(key, new Intl.NumberFormat(locale, opts));
+  return _fmtCache.get(key)!;
+}
+
 export function formatINR(n: number | null | undefined, opts: { maxFrac?: number } = {}): string {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   const maxFrac = opts.maxFrac ?? 2;
-  return new Intl.NumberFormat("en-IN", {
+  return _fmt("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: maxFrac,
@@ -23,7 +31,7 @@ export function formatCurrency(
 ): string {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   const maxFrac = opts.maxFrac ?? 2;
-  return new Intl.NumberFormat(region === "US" ? "en-US" : "en-IN", {
+  return _fmt(region === "US" ? "en-US" : "en-IN", {
     style: "currency",
     currency: region === "US" ? "USD" : "INR",
     maximumFractionDigits: maxFrac,
@@ -34,7 +42,7 @@ export function formatCurrency(
 export function formatNum(n: number | null | undefined, opts: { maxFrac?: number; compact?: boolean } = {}): string {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   const maxFrac = opts.maxFrac ?? 2;
-  return new Intl.NumberFormat("en-IN", {
+  return _fmt("en-IN", {
     notation: opts.compact ? "compact" : "standard",
     maximumFractionDigits: maxFrac,
   }).format(n);
