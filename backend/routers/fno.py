@@ -75,8 +75,14 @@ async def index_futures() -> list[dict]:
         result = svc.get_index_futures()
         if result:
             return result
-        # Fallback: derive from allIndices (no futures-specific data, basis ≈ 0)
-        data = svc._api_get("/api/allIndices")
+        # Fallback 1: cached futures from last session
+        cached = svc._load_oi_cache("index_futures")
+        if cached:
+            for r in cached:
+                r["cached"] = True
+            return cached
+        # Fallback 2: derive spot prices from cached allIndices
+        data = svc._get_allindices_cached()
         if not data:
             return []
         index_map = [
@@ -185,8 +191,10 @@ async def oi_variations() -> list[dict]:
 @router.get("/symbols")
 async def fno_symbols() -> list[str]:
     svc = _svc()
-    result = await run_sync(svc.get_fno_symbols)
-    return result or []
+    equities = await run_sync(svc.get_fno_symbols) or []
+    # Always surface indices at the top regardless of NSE API availability
+    indices = [s for s in svc.INDEX_SYMBOLS if s not in equities]
+    return indices + equities
 
 
 # ── Scanner (server-side, uses OI spurts — no option chain needed) ───────────
@@ -270,7 +278,7 @@ async def index_prices() -> list[dict]:
     svc = _svc()
 
     def _run():
-        data = svc._api_get("/api/allIndices")
+        data = svc._get_allindices_cached()
         if not data:
             return []
         keep = {"NIFTY 50", "NIFTY BANK", "NIFTY FINANCIAL SERVICES",
@@ -291,6 +299,114 @@ async def index_prices() -> list[dict]:
         return out
 
     return await run_sync(_run) or []
+
+
+# ── F&O Watchlist CRUD (P1-2) ────────────────────────────────────────────────
+
+@router.get("/watchlist")
+async def fno_watchlist_get() -> list[str]:
+    """Return the F&O watchlist symbols (default: NIFTY, BANKNIFTY)."""
+    svc = _svc()
+    return await run_sync(svc.get_fno_watchlist) or ["NIFTY", "BANKNIFTY"]
+
+
+@router.post("/watchlist")
+async def fno_watchlist_add(body: dict) -> dict:
+    """Add a symbol to the F&O watchlist.  Body: {symbol: string}."""
+    svc = _svc()
+    symbol = str(body.get("symbol", "")).upper().strip()
+    if not symbol:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="symbol is required")
+
+    def _run():
+        current = svc.get_fno_watchlist()
+        if symbol not in current:
+            current.append(symbol)
+            svc.save_fno_watchlist(current)
+        return {"ok": True, "watchlist": svc.get_fno_watchlist()}
+
+    return await run_sync(_run)
+
+
+@router.delete("/watchlist/{symbol}")
+async def fno_watchlist_remove(symbol: str) -> dict:
+    """Remove a symbol from the F&O watchlist."""
+    svc = _svc()
+
+    def _run():
+        current = svc.get_fno_watchlist()
+        updated = [s for s in current if s.upper() != symbol.upper()]
+        svc.save_fno_watchlist(updated)
+        return {"ok": True, "watchlist": svc.get_fno_watchlist()}
+
+    return await run_sync(_run)
+
+
+# ── Underlying Quotes (P1-7) ──────────────────────────────────────────────────
+
+@router.get("/underlying-quotes")
+async def underlying_quotes(
+    symbols: str = "",   # comma-separated; empty = current watchlist
+) -> list[dict]:
+    """
+    Live spot LTP + change% for the given symbols (or the F&O watchlist).
+    Uses allIndices for index symbols; F&O securities list for equities.
+    """
+    svc = _svc()
+
+    def _run():
+        import math
+        if symbols.strip():
+            syms = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+        else:
+            syms = svc.get_fno_watchlist()
+
+        rows = svc.get_underlying_quotes(syms)
+        for r in rows:
+            for k, v in r.items():
+                if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                    r[k] = 0.0
+        return rows
+
+    return await run_sync(_run) or []
+
+
+# ── IV Rank (WS-5) ───────────────────────────────────────────────────────────
+
+@router.get("/iv-rank")
+async def iv_rank_endpoint(symbol: str = Query("NIFTY")) -> dict:
+    """
+    True IV Rank for a symbol from stored ATM IV history (52-week high/low).
+    Falls back to a VIX-proxy estimate with sufficient_history=False when
+    fewer than 30 days of history are available.
+    """
+    svc = _svc()
+    return await run_sync(lambda: svc.get_iv_rank(symbol.upper())) or {}
+
+
+@router.post("/iv-snapshot")
+async def iv_snapshot_endpoint() -> dict:
+    """
+    Manually trigger a daily ATM IV snapshot for all watchlist + index symbols.
+    In production this is called once per day at startup. Expose as a POST so
+    tests and admins can trigger it on demand.
+    """
+    svc = _svc()
+    updated = await run_sync(svc.append_daily_iv_snapshot) or []
+    return {"ok": True, "updated": updated, "count": len(updated)}
+
+
+# ── F&O History (PCR + VIX 60-day rolling) ───────────────────────────────────
+
+@router.get("/history")
+async def fno_history() -> dict:
+    """
+    60-day rolling PCR + VIX history.  One entry per calendar day, appended at
+    startup by append_daily_fno_snapshot().  Returns {pcr: [...], vix: [...]}.
+    """
+    svc = _svc()
+    return await run_sync(svc.get_fno_history) or {"pcr": [], "vix": []}
 
 
 # ── Saved Strategies ──────────────────────────────────────────────────────────
@@ -317,68 +433,6 @@ async def remove_strategy(name: str) -> dict:
     svc = _svc()
     await run_sync(lambda: svc.delete_strategy(name))
     return {"ok": True}
-
-
-# ── AI Suggestions ────────────────────────────────────────────────────────────
-
-@router.get("/ai-suggest")
-async def ai_suggest(symbol: str = Query("NIFTY")) -> dict:
-    """Claude AI-powered F&O trade suggestion for the given symbol."""
-
-    def _run():
-        import dataclasses
-        from storage.file_store import get_anthropic_key
-
-        api_key = get_anthropic_key()
-        if not api_key:
-            return {
-                "symbol": symbol.upper(),
-                "error": "No Anthropic API key configured. Add it in Settings → AI Agent.",
-                "primary_trade": None, "secondary_trade": None,
-                "reasoning": [], "market_bias": "NEUTRAL", "key_levels": {},
-                "risk_factors": [], "valid_for_minutes": 0,
-                "analysis_timestamp": "", "context_used": "",
-                "tokens_used": 0, "cost_inr": 0.0,
-            }
-
-        from services import fno_data_service as ds
-        from services import fno_ai_service as ai_svc
-
-        sym = symbol.upper()
-        try:
-            df, meta = ds.get_option_chain(sym)
-            if df is None or df.empty:
-                df, meta = ds.get_synthetic_option_chain(sym)
-        except Exception:
-            df, meta = ds.get_synthetic_option_chain(sym)
-
-        spot = float((meta or {}).get("underlying", 0))
-
-        try:
-            tech = ds.get_technical_data(sym) if hasattr(ds, "get_technical_data") else None
-        except Exception:
-            tech = None
-
-        try:
-            vix_data = ds.get_vix()
-            market_ctx = {"vix": vix_data.get("vix")} if vix_data else None
-        except Exception:
-            market_ctx = None
-
-        suggestion = ai_svc.get_fno_suggestion(
-            symbol=sym,
-            spot_price=spot,
-            option_chain_df=df,
-            technical_data=tech,
-            market_context=market_ctx,
-        )
-
-        d = dataclasses.asdict(suggestion)
-        # raw_json is internal — don't expose it
-        d.pop("raw_json", None)
-        return d
-
-    return await run_sync(_run) or {}
 
 
 # ── Paper Trades ──────────────────────────────────────────────────────────────
@@ -447,6 +501,32 @@ async def close_paper_trade_endpoint(trade_id: str, body: dict) -> dict:
         return {"ok": True, "message": msg}
 
     return await run_sync(_run)
+
+
+@router.post("/paper-trades/refresh-prices")
+async def refresh_paper_trade_prices() -> list[dict]:
+    """
+    Fetch live LTP from NSE option chain for every open paper position and update
+    current_price / pnl_rs / pnl_pct in storage.  Returns a list of update events
+    (one per successfully refreshed trade), including sl_hit / tp_hit flags.
+
+    Falls back gracefully: trades whose LTP cannot be fetched are left unchanged.
+    """
+    from services import paper_trade_service as pts
+    return await run_sync(pts.update_all_prices) or []
+
+
+@router.patch("/paper-trades/{trade_id}/price")
+async def update_paper_trade_price_manual(trade_id: str, body: dict) -> dict:
+    """Manually set current_price for a trade and recalculate P&L."""
+    from services import paper_trade_service as pts
+    current_price = float(body.get("current_price", 0))
+    if current_price <= 0:
+        raise HTTPException(status_code=400, detail="current_price must be > 0")
+    updated = await run_sync(lambda: pts.update_trade_price(trade_id, current_price))
+    if updated is None:
+        raise HTTPException(status_code=404, detail=f"Trade {trade_id} not found")
+    return updated
 
 
 @router.post("/paper-trades/reset")

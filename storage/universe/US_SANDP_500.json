@@ -176,7 +176,6 @@
     "EMR",
     "ETR",
     "EOG",
-    "EPAM",
     "EQT",
     "EFX",
     "EQIX",
@@ -199,6 +198,7 @@
     "FAST",
     "FRT",
     "FDX",
+    "FDXF",
     "FIS",
     "FITB",
     "FSLR",
@@ -681,7 +681,6 @@
     "EMR": "EMR",
     "ETR": "ETR",
     "EOG": "EOG",
-    "EPAM": "EPAM",
     "EQT": "EQT",
     "EFX": "EFX",
     "EQIX": "EQIX",
@@ -704,6 +703,7 @@
     "FAST": "FAST",
     "FRT": "FRT",
     "FDX": "FDX",
+    "FDXF": "FDXF",
     "FIS": "FIS",
     "FITB": "FITB",
     "FSLR": "FSLR",
@@ -1011,7 +1011,7 @@
     "ZTS": "ZTS"
   },
   "count": 503,
-  "synced_at": 1780506833.6617048,
+  "synced_at": 1781339452.2779603,
   "fallback": false,
   "region": "US"
 }

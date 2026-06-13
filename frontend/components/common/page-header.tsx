@@ -2,7 +2,7 @@ export function PageHeader({
   title, subtitle, actions,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;  // widened from string — allows HelpTip + links inline
   actions?: React.ReactNode;
 }) {
   return (

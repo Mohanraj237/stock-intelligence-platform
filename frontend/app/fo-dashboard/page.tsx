@@ -7,9 +7,17 @@ import {
   getIndexFutures,
   getPcr,
   getOiSpurts,
+  getFnoWatchlist,
+  getUnderlyingQuotes,
+  addToFnoWatchlist,
+  removeFromFnoWatchlist,
+  type UnderlyingQuote,
 } from "@/lib/fno-api";
 import type { VixData, IndexFuture, PcrData, OISpurtRow } from "@/lib/fno-types";
 import { daysToExpiry } from "@/lib/fno-types";
+import { useQueryClient } from "@tanstack/react-query";
+import { Plus, X } from "lucide-react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +91,9 @@ const IndexFutureCard = memo(function IndexFutureCard({ fut }: { fut: IndexFutur
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-white">{fut.symbol}</span>
-          {fut.synthetic
+          {fut.cached
+            ? <Badge variant="default" className="text-amber-300 border-amber-600/40 bg-amber-600/10">🕐 close</Badge>
+            : fut.synthetic
             ? <Badge variant="default" className="text-blue-300 border-blue-600/40 bg-blue-600/10">⚗ est.</Badge>
             : dte != null && <Badge variant="default">{dte}d exp</Badge>
           }
@@ -235,6 +245,105 @@ const OiSpurtsTable = memo(function OiSpurtsTable({ rows, loading }: { rows?: OI
   );
 });
 
+// ── Watchlist Quote Strip (P1-2 + P2-7) ─────────────────────────────────────
+
+const WatchlistStrip = memo(function WatchlistStrip() {
+  const qc = useQueryClient();
+  const [addInput, setAddInput] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const watchlistQ = useQuery<string[]>({
+    queryKey: ["fno", "watchlist"],
+    queryFn: getFnoWatchlist,
+    staleTime: 5 * 60_000,
+  });
+
+  const quotesQ = useQuery<UnderlyingQuote[]>({
+    queryKey: ["fno", "watchlist-quotes", watchlistQ.data],
+    queryFn: () => getUnderlyingQuotes(watchlistQ.data),
+    enabled: (watchlistQ.data?.length ?? 0) > 0,
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  });
+
+  const handleAdd = async () => {
+    const sym = addInput.trim().toUpperCase();
+    if (!sym) return;
+    setAdding(true);
+    try {
+      await addToFnoWatchlist(sym);
+      qc.invalidateQueries({ queryKey: ["fno", "watchlist"] });
+      setAddInput("");
+    } finally { setAdding(false); }
+  };
+
+  const handleRemove = async (sym: string) => {
+    await removeFromFnoWatchlist(sym);
+    qc.invalidateQueries({ queryKey: ["fno", "watchlist"] });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>F&amp;O Watchlist</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <input
+              value={addInput}
+              onChange={(e) => setAddInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              placeholder="Add symbol…"
+              className="h-7 px-2 text-xs w-28 rounded border border-[var(--color-border)] bg-[var(--color-surface)] text-white uppercase placeholder:normal-case placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
+            />
+            <button
+              onClick={handleAdd}
+              disabled={adding || !addInput.trim()}
+              className="h-7 px-2 rounded border border-[var(--color-border)] text-xs text-[var(--color-text-muted)] hover:text-white transition-colors disabled:opacity-40"
+            >
+              <Plus className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0 overflow-x-auto">
+        {watchlistQ.isLoading ? (
+          <div className="p-4 flex gap-3">
+            {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12 w-32 rounded" />)}
+          </div>
+        ) : (quotesQ.data ?? []).length === 0 ? (
+          <div className="p-4 text-xs text-[var(--color-text-muted)]">
+            Watchlist is empty — add symbols above, or quotes unavailable outside market hours.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-0 border-t border-[var(--color-border)]">
+            {(quotesQ.data ?? []).map((q) => (
+              <div key={q.symbol}
+                className="group relative flex items-center gap-3 px-4 py-3 border-r border-[var(--color-border)] hover:bg-[var(--color-surface-2)]/60 transition-colors min-w-[140px]">
+                <div>
+                  <div className="text-xs font-semibold text-white">{q.symbol}</div>
+                  <div className="text-sm font-bold tnum text-white mt-0.5">
+                    ₹{q.ltp.toLocaleString("en-IN")}
+                  </div>
+                  <div className={cn("text-[10px] tnum", q.change_pct >= 0 ? "up" : "down")}>
+                    {q.change_pct >= 0 ? "▲" : "▼"} {Math.abs(q.change_pct).toFixed(2)}%
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRemove(q.symbol)}
+                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-text-muted)] hover:text-[var(--color-danger)]"
+                  title={`Remove ${q.symbol}`}
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function FoDashboardPage() {
@@ -354,8 +463,11 @@ export default function FoDashboardPage() {
               <IndexFutureCard key={fut.symbol} fut={fut} />
             ))}
             {(indexFutures.data ?? []).length === 0 && (
-              <div className="col-span-3 py-8 text-center text-sm text-[var(--color-text-muted)]">
-                Index futures data unavailable
+              <div className="col-span-3 py-8 text-center space-y-1">
+                <div className="text-sm text-[var(--color-text-muted)]">Index futures data unavailable</div>
+                <div className="text-xs text-[var(--color-text-muted)] opacity-70">
+                  After-hours cache is empty. Data will be available once the backend runs during market hours (9:15–15:30 IST).
+                </div>
               </div>
             )}
           </div>
@@ -375,6 +487,11 @@ export default function FoDashboardPage() {
       {/* OI Spurts */}
       <section>
         <OiSpurtsTable rows={oiSpurts.data} loading={oiSpurts.isLoading} />
+      </section>
+
+      {/* F&O Watchlist Quote Strip (P1-2 + P2-7) */}
+      <section>
+        <WatchlistStrip />
       </section>
     </div>
   );

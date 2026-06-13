@@ -11,20 +11,17 @@ import type {
   OIBuildupRow,
   VixData,
   PcrData,
-  GreeksRow,
-  FoScanRow,
-  FoScanType,
   SavedStrategy,
   StrategyLeg,
-  FNOSuggestion,
   PaperTrade,
   PortfolioSummary,
+  FnoHistory,
+  PriceRefreshResult,
 } from "@/lib/fno-types";
 
 import {
   calculateGreeks,
   calculateMaxPain,
-  calculateGex,
 } from "@/lib/greeks";
 
 import { daysToExpiry, getLotSize, INDEX_SYMBOLS } from "@/lib/fno-types";
@@ -83,6 +80,20 @@ async function faPost<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`POST ${path} → ${res.status}${text ? `: ${text.slice(0, 200)}` : ""}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function faPatch<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${FASTAPI_DIRECT}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`PATCH ${path} → ${res.status}${text ? `: ${text.slice(0, 200)}` : ""}`);
   }
   return res.json() as Promise<T>;
 }
@@ -210,63 +221,6 @@ export function getMaxPain(chain: OptionChainResponse, expiry?: string): number 
   return calculateMaxPain(rows);
 }
 
-// ── GEX ───────────────────────────────────────────────────────────────────────
-
-export function getGex(chain: OptionChainResponse, symbol: string, expiry?: string) {
-  const spot = chain.meta.underlying;
-  const rows = chain.rows
-    .filter((r) => !expiry || r.expiry === expiry)
-    .map((r) => ({
-      strike: r.strike,
-      gex_cr: 0,
-      CE_oi: r.CE.oi ?? 0,
-      PE_oi: r.PE.oi ?? 0,
-      CE_iv: r.CE.iv ?? 15,
-      PE_iv: r.PE.iv ?? 15,
-    }));
-  const dte = expiry ? daysToExpiry(expiry) : 30;
-  return calculateGex(rows, spot, dte, getLotSize(symbol));
-}
-
-// ── Greeks table rows ─────────────────────────────────────────────────────────
-
-export function buildGreeksRows(
-  chain: OptionChainResponse,
-  symbol: string,
-  expiry?: string
-): GreeksRow[] {
-  const spot = chain.meta.underlying;
-  const dte  = expiry ? daysToExpiry(expiry) : 30;
-  const T    = Math.max(dte, 1) / 365;
-
-  return chain.rows
-    .filter((r) => !expiry || r.expiry === expiry)
-    .map((row) => {
-      const ceIv = row.CE.iv ? (row.CE.iv > 1 ? row.CE.iv / 100 : row.CE.iv) : 0.15;
-      const peIv = row.PE.iv ? (row.PE.iv > 1 ? row.PE.iv / 100 : row.PE.iv) : 0.15;
-      const ceG  = calculateGreeks(spot, row.strike, T, ceIv, "CE");
-      const peG  = calculateGreeks(spot, row.strike, T, peIv, "PE");
-
-      return {
-        strike:   row.strike,
-        CE_iv:    row.CE.iv ?? 0,
-        CE_ltp:   row.CE.ltp ?? 0,
-        CE_oi:    row.CE.oi ?? 0,
-        CE_delta: ceG.delta,
-        CE_gamma: ceG.gamma,
-        CE_theta: ceG.theta,
-        CE_vega:  ceG.vega,
-        PE_delta: peG.delta,
-        PE_gamma: peG.gamma,
-        PE_theta: peG.theta,
-        PE_vega:  peG.vega,
-        PE_ltp:   row.PE.ltp ?? 0,
-        PE_oi:    row.PE.oi ?? 0,
-        PE_iv:    row.PE.iv ?? 0,
-      };
-    });
-}
-
 // ── Index Futures ─────────────────────────────────────────────────────────────
 
 export async function getIndexFutures(): Promise<IndexFuture[]> {
@@ -368,12 +322,6 @@ export function getAllSymbols(): string[] {
   return [...INDEX_SYMBOLS];
 }
 
-// ── AI Suggestions ────────────────────────────────────────────────────────────
-
-export async function getFnoAiSuggestion(symbol: string): Promise<FNOSuggestion> {
-  return faGet<FNOSuggestion>("/api/fno/ai-suggest", { symbol });
-}
-
 // ── Paper Trades ──────────────────────────────────────────────────────────────
 
 export async function getOpenTrades(): Promise<PaperTrade[]> {
@@ -416,6 +364,91 @@ export async function resetPortfolio(initialCapital = 500_000): Promise<{ ok: bo
   return faPost("/api/fno/paper-trades/reset", { initial_capital: initialCapital });
 }
 
+/**
+ * Fetch live/cached LTP from NSE option chain for all open positions.
+ * Returns one result per trade — check `price_source` and `error` fields.
+ * Throws on network/server failure so the caller can surface the error.
+ */
+export async function refreshPaperTradePrices(): Promise<PriceRefreshResult[]> {
+  return faPost<PriceRefreshResult[]>("/api/fno/paper-trades/refresh-prices", {});
+}
+
+/** Manually set the current market price for a single open trade and recompute P&L. */
+export async function updatePaperTradeLtp(tradeId: string, currentPrice: number): Promise<PaperTrade> {
+  return faPatch<PaperTrade>(`/api/fno/paper-trades/${tradeId}/price`, { current_price: currentPrice });
+}
+
+// ── F&O Watchlist (P1-2) ──────────────────────────────────────────────────────
+
+export async function getFnoWatchlist(): Promise<string[]> {
+  try { return await apiGet<string[]>("/api/fno/watchlist"); }
+  catch { return ["NIFTY", "BANKNIFTY"]; }
+}
+
+export async function addToFnoWatchlist(symbol: string): Promise<{ ok: boolean; watchlist: string[] }> {
+  return apiPost("/api/fno/watchlist", { symbol });
+}
+
+export async function removeFromFnoWatchlist(symbol: string): Promise<{ ok: boolean; watchlist: string[] }> {
+  const base = typeof window === "undefined"
+    ? (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000") : "";
+  const res = await fetch(`${base}/api/fno/watchlist/${encodeURIComponent(symbol)}`, {
+    method: "DELETE", cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`DELETE watchlist/${symbol} → ${res.status}`);
+  return res.json();
+}
+
+// ── Underlying Quotes (P1-7) ──────────────────────────────────────────────────
+
+export interface UnderlyingQuote {
+  symbol: string;
+  ltp: number;
+  change: number;
+  change_pct: number;
+  lot_size: number;
+}
+
+/** Live spot LTP + change% for given symbols (or watchlist when empty). */
+export async function getUnderlyingQuotes(symbols?: string[]): Promise<UnderlyingQuote[]> {
+  const qs = symbols?.length ? `?symbols=${symbols.join(",")}` : "";
+  try { return await apiGet<UnderlyingQuote[]>(`/api/fno/underlying-quotes${qs}`); }
+  catch { return []; }
+}
+
+// ── OI Variations (P1-3) ──────────────────────────────────────────────────────
+
+export interface OIVariationRow {
+  symbol?: string;
+  latestOI?: number;
+  changeInOI?: number;
+  underlyingValue?: number;
+  pricePChange?: number;
+  _category?: string;
+  [key: string]: unknown;
+}
+
+/** NSE's own long/short buildup classification (richer but sometimes empty). */
+export async function getOiVariations(): Promise<OIVariationRow[]> {
+  try { return await apiGet<OIVariationRow[]>("/api/fno/oi-variations"); }
+  catch { return []; }
+}
+
+// ── F&O History ───────────────────────────────────────────────────────────────
+
+/**
+ * 60-day rolling PCR + VIX history (one entry per calendar day).
+ * Returns { pcr: [...], vix: [...] } with up to 60 entries each.
+ * Gracefully returns empty arrays if no history is available yet.
+ */
+export async function getFnoHistory(): Promise<FnoHistory> {
+  try {
+    return await apiGet<FnoHistory>("/api/fno/history");
+  } catch {
+    return { pcr: [], vix: [] };
+  }
+}
+
 // ── Saved Strategies (server-side via FastAPI) ────────────────────────────────
 
 export async function getSavedStrategies(): Promise<SavedStrategy[]> {
@@ -439,77 +472,3 @@ export async function deleteStrategy(name: string): Promise<void> {
   });
 }
 
-// ── F&O Scanner (client-side, computed from option chain data) ────────────────
-
-export async function runFoScan(
-  scanType: FoScanType,
-  symbols: string[],
-  maxWorkers = 4
-): Promise<FoScanRow[]> {
-  const results: FoScanRow[] = [];
-
-  for (let i = 0; i < symbols.length; i += maxWorkers) {
-    const chunk = symbols.slice(i, i + maxWorkers);
-    const settled = await Promise.allSettled(chunk.map((sym) => _scanSymbol(sym, scanType)));
-    for (const s of settled) {
-      if (s.status === "fulfilled" && s.value) results.push(s.value);
-    }
-  }
-
-  return results.sort((a, b) => b.strength - a.strength);
-}
-
-async function _scanSymbol(symbol: string, scanType: FoScanType): Promise<FoScanRow | null> {
-  try {
-    const chain = await getOptionChain(symbol);
-    const spot  = chain.meta.underlying;
-    const exp   = chain.meta.expiry_dates[0] ?? "";
-    const dte   = daysToExpiry(exp);
-    const rows  = chain.rows.filter((r) => r.expiry === exp);
-
-    switch (scanType) {
-      case "High OI Buildup": {
-        const totalOi = rows.reduce((a, r) => a + (r.CE.oi ?? 0) + (r.PE.oi ?? 0), 0);
-        if (totalOi < 100_000) return null;
-        return { symbol, signal_type: scanType, metric: `OI ${(totalOi / 1e5).toFixed(1)}L`, direction: "Neutral", strength: Math.min(99, Math.round(totalOi / 1e6)), expiry: exp, dte };
-      }
-      case "PCR Extremes": {
-        const ceOi = rows.reduce((a, r) => a + (r.CE.oi ?? 0), 0);
-        const peOi = rows.reduce((a, r) => a + (r.PE.oi ?? 0), 0);
-        if (!ceOi) return null;
-        const pcr = peOi / ceOi;
-        const direction = pcr > 1.2 ? "Bullish" : pcr < 0.8 ? "Bearish" : "Neutral";
-        if (direction === "Neutral") return null;
-        return { symbol, signal_type: scanType, metric: `PCR ${pcr.toFixed(2)}`, direction, strength: Math.min(99, Math.round(Math.abs(pcr - 1) * 100)), expiry: exp, dte };
-      }
-      case "Max Pain Divergence": {
-        const mp   = calculateMaxPain(rows.map((r) => ({ strike: r.strike, CE_oi: r.CE.oi ?? 0, PE_oi: r.PE.oi ?? 0 })));
-        const diff = Math.abs(spot - mp);
-        const pct  = spot ? (diff / spot) * 100 : 0;
-        if (pct < 0.5) return null;
-        return { symbol, signal_type: scanType, metric: `MaxPain ₹${mp.toFixed(0)} (${pct.toFixed(1)}% away)`, direction: spot > mp ? "Bearish" : "Bullish", strength: Math.min(99, Math.round(pct * 10)), expiry: exp, dte };
-      }
-      case "Unusual Volume": {
-        const ceVol = rows.reduce((a, r) => a + (r.CE.vol ?? 0), 0);
-        const peVol = rows.reduce((a, r) => a + (r.PE.vol ?? 0), 0);
-        const totalVol = ceVol + peVol;
-        const ceOi = rows.reduce((a, r) => a + (r.CE.oi ?? 0), 0);
-        if (!ceOi || totalVol < 1000) return null;
-        const ratio = totalVol / ceOi;
-        if (ratio < 0.3) return null;
-        return { symbol, signal_type: scanType, metric: `Vol/OI ${ratio.toFixed(2)}`, direction: ceVol > peVol ? "Bullish" : "Bearish", strength: Math.min(99, Math.round(ratio * 50)), expiry: exp, dte };
-      }
-      case "IV Crush Candidates": {
-        const ivs = rows.flatMap((r) => [r.CE.iv ?? 0, r.PE.iv ?? 0]).filter(Boolean);
-        if (!ivs.length) return null;
-        const avgIv = ivs.reduce((a, v) => a + v, 0) / ivs.length;
-        if (avgIv < 20) return null;
-        return { symbol, signal_type: scanType, metric: `Avg IV ${avgIv.toFixed(1)}%`, direction: "Neutral", strength: Math.min(99, Math.round(avgIv)), expiry: exp, dte };
-      }
-      default:
-        return null;
-    }
-  } catch {
-    return null;
-  }
-}

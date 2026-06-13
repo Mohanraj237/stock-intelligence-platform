@@ -44,7 +44,7 @@ from backend.config import get_settings
 from backend.routers import (
     market, stocks, patterns, scans, news, earnings, positions,
     backtests, portfolio, watchlist, rules, universe, settings as settings_router,
-    reports, fno, options_scanner,
+    reports, fno, live_scanner,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_router.router)
     app.include_router(reports.router)
     app.include_router(fno.router)
-    app.include_router(options_scanner.router)
+    app.include_router(live_scanner.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> JSONResponse:

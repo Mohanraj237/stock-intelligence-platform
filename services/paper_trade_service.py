@@ -226,74 +226,143 @@ def close_trade(
     return True, f"Closed {trade_id}: P&L {sign}₹{pnl:,.0f} ({sign}{pnl_pct:.1f}%) — {exit_reason}"
 
 
-def update_trade_price(trade_id: str, current_price: float) -> dict | None:
-    """Update current_price and pnl for a single trade. Returns updated trade dict or None."""
+def update_trade_price(trade_id: str, current_price: float, price_source: str = "manual") -> dict | None:
+    """
+    Update current_price, pnl_rs, pnl_pct, and price_source for a single open trade.
+    price_source: "live" | "cached" | "manual"
+    Returns updated trade dict or None if trade not found.
+    """
     with _LOCK:
         data = _load()
         for trade in data.get("trades", []):
             if trade.get("trade_id") == trade_id:
-                action = trade.get("action", "BUY")
-                entry = float(trade.get("entry_price", 0))
-                lots = int(trade.get("lots", 1))
-                lot_sz = int(trade.get("lot_size", 1))
-                margin = float(trade.get("margin_used", 0))
-                multiplier = 1 if action == "BUY" else -1
-                pnl = round(multiplier * (current_price - entry) * lots * lot_sz, 2)
-                pnl_pct = round(pnl / margin * 100, 2) if margin > 0 else 0
+                action    = trade.get("action", "BUY")
+                entry     = float(trade.get("entry_price", 0))
+                lots      = int(trade.get("lots", 1))
+                lot_sz    = int(trade.get("lot_size", 1))
+                margin    = float(trade.get("margin_used", 0))
+                mult      = 1 if action == "BUY" else -1
+                pnl       = round(mult * (current_price - entry) * lots * lot_sz, 2)
+                pnl_pct   = round(pnl / margin * 100, 2) if margin > 0 else 0.0
                 trade["current_price"] = current_price
-                trade["pnl_rs"] = pnl
-                trade["pnl_pct"] = pnl_pct
+                trade["pnl_rs"]        = pnl
+                trade["pnl_pct"]       = pnl_pct
+                trade["price_source"]  = price_source
                 _save(data)
                 return dict(trade)
     return None
 
 
+def _normalize_expiry(exp: str) -> str:
+    """Normalize any expiry string to 'DD-Mon-YYYY' for robust comparison."""
+    exp = exp.strip()
+    for fmt in ("%d-%b-%Y", "%d %b %Y", "%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(exp, fmt).strftime("%d-%b-%Y")
+        except ValueError:
+            pass
+    return exp.lower()  # last-resort: lower-cased original
+
+
+def _ltp_from_chain(sym: str, strike: float, expiry: str, instr: str) -> tuple[float | None, str]:
+    """
+    Resolve a single option LTP using the same get_option_chain() path the scanner uses.
+    This path is: live NSE → disk cache (last-traded prices) → synthetic BS.
+    Synthetic prices are REJECTED because they are model estimates, not traded prices.
+
+    Returns (ltp, source) where source is "live" | "cached" | "none".
+    """
+    from services.fno_data_service import get_option_chain
+    try:
+        df, meta = get_option_chain(sym)
+    except Exception as exc:
+        logger.warning("get_option_chain failed for %s: %s", sym, exc)
+        return None, "none"
+
+    if df is None or df.empty:
+        return None, "none"
+
+    # Reject synthetic (Black-Scholes) prices — they are not real traded prices.
+    if meta.get("synthetic"):
+        logger.debug("Skipping synthetic chain for %s — not real market data", sym)
+        return None, "none"
+
+    col = f"{instr}_ltp"
+    if col not in df.columns:
+        logger.warning("Column %s missing in chain for %s", col, sym)
+        return None, "none"
+
+    expiry_norm = _normalize_expiry(expiry)
+    df_match = df[
+        df["expiry"].apply(_normalize_expiry).eq(expiry_norm)
+        & df["strike"].apply(lambda s: abs(float(s) - strike) < 0.5)
+    ]
+
+    if df_match.empty:
+        logger.info("No chain row for %s %.1f %s %s", sym, strike, instr, expiry)
+        return None, "none"
+
+    ltp = float(df_match.iloc[0][col])
+    if ltp <= 0:
+        logger.info("Chain row found for %s %.1f %s but lastPrice=0", sym, strike, instr)
+        return None, "none"
+
+    source = "cached" if meta.get("cached") else "live"
+    return ltp, source
+
+
 def update_all_prices() -> list[dict]:
     """
-    Fetch current LTP for each open trade from NSE and update P&L.
-    Returns list of (trade_id, current_price, pnl_rs, sl_hit, tp_hit) dicts.
-    """
-    from services.fno_data_service import _api_get
-    results = []
-    open_trades = get_open_trades()
+    Fetch current LTP for every open trade using the option chain path (same as scanner).
+    Fallback order: live NSE → disk cache (real last-close) → no update.
+    Synthetic Black-Scholes prices are explicitly excluded.
 
-    for trade in open_trades:
-        sym = trade.get("symbol", "")
+    Returns one dict per trade:
+      - on success: trade_id, symbol, current_price, pnl_rs, price_source, sl_hit, tp_hit
+      - on failure: trade_id, symbol, current_price=None, error=<reason>, price_source="none"
+    """
+    results = []
+    for trade in get_open_trades():
+        sym    = trade.get("symbol", "")
         strike = float(trade.get("strike", 0))
         expiry = trade.get("expiry", "")
-        instr = trade.get("instrument_type", "CE")
-        try:
-            path = "/api/option-chain-equities"
-            from services.fno_data_service import INDEX_SYMBOLS
-            if sym in INDEX_SYMBOLS:
-                path = "/api/option-chain-indices"
-            raw = _api_get(path, {"symbol": sym})
-            ltp = None
-            if raw:
-                for entry in raw.get("records", {}).get("data", []):
-                    if (abs(float(entry.get("strikePrice", 0)) - strike) < 0.01
-                            and entry.get("expiryDate", "") == expiry):
-                        side_data = entry.get(instr, {})
-                        ltp = float(side_data.get("lastPrice", 0))
-                        break
-            if ltp and ltp > 0:
-                updated = update_trade_price(trade["trade_id"], ltp)
-                if updated:
-                    sl = float(trade.get("stop_loss", 0))
-                    tp = float(trade.get("target_price", 0))
-                    action = trade.get("action", "BUY")
-                    sl_hit = (action == "BUY" and ltp <= sl) or (action == "SELL" and ltp >= sl)
-                    tp_hit = (action == "BUY" and ltp >= tp) or (action == "SELL" and ltp <= tp)
-                    results.append({
-                        "trade_id":     trade["trade_id"],
-                        "symbol":       sym,
-                        "current_price": ltp,
-                        "pnl_rs":       updated.get("pnl_rs", 0),
-                        "sl_hit":       sl_hit,
-                        "tp_hit":       tp_hit,
-                    })
-        except Exception as exc:
-            logger.warning("Price update failed for %s %s: %s", sym, trade["trade_id"], exc)
+        instr  = trade.get("instrument_type", "CE")
+
+        ltp, source = _ltp_from_chain(sym, strike, expiry, instr)
+
+        if ltp is not None and ltp > 0:
+            updated = update_trade_price(trade["trade_id"], ltp, price_source=source)
+            if updated:
+                sl     = float(trade.get("stop_loss", 0))
+                tp     = float(trade.get("target_price", 0))
+                action = trade.get("action", "BUY")
+                sl_hit = (action == "BUY" and ltp <= sl) or (action == "SELL" and ltp >= sl)
+                tp_hit = (action == "BUY" and ltp >= tp) or (action == "SELL" and ltp <= tp)
+                results.append({
+                    "trade_id":      trade["trade_id"],
+                    "symbol":        sym,
+                    "current_price": ltp,
+                    "pnl_rs":        updated["pnl_rs"],
+                    "price_source":  source,
+                    "sl_hit":        sl_hit,
+                    "tp_hit":        tp_hit,
+                })
+                logger.info("Price updated: %s %.1f %s → %.2f (%s)", sym, strike, instr, ltp, source)
+        else:
+            reason = "NSE blocked and no disk cache" if source == "none" else "lastPrice=0"
+            logger.warning("No real LTP for %s %.1f %s %s — %s", sym, strike, instr, trade["trade_id"], reason)
+            results.append({
+                "trade_id":      trade["trade_id"],
+                "symbol":        sym,
+                "current_price": None,
+                "pnl_rs":        None,
+                "price_source":  "none",
+                "sl_hit":        False,
+                "tp_hit":        False,
+                "error":         f"No real market price available for {sym} {strike:.0f} {instr} ({expiry}). "
+                                 f"NSE API is unavailable and no cached chain exists. "
+                                 f"Use 'set price' to enter the current price manually.",
+            })
     return results
 
 

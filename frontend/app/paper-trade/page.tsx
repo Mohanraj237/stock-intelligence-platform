@@ -11,8 +11,10 @@ import {
   closePaperTrade,
   resetPortfolio,
   getFnoSymbols,
+  refreshPaperTradePrices,
+  updatePaperTradeLtp,
 } from "@/lib/fno-api";
-import type { PaperTrade, PortfolioSummary } from "@/lib/fno-types";
+import type { PaperTrade, PortfolioSummary, PriceRefreshResult } from "@/lib/fno-types";
 import { getLotSize, INDEX_SYMBOLS } from "@/lib/fno-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +33,90 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { FlaskConical, Trash2 } from "lucide-react";
+import { FlaskConical, Trash2, RefreshCw, X, Target, ShieldAlert } from "lucide-react";
+import { getMarketInfo } from "@/lib/market-hours";
+
+// ── Exit Price Dialog (P2-8) ──────────────────────────────────────────────────
+
+interface ExitDialogState {
+  tradeId: string;
+  tradeDesc: string;  // human-readable label for the dialog title
+  suggestedPrice: number;
+}
+
+function ExitDialog({
+  state,
+  onConfirm,
+  onCancel,
+}: {
+  state: ExitDialogState;
+  onConfirm: (tradeId: string, exitPrice: number) => void;
+  onCancel: () => void;
+}) {
+  const [price, setPrice] = useState(state.suggestedPrice.toString());
+  const parsed = parseFloat(price);
+  const valid  = !isNaN(parsed) && parsed > 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-80 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-white">Close Position</h3>
+            <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{state.tradeDesc}</p>
+          </div>
+          <button onClick={onCancel} className="text-[var(--color-text-muted)] hover:text-white transition-colors">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div>
+          <label className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] block mb-1">
+            Exit Price (₹)
+            {state.suggestedPrice > 0 && state.suggestedPrice !== parsed && (
+              <span className="ml-2 normal-case text-[var(--color-text-muted)]">
+                suggested: ₹{state.suggestedPrice.toFixed(2)}
+              </span>
+            )}
+          </label>
+          <input
+            type="number"
+            step="0.05"
+            min="0.05"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            autoFocus
+            className="h-9 w-full px-3 rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] text-sm text-white tnum focus:outline-none focus:border-[var(--color-primary)]"
+          />
+          {price && !valid && (
+            <p className="mt-1 text-[11px] text-[var(--color-danger)]">Enter a valid price greater than 0</p>
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() => valid && onConfirm(state.tradeId, parsed)}
+            disabled={!valid}
+            className={cn(
+              "flex-1 py-2 rounded text-sm font-medium transition-colors",
+              valid
+                ? "bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/90 text-white"
+                : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)] cursor-not-allowed",
+            )}
+          >
+            Confirm Close
+          </button>
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2 rounded text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -120,50 +205,167 @@ function PortfolioHeader({ data, loading }: { data?: PortfolioSummary; loading: 
 
 function TradeRow({
   trade,
-  onClose,
+  onRequestClose,
+  onUpdateLtp,
   closing,
 }: {
   trade: PaperTrade;
-  onClose: (id: string) => void;
+  onRequestClose: (id: string, price: number, desc: string) => void;
+  onUpdateLtp: (id: string, price: number) => void;
   closing: string | null;
 }) {
+  const [editingLtp, setEditingLtp] = useState(false);
+  const [ltpInput, setLtpInput] = useState("");
+
   const pnl = trade.pnl_rs ?? 0;
   const isClosing = closing === trade.trade_id;
+  const src = trade.price_source;
+  // Derive label and colour from price_source; fall back to comparing prices for legacy trades
+  const hasRealPrice = src === "live" || src === "cached" || src === "manual"
+    || (src === undefined && trade.current_price !== trade.entry_price);
+  const srcLabel = src === "live" ? "live"
+    : src === "cached" ? "last close"
+    : src === "manual" ? "manual"
+    : hasRealPrice ? "set"
+    : "set price ✎";
+  const srcColor = src === "live" ? "text-[var(--color-success)]"
+    : src === "cached" ? "text-amber-400"
+    : src === "manual" ? "text-[var(--color-primary)]"
+    : "text-[var(--color-text-muted)]";
+  const desc = `${trade.action} ${trade.lots}× ${trade.symbol} ${trade.strike > 0 ? trade.strike + " " : ""}${trade.instrument_type}`;
+
+  const startEditLtp = () => {
+    setLtpInput(trade.current_price.toString());
+    setEditingLtp(true);
+  };
+  const commitLtp = () => {
+    const v = parseFloat(ltpInput);
+    if (!isNaN(v) && v > 0) onUpdateLtp(trade.trade_id, v);
+    setEditingLtp(false);
+  };
+  const onLtpKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commitLtp();
+    if (e.key === "Escape") setEditingLtp(false);
+  };
+
+  // Time since entry
+  const entryDate = trade.entry_time ? new Date(trade.entry_time) : null;
+  const minutesAgo = entryDate
+    ? Math.round((Date.now() - entryDate.getTime()) / 60_000)
+    : null;
+  const timeLabel = minutesAgo === null ? ""
+    : minutesAgo < 60 ? `${minutesAgo}m ago`
+    : minutesAgo < 1440 ? `${Math.floor(minutesAgo / 60)}h ago`
+    : `${Math.floor(minutesAgo / 1440)}d ago`;
 
   return (
-    <tr className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-2)]/50 text-xs tnum">
+    <tr className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-2)]/50 text-xs tnum group">
+      {/* Symbol + instrument */}
       <td className="px-3 py-2.5">
-        <div className="font-medium text-white">{trade.symbol}</div>
+        <div className="font-semibold text-white">{trade.symbol}</div>
         <div className="text-[var(--color-text-muted)]">
           {trade.strike > 0 ? `${trade.strike} ` : ""}{trade.instrument_type}
         </div>
+        {timeLabel && <div className="text-[9px] text-[var(--color-text-muted)]/60">{timeLabel}</div>}
       </td>
+
+      {/* Side */}
       <td className="px-3 py-2.5">
         <Badge variant={trade.action === "BUY" ? "success" : "danger"}>{trade.action}</Badge>
       </td>
-      <td className="px-3 py-2.5 text-[var(--color-text-muted)]">{trade.expiry}</td>
+
+      {/* Expiry */}
+      <td className="px-3 py-2.5 text-[var(--color-text-muted)]">{trade.expiry || "—"}</td>
+
+      {/* Qty */}
       <td className="px-3 py-2.5 text-right text-white">{trade.lots}×{trade.lot_size}</td>
+
+      {/* Entry */}
       <td className="px-3 py-2.5 text-right text-white">{formatINR(trade.entry_price)}</td>
-      <td className="px-3 py-2.5 text-right text-white">{formatINR(trade.current_price)}</td>
-      <td className={cn("px-3 py-2.5 text-right font-medium", pnlClass(pnl))}>
-        {pnl >= 0 ? "+" : ""}{formatINR(pnl)}
-        <div className="text-[10px]">{trade.pnl_pct >= 0 ? "+" : ""}{trade.pnl_pct?.toFixed(1)}%</div>
-      </td>
-      <td className="px-3 py-2.5 text-right text-[var(--color-text-muted)]">
-        <div className="up">{formatINR(trade.target_price)}</div>
-        <div className="down">{formatINR(trade.stop_loss)}</div>
-      </td>
+
+      {/* LTP — click to edit manually */}
       <td className="px-3 py-2.5 text-right">
+        {editingLtp ? (
+          <input
+            type="number"
+            step="0.05"
+            min="0.01"
+            value={ltpInput}
+            onChange={(e) => setLtpInput(e.target.value)}
+            onBlur={commitLtp}
+            onKeyDown={onLtpKey}
+            autoFocus
+            className="w-20 h-6 px-1.5 rounded border border-[var(--color-primary)] bg-[var(--color-surface-2)] text-right text-xs text-white focus:outline-none"
+          />
+        ) : (
+          <button
+            onClick={startEditLtp}
+            title={hasRealPrice ? "Click to override price" : "No market price — click to enter manually"}
+            className="group/ltp text-right"
+          >
+            <div className={cn("font-medium", hasRealPrice ? "text-white" : "text-[var(--color-text-muted)]")}>
+              {formatINR(trade.current_price)}
+            </div>
+            <div className={cn("text-[9px] group-hover/ltp:text-[var(--color-primary)] transition-colors", srcColor)}>
+              {srcLabel}
+            </div>
+          </button>
+        )}
+      </td>
+
+      {/* P&L */}
+      <td className={cn("px-3 py-2.5 text-right font-semibold", pnlClass(pnl))}>
+        {pnl >= 0 ? "+" : ""}{formatINR(pnl)}
+        <div className="text-[10px] font-normal">
+          {trade.pnl_pct >= 0 ? "+" : ""}{trade.pnl_pct?.toFixed(1)}%
+        </div>
+      </td>
+
+      {/* SL / Target */}
+      <td className="px-3 py-2.5 text-right">
+        <div className="up text-[11px]">T {formatINR(trade.target_price)}</div>
+        <div className="down text-[11px]">SL {formatINR(trade.stop_loss)}</div>
+      </td>
+
+      {/* Source */}
+      <td className="px-3 py-2.5">
         <Badge variant={trade.source === "AI" ? "info" : "default"}>{trade.source}</Badge>
       </td>
-      <td className="px-3 py-2.5 text-right">
-        <button
-          onClick={() => onClose(trade.trade_id)}
-          disabled={isClosing}
-          className="px-2 py-1 rounded text-[10px] bg-[var(--color-danger)]/20 text-[var(--color-danger)] border border-[var(--color-danger)]/30 hover:bg-[var(--color-danger)]/30 transition-colors disabled:opacity-50"
-        >
-          {isClosing ? "…" : "Close"}
-        </button>
+
+      {/* Exit actions — always visible on mobile, hover-reveal on desktop */}
+      <td className="px-3 py-2.5">
+        <div className="flex flex-col gap-1 items-end sm:opacity-60 sm:group-hover:opacity-100 transition-opacity">
+          {/* Quick SL exit */}
+          {trade.stop_loss > 0 && (
+            <button
+              onClick={() => onRequestClose(trade.trade_id, trade.stop_loss, desc)}
+              disabled={isClosing}
+              title="Close at Stop Loss"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] bg-[var(--color-danger)]/15 text-[var(--color-danger)] border border-[var(--color-danger)]/25 hover:bg-[var(--color-danger)]/30 transition-colors disabled:opacity-40 whitespace-nowrap"
+            >
+              <ShieldAlert className="size-2.5" /> SL
+            </button>
+          )}
+          {/* Quick T1 exit */}
+          {trade.target_price > 0 && (
+            <button
+              onClick={() => onRequestClose(trade.trade_id, trade.target_price, desc)}
+              disabled={isClosing}
+              title="Close at Target 1"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/25 hover:bg-[var(--color-success)]/30 transition-colors disabled:opacity-40 whitespace-nowrap"
+            >
+              <Target className="size-2.5" /> T1
+            </button>
+          )}
+          {/* Manual close */}
+          <button
+            onClick={() => onRequestClose(trade.trade_id, trade.current_price, desc)}
+            disabled={isClosing}
+            className="px-2 py-0.5 rounded text-[9px] bg-white/8 text-[var(--color-text-muted)] border border-white/15 hover:text-white hover:bg-white/12 transition-colors disabled:opacity-40 whitespace-nowrap"
+          >
+            {isClosing ? "…" : "Manual"}
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -313,8 +515,19 @@ function TradeEntryForm({ symbols }: { symbols: string[] }) {
 
 export default function PaperTradePage() {
   const qc = useQueryClient();
-  const [closingId, setClosingId] = useState<string | null>(null);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [closingId,     setClosingId]     = useState<string | null>(null);
+  const [exitDialog,    setExitDialog]    = useState<ExitDialogState | null>(null);
+  const [confirmReset,  setConfirmReset]  = useState(false);
+  const [refreshing,    setRefreshing]    = useState(false);
+  const [refreshErrors, setRefreshErrors] = useState<PriceRefreshResult[]>([]);
+  const [refreshMsg,    setRefreshMsg]    = useState<string | null>(null);
+  const [mktInfo,       setMktInfo]       = useState(getMarketInfo());
+
+  // Refresh market status every 60s
+  useState(() => {
+    const id = setInterval(() => setMktInfo(getMarketInfo()), 60_000);
+    return () => clearInterval(id);
+  });
 
   const portfolio = useQuery<PortfolioSummary>({
     queryKey: ["paper-trades", "portfolio"],
@@ -356,8 +569,15 @@ export default function PaperTradePage() {
       closePaperTrade(id, price),
     onSettled: () => {
       setClosingId(null);
+      setExitDialog(null);
       qc.invalidateQueries({ queryKey: ["paper-trades"] });
     },
+  });
+
+  const ltpMutation = useMutation({
+    mutationFn: ({ id, price }: { id: string; price: number }) =>
+      updatePaperTradeLtp(id, price),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["paper-trades"] }),
   });
 
   const resetMutation = useMutation({
@@ -368,11 +588,39 @@ export default function PaperTradePage() {
     },
   });
 
-  const handleClose = (tradeId: string) => {
-    const trade = (openTrades.data ?? []).find((t) => t.trade_id === tradeId);
-    if (!trade) return;
+  /** Open the exit-price dialog; pre-fill with the trade's current (live) price. */
+  const handleRequestClose = (tradeId: string, currentPrice: number, desc: string) => {
+    setExitDialog({ tradeId, tradeDesc: desc, suggestedPrice: currentPrice || 0 });
+  };
+
+  /** Called when user confirms the exit price in the dialog. */
+  const handleConfirmClose = (tradeId: string, exitPrice: number) => {
     setClosingId(tradeId);
-    closeMutation.mutate({ id: tradeId, price: trade.current_price || trade.entry_price });
+    closeMutation.mutate({ id: tradeId, price: exitPrice });
+  };
+
+  /** Fetch live/cached LTPs for all open positions; surface per-trade errors. */
+  const handleRefreshPrices = async () => {
+    setRefreshing(true);
+    setRefreshErrors([]);
+    setRefreshMsg(null);
+    try {
+      const results = await refreshPaperTradePrices();
+      qc.invalidateQueries({ queryKey: ["paper-trades"] });
+      const updated = results.filter((r) => r.price_source !== "none");
+      const failed  = results.filter((r) => r.price_source === "none");
+      setRefreshErrors(failed);
+      if (updated.length > 0) {
+        setRefreshMsg(`${updated.length} price${updated.length > 1 ? "s" : ""} updated (${updated.map(r => r.price_source).join(", ")})`);
+      } else if (failed.length > 0) {
+        setRefreshMsg(null); // errors shown in the table
+      }
+    } catch (err) {
+      setRefreshMsg(`Refresh failed: ${String(err)}`);
+    } finally {
+      setRefreshing(false);
+      setTimeout(() => { setRefreshMsg(null); setRefreshErrors([]); }, 12_000);
+    }
   };
 
   const pnlHistogram = useMemo(() => {
@@ -392,6 +640,32 @@ export default function PaperTradePage() {
 
   return (
     <div className="space-y-5 max-w-[1400px] mx-auto">
+      {/* Exit price dialog */}
+      {exitDialog && (
+        <ExitDialog
+          state={exitDialog}
+          onConfirm={handleConfirmClose}
+          onCancel={() => setExitDialog(null)}
+        />
+      )}
+
+      {/* Refresh result banner */}
+      {(refreshMsg || refreshErrors.length > 0) && (
+        <div className={cn(
+          "rounded-lg border px-4 py-3 text-xs space-y-1",
+          refreshErrors.length > 0 && !refreshMsg
+            ? "border-amber-500/30 bg-amber-500/8 text-amber-300"
+            : "border-[var(--color-success)]/30 bg-[var(--color-success)]/8 text-[var(--color-success)]",
+        )}>
+          {refreshMsg && <div>{refreshMsg}</div>}
+          {refreshErrors.map((r) => (
+            <div key={r.trade_id} className="text-amber-300">
+              <span className="font-medium">{r.symbol}</span>: {r.error ?? "No market price available — click LTP to set manually."}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <header className="flex items-end justify-between gap-4">
         <div>
@@ -400,13 +674,39 @@ export default function PaperTradePage() {
             <h1 className="text-xl font-semibold text-white">Paper Trade Terminal</h1>
           </div>
           <p className="text-xs text-[var(--color-text-muted)]">
-            Virtual F&amp;O trading · no real money · ₹5L starting capital · live P&amp;L refresh 30s
+            Virtual F&amp;O trading · no real money · ₹5L starting capital
           </p>
+        </div>
+        {/* Market status badge */}
+        <div className={cn(
+          "flex items-center gap-2 rounded-lg px-3 py-1.5 text-[11px] shrink-0",
+          mktInfo.status === "open"    && "bg-emerald-500/10 border border-emerald-500/25",
+          mktInfo.status === "preopen" && "bg-amber-500/10 border border-amber-500/25",
+          (mktInfo.status === "closed" || mktInfo.status === "weekend") && "bg-slate-500/10 border border-slate-500/20",
+        )}>
+          <span className={cn(
+            "size-2 rounded-full shrink-0",
+            mktInfo.status === "open"    && "bg-emerald-400 animate-pulse",
+            mktInfo.status === "preopen" && "bg-amber-400",
+            (mktInfo.status === "closed" || mktInfo.status === "weekend") && "bg-slate-500",
+          )} />
+          <span className={cn("font-semibold", mktInfo.labelColor)}>{mktInfo.label}</span>
+          <span className="text-[var(--color-text-muted)] hidden sm:block">{mktInfo.sessionNote}</span>
         </div>
         <div className="flex items-center gap-2">
           {openTrades.isFetching && (
             <span className="text-[10px] text-[var(--color-text-muted)] animate-pulse">refreshing…</span>
           )}
+          {/* Live price refresh button (P1-5) */}
+          <button
+            onClick={handleRefreshPrices}
+            disabled={refreshing || (openTrades.data ?? []).length === 0}
+            title="Fetch live LTP from NSE for all open positions"
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-[var(--color-border)] text-xs text-[var(--color-text-muted)] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} />
+            {refreshing ? "Refreshing…" : "Refresh Prices"}
+          </button>
           {confirmReset ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-[var(--color-danger)]">Reset all trades?</span>
@@ -469,14 +769,20 @@ export default function PaperTradePage() {
                       <th className="text-right px-3 py-2.5">Entry</th>
                       <th className="text-right px-3 py-2.5">LTP</th>
                       <th className="text-right px-3 py-2.5">P&amp;L</th>
-                      <th className="text-right px-3 py-2.5">Tgt/SL</th>
-                      <th className="text-right px-3 py-2.5">Source</th>
-                      <th className="text-right px-3 py-2.5">Action</th>
+                      <th className="text-right px-3 py-2.5">Tgt / SL</th>
+                      <th className="text-left px-3 py-2.5">Source</th>
+                      <th className="text-right px-3 py-2.5">Exit →</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(openTrades.data ?? []).map((t) => (
-                      <TradeRow key={t.trade_id} trade={t} onClose={handleClose} closing={closingId} />
+                      <TradeRow
+                        key={t.trade_id}
+                        trade={t}
+                        onRequestClose={handleRequestClose}
+                        onUpdateLtp={(id, price) => ltpMutation.mutate({ id, price })}
+                        closing={closingId}
+                      />
                     ))}
                     {(openTrades.data ?? []).length === 0 && (
                       <tr>

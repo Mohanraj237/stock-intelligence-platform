@@ -42,6 +42,7 @@ export interface OptionChainMeta {
   total_ce_vol: number;
   total_pe_vol: number;
   synthetic?: boolean;      // true = Black-Scholes theoretical prices (real NSE chain unavailable)
+  cached?: boolean;         // true = last session closing data (NSE chain unavailable right now)
   vix?: number;             // India VIX used for synthetic pricing
 }
 
@@ -65,6 +66,7 @@ export interface IndexFuture {
   vol: number;
   expiry: string;
   synthetic?: boolean;
+  cached?: boolean;
 }
 
 // ── OI Analytics ─────────────────────────────────────────────────────────────
@@ -127,25 +129,6 @@ export interface GreeksResult {
   time_value: number;
 }
 
-export interface GreeksRow {
-  strike: number;
-  CE_iv: number;
-  CE_ltp: number;
-  CE_oi: number;
-  CE_delta: number;
-  CE_gamma: number;
-  CE_theta: number;
-  CE_vega: number;
-  PE_delta: number;
-  PE_gamma: number;
-  PE_theta: number;
-  PE_vega: number;
-  PE_ltp: number;
-  PE_oi: number;
-  PE_iv: number;
-  gex?: number;       // gamma exposure (₹ Cr)
-}
-
 // ── Strategy Builder ──────────────────────────────────────────────────────────
 
 export type OptionType = "CE" | "PE" | "FUT";
@@ -187,28 +170,6 @@ export interface SavedStrategy {
   saved_at: string;
 }
 
-// ── F&O Scanner ───────────────────────────────────────────────────────────────
-
-export type FoScanType =
-  | "High OI Buildup"
-  | "IV Crush Candidates"
-  | "OI Unwinding"
-  | "PCR Extremes"
-  | "Max Pain Divergence"
-  | "Unusual Volume"
-  | "Gamma Squeeze"
-  | "Roll Activity";
-
-export interface FoScanRow {
-  symbol: string;
-  signal_type: FoScanType;
-  metric: string;
-  direction: string;
-  strength: number;    // 0–100
-  expiry: string;
-  dte: number;
-}
-
 // ── Lot sizes ─────────────────────────────────────────────────────────────────
 
 export const LOT_SIZES: Record<string, number> = {
@@ -228,80 +189,23 @@ export const LOT_SIZES: Record<string, number> = {
   HAL: 150, BEL: 3700, BHEL: 4350, HDFCLIFE: 1100, SBILIFE: 750, ITC: 3200,
   IRCTC: 1375, LICI: 700, DMART: 450, TATACONSUM: 1100, BRITANNIA: 200,
   UPL: 1300, "BAJAJ-AUTO": 250,
+  // Additional live-scanner equities
+  RBLBANK: 3175, AUBANK: 1000, ABCAPITAL: 6000, MFSL: 4000,
+  PERSISTENT: 125, "360ONE": 1000, POLICYBZR: 2000, NAUKRI: 200,
+  PIIND: 500, DEEPAKNTR: 500, AARTIIND: 1500, ASTRAL: 700,
+  TATAPOWER: 4000, NHPC: 8000, RECLTD: 2250, PFC: 2700,
+  RVNL: 3000, IRFC: 6000, APLAPOLLO: 500,
 };
 
 export const INDEX_SYMBOLS = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX"];
-
-// ── AI Suggestion ─────────────────────────────────────────────────────────────
-
-export interface TradeRecommendation {
-  instrument: string;
-  strike: number;
-  expiry: string;
-  action: "BUY" | "SELL";
-  entry_price: number;
-  target_price: number;
-  target_1?: number;   // 2× premium — book 50%
-  target_2?: number;   // 3× premium — trail rest
-  stop_loss: number;
-  lots: number;
-  max_loss_rs: number;
-  reward_risk_ratio: number;
-  confidence: "HIGH" | "MEDIUM" | "LOW";
-  strategy_name: string;
-  time_stop?: string;
-}
-
-export interface FNOSuggestion {
-  symbol: string;
-  primary_trade: TradeRecommendation | null;
-  secondary_trade: TradeRecommendation | null;
-  reasoning: string[];
-  market_bias: "BULLISH" | "BEARISH" | "NEUTRAL" | "SIDEWAYS" | "VOLATILE";
-  key_levels: Record<string, number>;
-  risk_factors: string[];
-  valid_for_minutes: number;
-  analysis_timestamp: string;
-  context_used: string;
-  tokens_used: number;
-  cost_inr: number;
-  error: string | null;
-
-  // Elite F&O Agent fields
-  setup_score?: number;
-  signal?: string;
-  no_trade?: boolean;
-  no_trade_reason?: string | null;
-  confidence_level?: "HIGH" | "MEDIUM" | "LOW";
-  market_context_assessment?: {
-    vix_assessment: string;
-    pcr_assessment: string;
-    macro_bias: string;
-  };
-  mtf_summary?: {
-    monthly: string;
-    weekly: string;
-    daily: string;
-    hourly: string;
-  };
-  price_action_signal?: {
-    pattern_name: string | null;
-    where_formed: string;
-    validity: string;
-  };
-  volume_analysis?: {
-    breakout_volume_ratio: number;
-    obv_trend: string;
-    confirmation: string;
-  };
-  trade_qualification_reasons?: string[];
-  invalidation_conditions?: string[];
-}
 
 // ── Paper Trading ─────────────────────────────────────────────────────────────
 
 export type TradeStatus = "OPEN" | "CLOSED" | "CANCELLED";
 export type TradeSource = "MANUAL" | "AI";
+
+/** How the current_price was last set. */
+export type PriceSource = "live" | "cached" | "manual" | "none";
 
 export interface PaperTrade {
   trade_id: string;
@@ -327,6 +231,8 @@ export interface PaperTrade {
   source: TradeSource;
   ai_confidence: string;
   strategy_name: string;
+  /** How current_price was last obtained. Absent on trades added before this field existed. */
+  price_source?: PriceSource;
 }
 
 export interface PortfolioSummary {
@@ -342,6 +248,39 @@ export interface PortfolioSummary {
   closed_trades_count: number;
   win_rate: number;
   profit_factor: number;
+}
+
+// ── F&O History ───────────────────────────────────────────────────────────────
+
+export interface FnoHistoryPcrEntry {
+  date: string;
+  nifty_pcr: number;
+  banknifty_pcr: number;
+}
+
+export interface FnoHistoryVixEntry {
+  date: string;
+  vix: number;
+}
+
+export interface FnoHistory {
+  pcr: FnoHistoryPcrEntry[];
+  vix: FnoHistoryVixEntry[];
+}
+
+/** Returned by POST /api/fno/paper-trades/refresh-prices — one entry per open trade. */
+export interface PriceRefreshResult {
+  trade_id: string;
+  symbol: string;
+  /** null when no real market price could be obtained. */
+  current_price: number | null;
+  /** null when no real market price could be obtained. */
+  pnl_rs: number | null;
+  price_source: PriceSource;
+  sl_hit: boolean;
+  tp_hit: boolean;
+  /** Present when price_source is "none" — human-readable explanation. */
+  error?: string;
 }
 
 export function getLotSize(symbol: string): number {

@@ -54,6 +54,21 @@ function SyntheticBanner({ vix }: { vix?: number }) {
   );
 }
 
+function CachedBanner({ timestamp }: { timestamp?: string }) {
+  return (
+    <div className="rounded-lg border border-amber-600/30 bg-amber-600/5 px-4 py-2.5 flex items-start gap-3">
+      <span className="text-amber-400 text-[13px] mt-0.5">🕐</span>
+      <div>
+        <span className="text-amber-300 text-xs font-medium">Last session closing data</span>
+        <span className="text-[var(--color-text-muted)] text-xs ml-2">
+          NSE is unavailable right now. Showing cached data from the last trading session
+          {timestamp ? ` · ${timestamp}` : ""}. Useful for after-hours analysis.
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function DataUnavailable({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="rounded-lg border border-yellow-600/30 bg-yellow-600/5 p-6 text-center space-y-3">
@@ -322,7 +337,7 @@ export default function OptionChainPage() {
     },
     refetchInterval: (query) => {
       const d = query.state.data as OptionChainResponse | undefined;
-      if (d && (d.rows.length === 0 || d.meta.synthetic)) return false;
+      if (d && (d.rows.length === 0 || d.meta.synthetic || d.meta.cached)) return 60_000;
       return 30_000;
     },
     staleTime: 15_000,
@@ -443,8 +458,13 @@ export default function OptionChainPage() {
         </div>
       )}
 
-      {/* Synthetic data banner */}
-      {!isLoading && sortedRows.length > 0 && chainQuery.data?.meta.synthetic && (
+      {/* Cached closing data banner */}
+      {!isLoading && sortedRows.length > 0 && chainQuery.data?.meta.cached && (
+        <CachedBanner timestamp={chainQuery.data.meta.timestamp} />
+      )}
+
+      {/* Synthetic data banner (only when not cached) */}
+      {!isLoading && sortedRows.length > 0 && chainQuery.data?.meta.synthetic && !chainQuery.data?.meta.cached && (
         <SyntheticBanner vix={chainQuery.data.meta.vix} />
       )}
 

@@ -13,7 +13,8 @@ import {
   Cell,
 } from "recharts";
 import { BarChart2 } from "lucide-react";
-import { getOptionChain, getOiBuildup, getFnoSymbols } from "@/lib/fno-api";
+import { getOptionChain, getOiBuildup, getFnoSymbols, getOiVariations } from "@/lib/fno-api";
+import { HelpTip } from "@/components/ui/tooltip";
 import { INDEX_SYMBOLS } from "@/lib/fno-types";
 import type { OIBuildupRow } from "@/lib/fno-types";
 import {
@@ -240,6 +241,15 @@ export default function OIAnalyticsPage() {
     staleTime: 30_000,
   });
 
+  // P1-3: NSE's own variation classification (richer but sometimes empty)
+  const variationsQuery = useQuery({
+    queryKey: ["oi-variations"],
+    queryFn: getOiVariations,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const nseVariationsCount = (variationsQuery.data ?? []).length;
+
   // ── Derive chart data from option chain ──────────────────────────────────
 
   const chain = chainQuery.data;
@@ -292,7 +302,17 @@ export default function OIAnalyticsPage() {
     <div className="max-w-[1500px] mx-auto space-y-5">
       <PageHeader
         title="OI Analytics"
-        subtitle="Open interest distribution and buildup classification for F&O symbols."
+        subtitle={
+          <span>
+            <HelpTip tip="Open Interest (OI) = total outstanding contracts that have not been settled. Rising OI with rising price = Long Buildup (bullish). Rising OI with falling price = Short Buildup (bearish).">
+              Open interest
+            </HelpTip>
+            {" "}distribution and buildup classification for F&O symbols.{" "}
+            <a href="/fo-learn#oi" className="text-[var(--color-primary)] hover:underline text-[11px]">
+              Learn about OI →
+            </a>
+          </span>
+        }
         actions={
           <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--color-text-muted)]">Symbol</span>
@@ -636,6 +656,57 @@ export default function OIAnalyticsPage() {
                 </TBody>
               </Table>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* NSE Variations panel (P1-3) — shown only when NSE data is available */}
+      {nseVariationsCount > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>NSE Variation Data (Live)</span>
+              <span className="text-[11px] font-normal text-[var(--color-text-muted)]">
+                {nseVariationsCount} rows · source: NSE /api/live-analysis-variations
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-xs min-w-[560px]">
+              <thead className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
+                <tr className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
+                  <th className="text-left px-3 py-2">Symbol</th>
+                  <th className="text-right px-3 py-2">OI</th>
+                  <th className="text-right px-3 py-2">OI Change</th>
+                  <th className="text-right px-3 py-2">LTP</th>
+                  <th className="text-left px-3 py-2">Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(variationsQuery.data ?? []).slice(0, 30).map((row, i) => {
+                  const sym   = String(row.symbol ?? "—");
+                  const oi    = Number(row.latestOI ?? 0);
+                  const oiChg = Number(row.changeInOI ?? 0);
+                  const ltp   = Number(row.underlyingValue ?? 0);
+                  const cat   = String(row._category ?? "—");
+                  return (
+                    <tr key={i} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-2)]/50">
+                      <td className="px-3 py-2 font-medium text-white">{sym}</td>
+                      <td className="px-3 py-2 text-right tnum text-[var(--color-text-muted)]">
+                        {oi > 0 ? oi.toLocaleString("en-IN") : "—"}
+                      </td>
+                      <td className={cn("px-3 py-2 text-right tnum", oiChg >= 0 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]")}>
+                        {oiChg !== 0 ? `${oiChg >= 0 ? "+" : ""}${oiChg.toLocaleString("en-IN")}` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right tnum text-white">
+                        {ltp > 0 ? `₹${ltp.toLocaleString("en-IN")}` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-[var(--color-text-muted)]">{cat}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </CardContent>
         </Card>
       )}

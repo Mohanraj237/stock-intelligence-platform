@@ -58,7 +58,27 @@
       "Bash(powershell.exe -Command 'Get-Process | Where-Object {$_.Path -like '\\\\''*node*'\\\\'' -or $_.Name -like '\\\\''*node*'\\\\'' -or $_.Name -like '\\\\''*next*'\\\\''} | Select-Object Id,Name,Path | Format-Table -AutoSize')",
       "Bash(powershell.exe -Command 'Get-CimInstance Win32_Process | Where-Object { $_.Name -eq '\\\\''node.exe'\\\\'' } | Select-Object ProcessId,CommandLine | Format-List')",
       "Bash(powershell.exe -Command '21808,28924,29280 | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }')",
-      "Bash(python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001 --log-level warning)"
+      "Bash(python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001 --log-level warning)",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\mohan\\\\Stock App\\\\stock-intelligence-platform\\\\frontend\\\\components\\\\scanner\")",
+      "Bash(Write-Host \"done\")",
+      "Bash(pip show *)",
+      "Bash(python -c \"from sse_starlette.sse import EventSourceResponse; print\\('ok'\\)\")",
+      "Bash(pip uninstall *)",
+      "Bash(Get-ChildItem -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\mohan\\\\Stock App\\\\stock-intelligence-platform\\\\frontend\\\\app\" -Directory -Recurse)",
+      "Bash(Sort-Object FullName)",
+      "Bash(npx vitest *)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm exec *)",
+      "Bash(python -m pytest tests/test_fno.py -v --tb=short)",
+      "WebFetch(domain:query1.finance.yahoo.com)",
+      "WebSearch",
+      "Bash(python -m pytest tests/test_phase3.py -v --tb=short)",
+      "Bash(python -m pytest tests/ -q --tb=short)",
+      "Bash(rm -f services/fno_ai_service.py services/greeks_calculator.py services/fno_scanner_service.py services/strategy_calculator.py)",
+      "Bash(rm -f frontend/app/fo-ai-advisor/page.tsx frontend/app/greeks/page.tsx)",
+      "Bash(rmdir frontend/app/fo-ai-advisor frontend/app/greeks)"
     ]
   }
 }

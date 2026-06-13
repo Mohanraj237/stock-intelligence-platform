@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
@@ -27,6 +27,7 @@ import {
   getSavedStrategies,
   saveStrategy,
   deleteStrategy,
+  getFnoSymbols,
 } from "@/lib/fno-api";
 import {
   calculatePayoff,
@@ -119,6 +120,17 @@ export default function StrategyBuilderPage() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
   const [saveMsg, setSaveMsg] = useState("");
+
+  // P1-6: Load equity F&O symbols so all F&O stocks are selectable (not just indices)
+  const symbolsQuery = useQuery<string[]>({
+    queryKey: ["fno", "symbols"],
+    queryFn: getFnoSymbols,
+    staleTime: 10 * 60_000,
+  });
+  const allSymbols = useMemo(() => {
+    const extra = (symbolsQuery.data ?? []).filter((s) => !INDEX_SYMBOLS.includes(s)).sort();
+    return [...INDEX_SYMBOLS, ...extra];
+  }, [symbolsQuery.data]);
 
   const chainQuery = useQuery<OptionChainResponse>({
     queryKey: ["fno", "option-chain", symbol],
@@ -312,11 +324,18 @@ export default function StrategyBuilderPage() {
                 }}
                 className="rounded border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               >
-                {INDEX_SYMBOLS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
+                <optgroup label="Indices">
+                  {INDEX_SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </optgroup>
+                {(symbolsQuery.data ?? []).length > 0 && (
+                  <optgroup label="Equity F&amp;O">
+                    {(symbolsQuery.data ?? [])
+                      .filter((s) => !INDEX_SYMBOLS.includes(s))
+                      .sort()
+                      .map((s) => <option key={s} value={s}>{s}</option>)
+                    }
+                  </optgroup>
+                )}
               </select>
             </div>
 

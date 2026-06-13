@@ -376,18 +376,6 @@ const FO_GUIDE: GuideSection[] = [
     ],
   },
   {
-    title: "Greeks Dashboard",
-    icon: "🔢",
-    path: "/greeks",
-    summary: "Calculate and visualise Delta, Gamma, Theta, Vega, and Rho for any option.",
-    steps: [
-      "Select symbol, expiry, strike, and option type (CE/PE).",
-      "Greeks are computed using Black-Scholes with live VIX as implied volatility.",
-      "Charts show how each Greek changes across strikes and time-to-expiry.",
-    ],
-    tips: ["Theta decay accelerates in the last 7 days before expiry.", "High Gamma near ATM means P&L can swing rapidly — size accordingly."],
-  },
-  {
     title: "Paper Trade",
     icon: "📝",
     path: "/paper-trade",
@@ -402,18 +390,6 @@ const FO_GUIDE: GuideSection[] = [
       "Paper trades are purely virtual — no real broker is connected.",
       "Use paper trading to validate a strategy for 20+ trades before risking real capital.",
     ],
-  },
-  {
-    title: "AI F&O Advisor",
-    icon: "🤖",
-    path: "/fo-ai-advisor",
-    summary: "Claude AI analyses the option chain, VIX, and PCR to suggest appropriate strategies and risk levels.",
-    steps: [
-      "Select a symbol and timeframe.",
-      "Click Analyse — the AI reads the full option chain, OI profile, and sentiment indicators.",
-      "The response includes a market bias, specific strategy suggestions with strikes, and risk warnings.",
-    ],
-    tips: ["AI suggestions are educational — always verify with your own analysis before trading.", "The AI never recommends specific position sizes or guarantees outcomes."],
   },
 ];
 

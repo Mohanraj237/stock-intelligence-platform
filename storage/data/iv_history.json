@@ -1,0 +1,58 @@
+{
+  "NIFTY": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "BANKNIFTY": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "FINNIFTY": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "MIDCPNIFTY": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "SENSEX": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "BANKEX": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "RELIANCE": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ],
+  "TCS": [
+    {
+      "date": "2026-06-09",
+      "atm_iv": 15.58,
+      "synthetic": true
+    }
+  ]
+}

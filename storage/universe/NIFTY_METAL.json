@@ -3,10 +3,6 @@
   "symbols": [
     "APLAPOLLO",
     "ADANIENT",
-    "DUMMYVEDL1",
-    "DUMMYVEDL2",
-    "DUMMYVEDL3",
-    "DUMMYVEDL4",
     "HINDALCO",
     "HINDCOPPER",
     "HINDZINC",
@@ -18,16 +14,16 @@
     "NATIONALUM",
     "SAIL",
     "TATASTEEL",
+    "VAML",
+    "VISL",
     "VEDL",
+    "VOGL",
+    "VEDPOWER",
     "WELCORP"
   ],
   "companies": {
     "APLAPOLLO": "APL Apollo Tubes Ltd.",
     "ADANIENT": "Adani Enterprises Ltd.",
-    "DUMMYVEDL1": "Dummy Vedanta Ltd. 1",
-    "DUMMYVEDL2": "Dummy Vedanta Ltd. 2",
-    "DUMMYVEDL3": "Dummy Vedanta Ltd. 3",
-    "DUMMYVEDL4": "Dummy Vedanta Ltd. 4",
     "HINDALCO": "Hindalco Industries Ltd.",
     "HINDCOPPER": "Hindustan Copper Ltd.",
     "HINDZINC": "Hindustan Zinc Ltd.",
@@ -39,9 +35,13 @@
     "NATIONALUM": "National Aluminium Co. Ltd.",
     "SAIL": "Steel Authority of India Ltd.",
     "TATASTEEL": "Tata Steel Ltd.",
+    "VAML": "Vedanta Aluminium Metal Ltd.",
+    "VISL": "Vedanta Iron and Steel Ltd.",
     "VEDL": "Vedanta Ltd.",
+    "VOGL": "Vedanta Oil and Gas Ltd.",
+    "VEDPOWER": "Vedanta Power Ltd.",
     "WELCORP": "Welspun Corp Ltd."
   },
   "count": 19,
-  "synced_at": 1780720358.3928971
+  "synced_at": 1781343803.120409
 }

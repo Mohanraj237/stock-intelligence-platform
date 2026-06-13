@@ -2,17 +2,32 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  // Equity nav icons
   LayoutDashboard, Compass, LineChart, Radar, Beaker, GitCompare,
   Wallet, Star, FileText, Calendar, Newspaper, Sliders, Settings, GraduationCap,
   TestTube2, Calculator,
-  TrendingUp, Link2, BarChart2, Activity, Target, Gauge, Flame, Grid, BookOpen,
-  Cpu, FlaskConical, Crosshair,
+  // F&O nav icons
+  Zap,          // Live Scanner
+  BarChart2,    // F&O Overview
+  Activity,     // PCR & Sentiment
+  Link2,        // Option Chain
+  CalendarDays, // Expiry Heatmap
+  BarChart3,    // OI Analytics
+  Layers,       // Strategy Builder
+  FlaskConical, // Paper Trade
+  BookOpen,     // Learn F&O
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRegion, type Region } from "@/lib/region";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { FO_PREFIXES, FO_NAV_ROUTES, FO_BACK_ROUTES } from "@/lib/nav-config";
 
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; group: string };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  group: string;
+};
 
 const EQUITY_NAV: NavItem[] = [
   { group: "Market",   href: "/dashboard",        label: "Dashboard",         icon: LayoutDashboard },
@@ -33,28 +48,63 @@ const EQUITY_NAV: NavItem[] = [
   { group: "Help",     href: "/learn",            label: "Learn",             icon: GraduationCap },
 ];
 
-const FO_NAV: NavItem[] = [
-  { group: "F&O Markets",  href: "/fo-dashboard",    label: "F&O Dashboard",    icon: TrendingUp },
-  { group: "F&O Markets",  href: "/option-chain",    label: "Option Chain",     icon: Link2 },
-  { group: "F&O Markets",  href: "/oi-analytics",    label: "OI Analytics",     icon: BarChart2 },
-  { group: "F&O Markets",  href: "/pcr-sentiment",   label: "PCR & Sentiment",  icon: Activity },
-  { group: "F&O Markets",  href: "/expiry-heatmap",  label: "Expiry Heatmap",   icon: Grid },
-  { group: "F&O Tools",    href: "/strategy-builder",label: "Strategy Builder", icon: Target },
-  { group: "F&O Tools",    href: "/fo-scanner",       label: "F&O Scanner",      icon: Flame },
-  { group: "F&O Tools",    href: "/options-scanner",  label: "Options Buyer",    icon: Crosshair },
-  { group: "F&O Tools",    href: "/greeks",          label: "Greeks Dashboard", icon: Gauge },
-  { group: "F&O AI",       href: "/fo-ai-advisor",   label: "AI Advisor",       icon: Cpu },
-  { group: "F&O AI",       href: "/paper-trade",     label: "Paper Trade",      icon: FlaskConical },
-  { group: "F&O Tools",    href: "/fo-learn",        label: "Learn F&O",        icon: BookOpen },
-  { group: "Equity",       href: "/dashboard",       label: "Dashboard",        icon: LayoutDashboard },
-  { group: "Equity",       href: "/settings",        label: "Settings",         icon: Settings },
-];
+/**
+ * Icon map keyed by href. Covers every route in FO_NAV_ROUTES + FO_BACK_ROUTES.
+ * Adding a new page: add an entry here and a matching route in lib/nav-config.ts.
+ */
+const FO_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  // Market
+  "/fo-dashboard":    BarChart2,
+  "/pcr-sentiment":   Activity,
+  // Scanners
+  "/live-scanner":    Zap,
+  // Options
+  "/option-chain":    Link2,
+  "/expiry-heatmap":  CalendarDays,
+  "/oi-analytics":    BarChart3,
+  "/strategy-builder":Layers,
+  // Risk
+  "/paper-trade":     FlaskConical,
+  // Learn
+  "/fo-learn":        BookOpen,
+  // Back links
+  "/dashboard":       LayoutDashboard,
+  "/settings":        Settings,
+};
+
+/** Build typed NavItem array from route config + icon map. */
+function buildFoNav(): NavItem[] {
+  const items: NavItem[] = FO_NAV_ROUTES.map((r) => ({
+    href:  r.href,
+    label: r.label,
+    group: r.group,
+    icon:  FO_ICON_MAP[r.href] ?? BarChart2,
+  }));
+  FO_BACK_ROUTES.forEach((r) => {
+    items.push({
+      href:  r.href,
+      label: r.label,
+      group: r.group,
+      icon:  FO_ICON_MAP[r.href] ?? LayoutDashboard,
+    });
+  });
+  return items;
+}
+
+const FO_NAV: NavItem[] = buildFoNav();
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { region, setRegion } = useRegion();
   const [mode, setMode] = useState<"Equity" | "F&O">("Equity");
+
+  // Auto-switch to F&O mode when navigating directly to any F&O page
+  useEffect(() => {
+    if (region === "IN" && FO_PREFIXES.some((p) => pathname?.startsWith(p))) {
+      setMode("F&O");
+    }
+  }, [pathname, region]);
 
   const NAV = region === "IN" && mode === "F&O" ? FO_NAV : EQUITY_NAV;
   const groups = Array.from(new Set(NAV.map((n) => n.group)));
@@ -101,7 +151,7 @@ export function Sidebar() {
             {(["Equity", "F&O"] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); if (m === "F&O") router.push("/fo-dashboard"); }}
+                onClick={() => { setMode(m); if (m === "F&O") router.push("/live-scanner"); }}
                 className={cn(
                   "flex-1 py-1 rounded text-[12px] font-medium transition-colors",
                   mode === m
