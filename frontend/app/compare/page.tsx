@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueries } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { api } from "@/lib/api";
@@ -16,11 +17,37 @@ import type { Fundamentals } from "@/lib/types";
 const IN_DEFAULTS = ["RELIANCE", "TCS", "INFY"];
 const US_DEFAULTS = ["AAPL", "MSFT", "GOOGL"];
 
+function parseSymbolsFromUrl(searchParams: ReturnType<typeof useSearchParams>, isUS: boolean): string[] {
+  const s = searchParams.get("s");
+  if (s) {
+    const parsed = s.split(",").map((x) => x.trim().toUpperCase()).filter(Boolean).slice(0, 4);
+    if (parsed.length > 0) return parsed;
+  }
+  return isUS ? US_DEFAULTS : IN_DEFAULTS;
+}
+
 export default function ComparePage() {
   const { region, isUS } = useRegion();
-  const [symbols, setSymbols] = useState<string[]>(isUS ? US_DEFAULTS : IN_DEFAULTS);
-  useEffect(() => { setSymbols(isUS ? US_DEFAULTS : IN_DEFAULTS); }, [isUS]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [symbols, setSymbolsRaw] = useState<string[]>(() => parseSymbolsFromUrl(searchParams, isUS));
   const [draft, setDraft] = useState("");
+
+  // Keep URL in sync whenever symbols change
+  const setSymbols = useCallback((next: string[]) => {
+    setSymbolsRaw(next);
+    const qs = new URLSearchParams({ s: next.join(",") });
+    router.replace(`/compare?${qs}`, { scroll: false });
+  }, [router]);
+
+  // When region toggles, only reset to defaults if URL has no symbols param
+  useEffect(() => {
+    if (!searchParams.get("s")) {
+      setSymbols(isUS ? US_DEFAULTS : IN_DEFAULTS);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUS]);
 
   const queries = useQueries({
     queries: symbols.map((s) => ({

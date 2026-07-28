@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { HelpTip } from "@/components/ui/tooltip";
 import {
   TrendingUp, TrendingDown, Minus, Zap, RefreshCw,
@@ -48,6 +49,8 @@ async function streamScan(
     universe:  params.universe,
     threshold: String(params.threshold),
   });
+  if (params.timeframes)    qs.set("timeframes", params.timeframes);
+  if (params.pattern_names) qs.set("pattern_names", params.pattern_names);
   // Call FastAPI DIRECTLY — Next.js dev-server proxy buffers SSE responses
   // and only flushes at end, making the progress bar appear frozen.
   // Direct call (same as faGet in fno-api.ts) bypasses that buffer entirely.
@@ -109,12 +112,28 @@ const fmt = (n: number, d = 0) =>
 const TF_COLOR: Record<string, string> = {
   "5m":  "bg-blue-500/20 text-blue-300 border-blue-500/30",
   "15m": "bg-purple-500/20 text-purple-300 border-purple-500/30",
+  "30m": "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
   "1h":  "bg-orange-500/20 text-orange-300 border-orange-500/30",
+  "4h":  "bg-amber-500/20 text-amber-300 border-amber-500/30",
   "1d":  "bg-teal-500/20 text-teal-300 border-teal-500/30",
+  "1wk": "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+  "1mo": "bg-rose-500/20 text-rose-300 border-rose-500/30",
 };
 
 const TF_LABEL: Record<string, string> = {
-  "5m": "5 min", "15m": "15 min", "1h": "1 hr", "1d": "Daily",
+  "5m": "5 min", "15m": "15 min", "30m": "30 min", "1h": "1 hr",
+  "4h": "4 hr", "1d": "Daily", "1wk": "Weekly", "1mo": "Monthly",
+};
+
+const ALL_TFS = ["5m", "15m", "30m", "1h", "4h", "1d", "1wk", "1mo"] as const;
+
+// Pattern families — colours + display labels (keys match backend family strings)
+const FAMILY_META: Record<string, { label: string; active: string; muted: string }> = {
+  candlestick:  { label: "Candlestick",   active: "text-yellow-300 border-yellow-500/50 bg-yellow-500/15", muted: "text-yellow-400/60" },
+  price_action: { label: "Price Action",  active: "text-blue-300   border-blue-500/50   bg-blue-500/15",   muted: "text-blue-400/60"   },
+  volume:       { label: "Volume",        active: "text-orange-300 border-orange-500/50 bg-orange-500/15", muted: "text-orange-400/60" },
+  chart:        { label: "Chart Pattern", active: "text-purple-300 border-purple-500/50 bg-purple-500/15", muted: "text-purple-400/60" },
+  harmonic:     { label: "Harmonic",      active: "text-pink-300   border-pink-500/50   bg-pink-500/15",   muted: "text-pink-400/60"   },
 };
 
 function TfBadge({ tf }: { tf: string }) {
@@ -139,11 +158,32 @@ function ScorePill({ score }: { score: number }) {
     score >= 65 ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40" :
                   "bg-white/10 text-white/50 border-white/20";
   return (
-    <HelpTip tip="Confluence Score (0–100): Trend/Structure (30) + Momentum (25) + Volume (20) + Candle Trigger (25). Only setups ≥65 are shown.">
+    <HelpTip tip="Confluence Score (0–100): Trend/Structure (30) + Momentum (25) + Volume (15) + Candle Trigger (25) + Structural Bonus (5). Only setups ≥65 are shown.">
       <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border", cls)}>
         {score}
       </span>
     </HelpTip>
+  );
+}
+
+const BREAKOUT_STATE_CLS: Record<string, string> = {
+  FRESH_BREAKOUT:      "bg-teal-500/20 border-teal-500/40 text-teal-300",
+  CONFIRMED_BREAKOUT:  "bg-emerald-500/20 border-emerald-500/40 text-emerald-300",
+  VERGE_BREAKOUT:      "bg-yellow-500/20 border-yellow-500/40 text-yellow-300",
+  EXTENDED:            "bg-slate-500/20 border-slate-500/30 text-slate-400",
+  FRESH_BREAKDOWN:     "bg-red-500/20 border-red-500/40 text-red-300",
+  CONFIRMED_BREAKDOWN: "bg-rose-700/20 border-rose-700/40 text-rose-300",
+  VERGE_BREAKDOWN:     "bg-yellow-500/20 border-yellow-500/40 text-yellow-300",
+};
+
+function BreakoutBadge({ state, label }: { state?: string; label?: string }) {
+  if (!state || !label) return null;
+  const cls = BREAKOUT_STATE_CLS[state];
+  if (!cls) return null;
+  return (
+    <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border", cls)}>
+      {label}
+    </span>
   );
 }
 
@@ -261,6 +301,7 @@ function TfSection({ card }: { card: SetupCard }) {
           <span className="text-yellow-300/80 text-[12px] font-medium">{card.pattern}</span>
         )}
         <ScorePill score={card.confluence_score} />
+        <BreakoutBadge state={card.breakout_state} label={card.breakout_label} />
         {card.backtest && <BacktestTag bt={card.backtest} />}
         {plan && (
           <span className="ml-auto">
@@ -272,7 +313,7 @@ function TfSection({ card }: { card: SetupCard }) {
       {/* ── CHART — full width ──────────────────────────────────────────────── */}
       <div className="px-3 pt-3 pb-1 border-b border-white/10">
         <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
-          {card.symbol} · {TF_LABEL[card.timeframe] ?? card.timeframe} · Daily chart
+          {card.symbol} · {TF_LABEL[card.timeframe] ?? card.timeframe} chart
           {card.pattern !== "None" && (
             <span className="ml-2 text-yellow-400/80">▲ {card.pattern} highlighted</span>
           )}
@@ -300,10 +341,11 @@ function TfSection({ card }: { card: SetupCard }) {
         <div className="p-3">
           <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-2.5">Score breakdown</p>
           {[
-            { label: "Trend",    val: sb.trend,    max: 30, color: "bg-blue-500"   },
-            { label: "Momentum", val: sb.momentum, max: 25, color: "bg-purple-500" },
-            { label: "Volume",   val: sb.volume,   max: 20, color: "bg-orange-500" },
-            { label: "Candle",   val: sb.candle,   max: 25, color: "bg-pink-500"   },
+            { label: "Trend",      val: sb.trend,                  max: 30, color: "bg-blue-500"   },
+            { label: "Momentum",   val: sb.momentum,               max: 25, color: "bg-purple-500" },
+            { label: "Volume",     val: sb.volume,                 max: 15, color: "bg-orange-500" },
+            { label: "Candle",     val: sb.candle,                 max: 25, color: "bg-pink-500"   },
+            { label: "Structural", val: sb.structural ?? 0,        max: 5,  color: "bg-green-500"  },
           ].map((r) => (
             <div key={r.label} className="flex items-center gap-2 text-[11px] mb-1.5">
               <span className="w-20 text-[var(--color-text-muted)] shrink-0">{r.label}</span>
@@ -448,7 +490,12 @@ function GroupRow({ group, idx }: { group: SymbolGroup; idx: number }) {
           ) : <span className="text-white/20">—</span>}
         </td>
 
-        <td className="px-2 py-3"><ScorePill score={best.confluence_score} /></td>
+        <td className="px-2 py-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <ScorePill score={best.confluence_score} />
+            <BreakoutBadge state={best.breakout_state} label={best.breakout_label} />
+          </div>
+        </td>
 
         <td className="px-2 py-3">
           {plan ? <ActionPill plan={plan} /> : <span className="text-white/20 text-[11px]">—</span>}
@@ -607,7 +654,7 @@ function ScanProgress({
           />
         </div>
         <div className="flex justify-between text-[10px] text-[var(--color-text-muted)]">
-          <span>5 min · 15 min · 1 hr · Daily</span>
+          <span>5 min · 15 min · 30 min · 1 hr · 4 hr · Daily · Weekly · Monthly</span>
           <span>{pct}%</span>
         </div>
       </div>
@@ -645,9 +692,21 @@ export default function LiveScannerPage() {
   const [backendOk,  setBackendOk]  = useState<boolean | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Filter controls (client-side, no re-scan needed)
-  const [filterDir, setFilterDir] = useState<string>("all");
-  const [filterTf,  setFilterTf]  = useState<string>("all");
+  // Post-scan display filter (direction can't be known until after scoring)
+  const [filterDir,         setFilterDir]         = useState<string>("all");
+
+  // Pre-scan scan configuration — sent with the scan request itself
+  const [selectedTimeframes,   setSelectedTimeframes]   = useState<Set<string>>(new Set(ALL_TFS));
+  const [selectedPatternNames, setSelectedPatternNames] = useState<Set<string>>(new Set());
+  const [patternsOpen,      setPatternsOpen]      = useState(false);
+  const [expandedFamilies,  setExpandedFamilies]  = useState<Set<string>>(new Set());
+
+  const patternQuery = useQuery<Record<string, { name: string; direction: string; tier: number }[]>>({
+    queryKey: ["live-scanner-patterns"],
+    queryFn:  () => fetch("/api/live-scanner/patterns").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const patternGroups = patternQuery.data ?? {};
 
   // Poll health every 10s to show backend status
   useEffect(() => {
@@ -682,14 +741,23 @@ export default function LiveScannerPage() {
     const ctl = new AbortController();
     abortRef.current = ctl;
 
-    await streamScan(params, {
+    const scanParams: ScanParams = {
+      ...params,
+      timeframes: selectedTimeframes.size < ALL_TFS.length
+        ? Array.from(selectedTimeframes).join(",")
+        : undefined,
+      pattern_names: selectedPatternNames.size > 0
+        ? Array.from(selectedPatternNames).join(",")
+        : undefined,
+    };
+
+    await streamScan(scanParams, {
       onProgress: (p) => setProgress(p),
       onResult:   (data) => {
         setResult(data);
         setBackendOk(true);
         setScanAt(new Date().toLocaleTimeString("en-IN", { hour12: false }));
         setFilterDir("all");
-        setFilterTf("all");
       },
       onDone:  () => setLoading(false),
       onError: (msg) => {
@@ -699,15 +767,16 @@ export default function LiveScannerPage() {
       },
       signal: ctl.signal,
     });
-  }, [params]);
+  }, [params, selectedTimeframes, selectedPatternNames]);
 
   const upd = (k: keyof ScanParams) => (v: string | number) =>
     setParams((p) => ({ ...p, [k]: v }));
 
-  // Apply client-side filters
+  // Direction is the only remaining post-scan display filter — timeframe and
+  // pattern selection are now scan-time configuration (see scanParams above),
+  // so results are already scoped/scored to them by the time they arrive here.
   const visible = (result?.setups ?? []).filter((c) => {
     if (filterDir !== "all" && c.direction !== filterDir) return false;
-    if (filterTf  !== "all" && c.timeframe !== filterTf)  return false;
     return true;
   });
 
@@ -738,7 +807,7 @@ export default function LiveScannerPage() {
             </span>
           </div>
           <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">
-            Scans 5 min · 15 min · 1 hr · Daily simultaneously — surfaces actionable option setups.
+            Scans 5 min · 15 min · 30 min · 1 hr · 4 hr · Daily · Weekly · Monthly simultaneously — surfaces actionable option setups.
           </p>
         </div>
         {scanAt && (
@@ -793,7 +862,63 @@ export default function LiveScannerPage() {
           </button>
         </div>
 
-        {/* Filter row — only shown after scan completes */}
+        {/* Timeframes — pre-scan selection; unselected TFs are never fetched */}
+        <div className="pt-3 border-t border-[var(--color-border)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] shrink-0">
+              Timeframes
+            </span>
+            <span className="text-[11px] text-[var(--color-text-muted)]">
+              {selectedTimeframes.size === ALL_TFS.length
+                ? "— all 8 (no filter)"
+                : `${selectedTimeframes.size} selected`}
+            </span>
+            <button
+              onClick={() => setSelectedTimeframes(new Set(ALL_TFS))}
+              className="text-[10px] text-[var(--color-text-muted)] hover:text-white underline underline-offset-2"
+            >
+              All
+            </button>
+            <button
+              onClick={() => setSelectedTimeframes(new Set())}
+              className="text-[10px] text-[var(--color-text-muted)] hover:text-white underline underline-offset-2"
+            >
+              None
+            </button>
+            <div className="flex flex-wrap gap-1.5 ml-2">
+              {ALL_TFS.map((tf) => {
+                const active = selectedTimeframes.has(tf);
+                return (
+                  <button
+                    key={tf}
+                    onClick={() => {
+                      setSelectedTimeframes((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(tf)) next.delete(tf); else next.add(tf);
+                        return next;
+                      });
+                    }}
+                    className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-all",
+                      active
+                        ? TF_COLOR[tf] ?? "bg-white/10 text-white border-white/30"
+                        : "border-white/10 text-white/35 bg-transparent hover:text-white/55 hover:border-white/20",
+                    )}
+                  >
+                    {TF_LABEL[tf]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {selectedTimeframes.size === 0 && (
+            <p className="text-[11px] text-yellow-400/70 mt-2 flex items-center gap-1">
+              <AlertTriangle className="size-3 shrink-0" /> Select at least one timeframe to scan.
+            </p>
+          )}
+        </div>
+
+        {/* Filter row — only shown after scan completes (direction can't be known pre-scan) */}
         {result && !loading && (
           <div className="flex flex-wrap items-end gap-4 pt-3 border-t border-[var(--color-border)]">
             <span className="text-[11px] text-[var(--color-text-muted)] self-center">Filter results:</span>
@@ -810,20 +935,6 @@ export default function LiveScannerPage() {
                 onChange={setFilterDir}
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">Timeframe</label>
-              <Sel
-                value={filterTf}
-                options={[
-                  { value: "all", label: "All TFs" },
-                  { value: "5m",  label: "5 min" },
-                  { value: "15m", label: "15 min" },
-                  { value: "1h",  label: "1 hour" },
-                  { value: "1d",  label: "Daily" },
-                ]}
-                onChange={setFilterTf}
-              />
-            </div>
             <span className="text-[12px] text-[var(--color-text-muted)] self-end ml-auto">
               Showing <span className="text-white font-medium">{groupBySymbol(visible).length}</span> symbols
               {" · "}<span className="text-white font-medium">{visible.length}</span> setups
@@ -833,6 +944,138 @@ export default function LiveScannerPage() {
             </span>
           </div>
         )}
+
+        {/* Pattern selector — collapsible, two-level: section + per-family. Pre-scan:
+            selected patterns are sent with the scan and shape each setup's score
+            (Candle Trigger / Structural bonus), not just a post-scan display filter. */}
+        <div className="pt-3 border-t border-[var(--color-border)]">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setPatternsOpen((v) => !v)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPatternsOpen((v) => !v); } }}
+              className="flex items-center gap-2 w-full text-left group cursor-pointer"
+            >
+              <ChevronDown className={cn(
+                "size-3.5 text-white/40 transition-transform duration-150 shrink-0",
+                !patternsOpen && "-rotate-90",
+              )} />
+              <span className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] group-hover:text-white/70 transition-colors">
+                Patterns
+              </span>
+              {selectedPatternNames.size > 0 ? (
+                <span className="text-[11px] text-[var(--color-primary)] font-medium">
+                  {selectedPatternNames.size} selected
+                </span>
+              ) : (
+                <span className="text-[11px] text-[var(--color-text-muted)]">— all patterns (no filter)</span>
+              )}
+              {selectedPatternNames.size > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedPatternNames(new Set()); }}
+                  className="ml-auto text-[10px] text-[var(--color-text-muted)] hover:text-white underline underline-offset-2"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            {patternsOpen && (
+              <div className="mt-3 space-y-2">
+                {patternQuery.isLoading && (
+                  <p className="text-[11px] text-[var(--color-text-muted)]">Loading patterns…</p>
+                )}
+
+                {Object.entries(patternGroups).map(([family, patterns]) => {
+                  const meta     = FAMILY_META[family] ?? { label: family, active: "text-white border-white/30 bg-white/10", muted: "text-white/60" };
+                  const famPats  = patterns.map((p) => p.name);
+                  const allSel   = famPats.every((n) => selectedPatternNames.has(n));
+                  const famOpen  = expandedFamilies.has(family);
+                  const selCount = famPats.filter((n) => selectedPatternNames.has(n)).length;
+
+                  const toggleFamily = () =>
+                    setExpandedFamilies((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(family)) next.delete(family); else next.add(family);
+                      return next;
+                    });
+
+                  const toggleAll = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setSelectedPatternNames((prev) => {
+                      const next = new Set(prev);
+                      if (allSel) famPats.forEach((n) => next.delete(n));
+                      else        famPats.forEach((n) => next.add(n));
+                      return next;
+                    });
+                  };
+
+                  return (
+                    <div key={family} className="rounded-lg border border-white/6 bg-white/2 overflow-hidden">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={toggleFamily}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleFamily(); } }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-white/5 transition-colors cursor-pointer"
+                      >
+                        <ChevronDown className={cn(
+                          "size-3 text-white/30 transition-transform duration-150 shrink-0",
+                          !famOpen && "-rotate-90",
+                        )} />
+                        <span className={cn("text-[10px] font-semibold uppercase tracking-wider", meta.muted)}>
+                          {meta.label}
+                        </span>
+                        <span className="text-[9px] text-white/20">({patterns.length})</span>
+                        {selCount > 0 && (
+                          <span className={cn("text-[9px] font-medium ml-1", meta.muted)}>
+                            {selCount} selected
+                          </span>
+                        )}
+                        {famOpen && (
+                          <button
+                            onClick={toggleAll}
+                            className="ml-auto text-[9px] text-[var(--color-text-muted)] hover:text-white underline underline-offset-2"
+                          >
+                            {allSel ? "Deselect all" : "Select all"}
+                          </button>
+                        )}
+                      </div>
+
+                      {famOpen && (
+                        <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1">
+                          {patterns.map((p) => {
+                            const active = selectedPatternNames.has(p.name);
+                            return (
+                              <button
+                                key={p.name}
+                                onClick={() => {
+                                  setSelectedPatternNames((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(p.name)) next.delete(p.name);
+                                    else next.add(p.name);
+                                    return next;
+                                  });
+                                }}
+                                className={cn(
+                                  "px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-all",
+                                  active
+                                    ? meta.active
+                                    : "border-white/10 text-white/35 bg-transparent hover:text-white/55 hover:border-white/20",
+                                )}
+                              >
+                                {p.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
       </div>
 
       {/* ── Error ──────────────────────────────────────────────────────── */}

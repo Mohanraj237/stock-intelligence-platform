@@ -117,6 +117,7 @@ def fetch_and_cache_universe(name: str) -> dict:
     import json
     UNIVERSE_DIR.mkdir(parents=True, exist_ok=True)
     url = INDEX_URLS.get(name)
+    path = _universe_path(name)
     try:
         df = _read_csv_url(url)
         symbols = _extract_symbols(df)
@@ -129,8 +130,24 @@ def fetch_and_cache_universe(name: str) -> dict:
             "synced_at": time.time(),
         }
     except Exception as e:
-        logger.warning(f"Failed to fetch {name} from NSE: {e}. Using fallback.")
         fallback = FALLBACK_SYMBOLS.get(name, [])
+        # Don't clobber a better existing cache with an inferior fallback. This
+        # runs on every backend startup (see startup_sync); NSE's archive
+        # endpoints have become unreliable (403/503), so blindly overwriting
+        # on every failed attempt would degrade the cache a little more each
+        # restart instead of leaving already-good data alone.
+        if path.exists():
+            try:
+                existing = json.loads(path.read_text(encoding="utf-8"))
+                if len(existing.get("symbols", [])) >= len(fallback):
+                    logger.warning(
+                        f"Failed to fetch {name} from NSE: {e}. "
+                        f"Keeping existing cache ({len(existing.get('symbols', []))} symbols)."
+                    )
+                    return existing
+            except Exception:
+                pass
+        logger.warning(f"Failed to fetch {name} from NSE: {e}. Using fallback.")
         data = {
             "name": name,
             "symbols": fallback,
@@ -139,7 +156,6 @@ def fetch_and_cache_universe(name: str) -> dict:
             "synced_at": time.time(),
             "fallback": True,
         }
-    path = _universe_path(name)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return data
 

@@ -54,6 +54,28 @@ function fmt(n: number, d = 0) {
   return n.toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
+// ── Expiry date helpers ───────────────────────────────────────────────────────
+
+const _MONTH_MAP: Record<string, string> = {
+  Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+  Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
+};
+const _MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function expiryToISO(expiry: string): string {
+  const [d, m, y] = expiry.split("-");
+  const mm = _MONTH_MAP[m];
+  if (!mm || !y || !d) return "";
+  return `${y}-${mm}-${d.padStart(2, "0")}`;
+}
+
+function isoToExpiry(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  const name = _MONTH_NAMES[parseInt(m, 10) - 1];
+  if (!name || !y || !d) return "";
+  return `${d}-${name}-${y}`;
+}
+
 // ── Market status badge ───────────────────────────────────────────────────────
 
 function MarketBadge({ info }: { info: MarketInfo }) {
@@ -89,7 +111,7 @@ function ExpiryChips({
     : [{ label: "Monthly", value: monthly }];
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5 items-center">
       {options.map((o) => (
         <button
           key={o.value}
@@ -104,13 +126,12 @@ function ExpiryChips({
           {o.label} · {o.value}
         </button>
       ))}
-      {/* Custom expiry input */}
+      {/* Date picker — synced with chip selection */}
       <input
-        type="text"
-        placeholder="DD-Mon-YYYY"
-        value={!options.find(o => o.value === selected) ? selected : ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border)] bg-transparent text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-primary)] w-28"
+        type="date"
+        value={expiryToISO(selected)}
+        onChange={(e) => e.target.value && onChange(isoToExpiry(e.target.value))}
+        className="h-[26px] px-2 rounded-full text-[11px] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-white focus:outline-none focus:border-[var(--color-primary)] [color-scheme:dark]"
       />
     </div>
   );
@@ -136,9 +157,9 @@ export function PaperTradeModal({ setup, onClose }: Props) {
   const [mkt, setMkt]   = useState<MarketInfo>(getMarketInfo());
   const [lots, setLots] = useState(1);
 
-  // Lot size: use the correctly resolved value (frontend getLotSize is now complete)
-  const frontendLot = getLotSize(setup.symbol);
-  const lotSize     = frontendLot > 1 ? frontendLot : setup.lot_size; // prefer correctly resolved value
+  // Lot size — editable so users can correct it when NSE revises it each expiry cycle
+  const defaultLot  = getLotSize(setup.symbol);
+  const [lotSize, setLotSize] = useState(defaultLot > 1 ? defaultLot : setup.lot_size);
   const isIndex     = INDEX_SYMBOLS.includes(setup.symbol.toUpperCase());
 
   // Auto-set expiry based on market / symbol type
@@ -275,13 +296,21 @@ export function PaperTradeModal({ setup, onClose }: Props) {
                 <ExpiryChips selected={expiry} onChange={setExpiry} isIndex={isIndex} />
               </div>
 
-              {/* ── Lots + Premium ────────────────────────────────────────── */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* ── Lots + Lot Size + Premium ─────────────────────────────── */}
+              <div className="grid grid-cols-3 gap-3">
                 <label className="flex flex-col gap-1.5">
                   <span className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">Lots</span>
                   <input
                     type="number" min={1} max={100} value={lots}
                     onChange={(e) => setLots(Math.max(1, Number(e.target.value)))}
+                    className="bg-[var(--color-surface-2)] border border-[var(--color-border)] text-white rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">Lot Size</span>
+                  <input
+                    type="number" min={1} value={lotSize}
+                    onChange={(e) => setLotSize(Math.max(1, Number(e.target.value)))}
                     className="bg-[var(--color-surface-2)] border border-[var(--color-border)] text-white rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                   />
                 </label>

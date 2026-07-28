@@ -14,11 +14,7 @@
     "NATIONALUM",
     "SAIL",
     "TATASTEEL",
-    "VAML",
-    "VISL",
     "VEDL",
-    "VOGL",
-    "VEDPOWER",
     "WELCORP"
   ],
   "companies": {
@@ -35,13 +31,9 @@
     "NATIONALUM": "National Aluminium Co. Ltd.",
     "SAIL": "Steel Authority of India Ltd.",
     "TATASTEEL": "Tata Steel Ltd.",
-    "VAML": "Vedanta Aluminium Metal Ltd.",
-    "VISL": "Vedanta Iron and Steel Ltd.",
     "VEDL": "Vedanta Ltd.",
-    "VOGL": "Vedanta Oil and Gas Ltd.",
-    "VEDPOWER": "Vedanta Power Ltd.",
     "WELCORP": "Welspun Corp Ltd."
   },
-  "count": 19,
-  "synced_at": 1781343803.120409
+  "count": 15,
+  "synced_at": 1785234292.9165483
 }

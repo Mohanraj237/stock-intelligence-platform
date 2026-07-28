@@ -128,7 +128,6 @@
     "INTELLECT",
     "IGIL",
     "IKS",
-    "JBCHEPHARM",
     "JBMA",
     "JKTYRE",
     "JMFINANCIL",
@@ -190,6 +189,7 @@
     "PPLPHARMA",
     "POLYMED",
     "POONAWALLA",
+    "PFOCUS",
     "RRKABEL",
     "RBLBANK",
     "RHIM",
@@ -380,7 +380,6 @@
     "INTELLECT": "Intellect Design Arena Ltd.",
     "IGIL": "International Gemological Institute Ltd.",
     "IKS": "Inventurus Knowledge Solutions Ltd.",
-    "JBCHEPHARM": "J.B. Chemicals & Pharmaceuticals Ltd.",
     "JBMA": "JBM Auto Ltd.",
     "JKTYRE": "JK Tyre & Industries Ltd.",
     "JMFINANCIL": "JM Financial Ltd.",
@@ -442,6 +441,7 @@
     "PPLPHARMA": "Piramal Pharma Ltd.",
     "POLYMED": "Poly Medicure Ltd.",
     "POONAWALLA": "Poonawalla Fincorp Ltd.",
+    "PFOCUS": "Prime Focus Ltd.",
     "RRKABEL": "R R Kabel Ltd.",
     "RBLBANK": "RBL Bank Ltd.",
     "RHIM": "RHI MAGNESITA INDIA LTD.",
@@ -505,5 +505,5 @@
     "ECLERX": "eClerx Services Ltd."
   },
   "count": 250,
-  "synced_at": 1781343802.6647213
+  "synced_at": 1785234292.5749164
 }

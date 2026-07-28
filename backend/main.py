@@ -44,7 +44,7 @@ from backend.config import get_settings
 from backend.routers import (
     market, stocks, patterns, scans, news, earnings, positions,
     backtests, portfolio, watchlist, rules, universe, settings as settings_router,
-    reports, fno, live_scanner,
+    reports, fno, live_scanner, equity_scanner,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -70,10 +70,20 @@ log = logging.getLogger("backend")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import asyncio
+    import concurrent.futures
+    # Increase the default executor so paper trades, health checks, and other
+    # lightweight endpoints are never starved by scanner workloads (which use
+    # their own dedicated pools defined in live_scanner.py / equity_scanner.py).
+    loop = asyncio.get_running_loop()
+    loop.set_default_executor(
+        concurrent.futures.ThreadPoolExecutor(
+            max_workers=8, thread_name_prefix="fastapi-default"
+        )
+    )
     log.info("Stock Intelligence Platform backend v%s starting (log: %s)", __version__, LOG_FILE)
     try:
         from services.universe_sync import startup_sync
-        import asyncio
         asyncio.create_task(asyncio.to_thread(startup_sync, True))
     except Exception as e:
         log.warning("Background universe sync skipped: %s", e)
@@ -149,6 +159,7 @@ def create_app() -> FastAPI:
     app.include_router(reports.router)
     app.include_router(fno.router)
     app.include_router(live_scanner.router)
+    app.include_router(equity_scanner.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> JSONResponse:

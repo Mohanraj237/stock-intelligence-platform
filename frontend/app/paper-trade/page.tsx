@@ -129,74 +129,132 @@ function pnlClass(n: number) {
 function PortfolioHeader({ data, loading }: { data?: PortfolioSummary; loading: boolean }) {
   if (loading || !data) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[0, 1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-4 space-y-2">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-7 w-32" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-7 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
-  const capitalPct = data.initial_capital > 0
-    ? (data.available_capital / data.initial_capital) * 100
-    : 100;
+  const currentValue  = data.current_value ?? (data.deployed_capital + data.open_pnl);
+  const openPnlPct    = data.deployed_capital > 0
+    ? (data.open_pnl / data.deployed_capital) * 100
+    : 0;
+  const deployedPct   = data.initial_capital > 0
+    ? (data.deployed_capital / data.initial_capital) * 100
+    : 0;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <Card>
-        <CardContent className="p-4">
-          <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Total Equity</div>
-          <div className="text-2xl font-bold tnum text-white">{formatINR(data.total_equity ?? data.available_capital + data.deployed_capital)}</div>
-          <div className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-            Avail: {formatINR(data.available_capital)} · Deployed: {formatINR(data.deployed_capital)}
-          </div>
-          <div className="mt-2 h-1.5 rounded-full bg-[var(--color-surface-2)]">
-            <div
-              className="h-full rounded-full bg-[var(--color-primary)] transition-all"
-              style={{ width: `${Math.max(2, capitalPct)}%` }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      {/* ── 4 main metric cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-      <Card>
-        <CardContent className="p-4">
-          <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Total P&amp;L</div>
-          <div className={cn("text-2xl font-bold tnum", pnlClass(data.total_pnl))}>
-            {data.total_pnl >= 0 ? "+" : ""}{formatINR(data.total_pnl)}
-          </div>
-          <div className={cn("text-[11px]", pnlClass(data.total_pnl_pct))}>
-            {data.total_pnl_pct >= 0 ? "+" : ""}{data.total_pnl_pct?.toFixed(2)}%
-          </div>
-        </CardContent>
-      </Card>
+        {/* Cash */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Available Cash</div>
+            <div className="text-2xl font-bold tnum text-white">{formatINR(data.available_capital)}</div>
+            <div className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+              of {formatINR(data.initial_capital)} initial
+            </div>
+            {/* utilisation bar */}
+            <div className="mt-2 h-1 rounded-full bg-[var(--color-surface-2)]">
+              <div
+                className="h-full rounded-full bg-[var(--color-primary)] transition-all"
+                style={{ width: `${Math.min(100, Math.max(2, 100 - deployedPct))}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="p-4">
-          <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Win Rate</div>
-          <div className="text-2xl font-bold tnum text-white">{data.win_rate?.toFixed(1)}%</div>
-          <div className="text-[11px] text-[var(--color-text-muted)]">
-            {data.closed_trades_count} closed · {data.open_trades_count} open
-          </div>
-        </CardContent>
-      </Card>
+        {/* Invested */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Total Invested</div>
+            <div className="text-2xl font-bold tnum text-white">{formatINR(data.deployed_capital)}</div>
+            <div className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+              {data.open_trades_count} open position{data.open_trades_count !== 1 ? "s" : ""}
+            </div>
+            {/* deployed pct bar */}
+            <div className="mt-2 h-1 rounded-full bg-[var(--color-surface-2)]">
+              <div
+                className="h-full rounded-full bg-amber-400 transition-all"
+                style={{ width: `${Math.min(100, Math.max(2, deployedPct))}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="p-4">
-          <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Profit Factor</div>
-          <div className={cn("text-2xl font-bold tnum", (data.profit_factor ?? 0) >= 1.5 ? "up" : "down")}>
+        {/* Current Value */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Current Value</div>
+            <div className="text-2xl font-bold tnum text-white">{formatINR(currentValue)}</div>
+            <div className={cn("mt-1 text-[11px]", pnlClass(data.open_pnl))}>
+              {data.open_pnl >= 0 ? "+" : ""}{formatINR(data.open_pnl)}
+              {" "}({openPnlPct >= 0 ? "+" : ""}{openPnlPct.toFixed(2)}%)
+            </div>
+            <div className="mt-1 text-[10px] text-[var(--color-text-muted)]">Unrealised P&amp;L</div>
+          </CardContent>
+        </Card>
+
+        {/* Total P&L */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Total P&amp;L</div>
+            <div className={cn("text-2xl font-bold tnum", pnlClass(data.total_pnl))}>
+              {data.total_pnl >= 0 ? "+" : ""}{formatINR(data.total_pnl)}
+            </div>
+            <div className={cn("text-[11px]", pnlClass(data.total_pnl_pct))}>
+              {data.total_pnl_pct >= 0 ? "+" : ""}{data.total_pnl_pct?.toFixed(2)}% on capital
+            </div>
+            <div className="mt-1.5 flex gap-3 text-[10px]">
+              <span className={cn(pnlClass(data.open_pnl))}>
+                Open {data.open_pnl >= 0 ? "+" : ""}{formatINR(data.open_pnl)}
+              </span>
+              <span className="text-[var(--color-text-muted)]">·</span>
+              <span className={cn(pnlClass(data.closed_pnl ?? 0))}>
+                Realised {(data.closed_pnl ?? 0) >= 0 ? "+" : ""}{formatINR(data.closed_pnl ?? 0)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── Stats strip ── */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 text-[11px]">
+        <span className="text-[var(--color-text-muted)]">
+          Win Rate:{" "}
+          <span className={cn("font-semibold", data.win_rate >= 50 ? "up" : "text-white")}>
+            {data.win_rate?.toFixed(1)}%
+          </span>
+        </span>
+        <span className="text-[var(--color-text-muted)] hidden sm:inline">·</span>
+        <span className="text-[var(--color-text-muted)]">
+          Profit Factor:{" "}
+          <span className={cn("font-semibold", (data.profit_factor ?? 0) >= 1.5 ? "up" : (data.profit_factor ?? 0) >= 1 ? "text-white" : "down")}>
             {data.profit_factor?.toFixed(2)}×
-          </div>
-          <div className="text-[11px] text-[var(--color-text-muted)]">
-            Open P&amp;L: {formatINR(data.open_pnl)}
-          </div>
-        </CardContent>
-      </Card>
+          </span>
+        </span>
+        <span className="text-[var(--color-text-muted)] hidden sm:inline">·</span>
+        <span className="text-[var(--color-text-muted)]">
+          {data.closed_trades_count} closed · {data.open_trades_count} open
+        </span>
+        <span className="text-[var(--color-text-muted)] hidden sm:inline">·</span>
+        <span className="text-[var(--color-text-muted)]">
+          Total Equity:{" "}
+          <span className="font-semibold text-white">{formatINR(data.total_equity)}</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -221,16 +279,18 @@ function TradeRow({
   const isClosing = closing === trade.trade_id;
   const src = trade.price_source;
   // Derive label and colour from price_source; fall back to comparing prices for legacy trades
-  const hasRealPrice = src === "live" || src === "cached" || src === "manual"
+  const hasRealPrice = src === "live" || src === "cached" || src === "manual" || src === "synthetic"
     || (src === undefined && trade.current_price !== trade.entry_price);
   const srcLabel = src === "live" ? "live"
     : src === "cached" ? "last close"
     : src === "manual" ? "manual"
+    : src === "synthetic" ? "estimated"
     : hasRealPrice ? "set"
     : "set price ✎";
   const srcColor = src === "live" ? "text-[var(--color-success)]"
     : src === "cached" ? "text-amber-400"
     : src === "manual" ? "text-[var(--color-primary)]"
+    : src === "synthetic" ? "text-purple-400"
     : "text-[var(--color-text-muted)]";
   const desc = `${trade.action} ${trade.lots}× ${trade.symbol} ${trade.strike > 0 ? trade.strike + " " : ""}${trade.instrument_type}`;
 
@@ -282,6 +342,14 @@ function TradeRow({
 
       {/* Entry */}
       <td className="px-3 py-2.5 text-right text-white">{formatINR(trade.entry_price)}</td>
+
+      {/* Invested (total premium paid) */}
+      <td className="px-3 py-2.5 text-right">
+        <div className="text-white">{formatINR(trade.margin_used)}</div>
+        <div className="text-[9px] text-[var(--color-text-muted)]">
+          {formatINR(trade.entry_price)} × {trade.lots * trade.lot_size}
+        </div>
+      </td>
 
       {/* LTP — click to edit manually */}
       <td className="px-3 py-2.5 text-right">
@@ -371,6 +439,34 @@ function TradeRow({
   );
 }
 
+// ── Expiry date helpers ───────────────────────────────────────────────────────
+
+const MONTH_MAP: Record<string, string> = {
+  Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+  Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
+};
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function expiryToISO(expiry: string): string {
+  // "25-Jun-2025" → "2025-06-25"
+  const [d, m, y] = expiry.split("-");
+  const mm = MONTH_MAP[m];
+  if (!mm || !y || !d) return "";
+  return `${y}-${mm}-${d.padStart(2, "0")}`;
+}
+
+function isoToExpiry(iso: string): string {
+  // "2025-06-25" → "25-Jun-2025"
+  const [y, m, d] = iso.split("-");
+  const name = MONTH_NAMES[parseInt(m, 10) - 1];
+  if (!name || !y || !d) return "";
+  return `${d}-${name}-${y}`;
+}
+
+function todayExpiry(): string {
+  return isoToExpiry(new Date().toISOString().slice(0, 10));
+}
+
 // ── Trade Entry Form ──────────────────────────────────────────────────────────
 
 function TradeEntryForm({ symbols }: { symbols: string[] }) {
@@ -379,9 +475,10 @@ function TradeEntryForm({ symbols }: { symbols: string[] }) {
     symbol: "NIFTY",
     instrument_type: "CE",
     strike: "",
-    expiry: "",
+    expiry: todayExpiry(),
     action: "BUY",
     lots: "1",
+    lot_size: String(getLotSize("NIFTY")),
     entry_price: "",
     target_price: "",
     stop_loss: "",
@@ -402,8 +499,12 @@ function TradeEntryForm({ symbols }: { symbols: string[] }) {
     },
   });
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const lotSize = getLotSize(form.symbol);
+  const set = (k: string, v: string) => setForm((f) => {
+    const next = { ...f, [k]: v };
+    if (k === "symbol") next.lot_size = String(getLotSize(v));
+    return next;
+  });
+  const lotSize = parseInt(form.lot_size) || getLotSize(form.symbol);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,7 +544,7 @@ function TradeEntryForm({ symbols }: { symbols: string[] }) {
         <div>
           <div className={labelCls}>Symbol</div>
           <select value={form.symbol} onChange={(e) => set("symbol", e.target.value)} className={fieldCls}>
-            {symbols.slice(0, 50).map((s) => <option key={s} value={s}>{s}</option>)}
+            {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
@@ -467,11 +568,20 @@ function TradeEntryForm({ symbols }: { symbols: string[] }) {
         </div>
         <div>
           <div className={labelCls}>Expiry</div>
-          <input type="text" value={form.expiry} onChange={(e) => set("expiry", e.target.value)} placeholder="27-Mar-2025" className={fieldCls} />
+          <input
+            type="date"
+            value={expiryToISO(form.expiry)}
+            onChange={(e) => set("expiry", e.target.value ? isoToExpiry(e.target.value) : "")}
+            className={cn(fieldCls, "[color-scheme:dark]")}
+          />
         </div>
         <div>
-          <div className={labelCls}>Lots · lot size: {lotSize}</div>
+          <div className={labelCls}>Lots</div>
           <input type="number" min="1" value={form.lots} onChange={(e) => set("lots", e.target.value)} className={fieldCls} />
+        </div>
+        <div>
+          <div className={labelCls}>Lot Size</div>
+          <input type="number" min="1" value={form.lot_size} onChange={(e) => set("lot_size", e.target.value)} className={fieldCls} />
         </div>
         <div>
           <div className={labelCls}>Entry Price (₹)</div>
@@ -759,7 +869,7 @@ export default function PaperTradePage() {
                   {[0, 1, 2].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
                 </div>
               ) : (
-                <table className="w-full text-xs min-w-[800px]">
+                <table className="w-full text-xs min-w-[920px]">
                   <thead className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
                     <tr className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]">
                       <th className="text-left px-3 py-2.5">Symbol</th>
@@ -767,6 +877,7 @@ export default function PaperTradePage() {
                       <th className="text-left px-3 py-2.5">Expiry</th>
                       <th className="text-right px-3 py-2.5">Qty</th>
                       <th className="text-right px-3 py-2.5">Entry</th>
+                      <th className="text-right px-3 py-2.5">Invested</th>
                       <th className="text-right px-3 py-2.5">LTP</th>
                       <th className="text-right px-3 py-2.5">P&amp;L</th>
                       <th className="text-right px-3 py-2.5">Tgt / SL</th>
@@ -786,7 +897,7 @@ export default function PaperTradePage() {
                     ))}
                     {(openTrades.data ?? []).length === 0 && (
                       <tr>
-                        <td colSpan={10} className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+                        <td colSpan={11} className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
                           No open positions · use New Trade tab to add one
                         </td>
                       </tr>

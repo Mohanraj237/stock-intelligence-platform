@@ -49,11 +49,7 @@
     "UNIONBANK",
     "UNITDSPR",
     "VBL",
-    "VAML",
-    "VISL",
     "VEDL",
-    "VOGL",
-    "VEDPOWER",
     "ZYDUSLIFE"
   ],
   "companies": {
@@ -105,13 +101,9 @@
     "UNIONBANK": "Union Bank of India",
     "UNITDSPR": "United Spirits Ltd.",
     "VBL": "Varun Beverages Ltd.",
-    "VAML": "Vedanta Aluminium Metal Ltd.",
-    "VISL": "Vedanta Iron and Steel Ltd.",
     "VEDL": "Vedanta Ltd.",
-    "VOGL": "Vedanta Oil and Gas Ltd.",
-    "VEDPOWER": "Vedanta Power Ltd.",
     "ZYDUSLIFE": "Zydus Lifesciences Ltd."
   },
-  "count": 54,
-  "synced_at": 1781343802.3994813
+  "count": 50,
+  "synced_at": 1785234292.4134748
 }

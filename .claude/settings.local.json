@@ -78,7 +78,21 @@
       "Bash(python -m pytest tests/ -q --tb=short)",
       "Bash(rm -f services/fno_ai_service.py services/greeks_calculator.py services/fno_scanner_service.py services/strategy_calculator.py)",
       "Bash(rm -f frontend/app/fo-ai-advisor/page.tsx frontend/app/greeks/page.tsx)",
-      "Bash(rmdir frontend/app/fo-ai-advisor frontend/app/greeks)"
+      "Bash(rmdir frontend/app/fo-ai-advisor frontend/app/greeks)",
+      "Bash(curl -s --max-time 120 -N \"http://localhost:8000/api/equity-scanner/scan/stream?universe=india_indices&threshold=60\")",
+      "Bash(curl -s --max-time 120 -N \"http://localhost:8000/api/live-scanner/scan/stream?universe=indices&threshold=60\")",
+      "Bash(curl -s --max-time 30 -X POST \"http://localhost:8000/api/fno/paper-trades/refresh-prices\")",
+      "Bash(mkdir -p \"c:/Users/mohan/Stock App/stock-intelligence-platform/frontend/app/api/live-scanner/[...slug]\")",
+      "Bash(cat .env.local)",
+      "Bash(cat frontend/.env.local)",
+      "Bash(curl -s \"http://127.0.0.1:8000/api/equity-scanner/chart-data?symbol=BERGEPAINT&interval=1d&bars=10\")",
+      "Bash(npx playwright *)",
+      "Bash(node ../test_chart.js)",
+      "Bash(curl -s \"http://localhost:3001/api/equity-scanner/health\")",
+      "Bash(curl -s \"http://localhost:3001/api/live-scanner/health\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\mohan\\Stock App\\stock-intelligence-platform\\frontend\\app\\api\\live-scanner"
     ]
   }
 }

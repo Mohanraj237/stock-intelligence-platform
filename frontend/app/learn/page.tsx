@@ -29,26 +29,69 @@ export default function LearnPage() {
   );
 }
 
+const CATEGORY_ORDER = [
+  "Momentum / Breakout", "Momentum",
+  "Trend Continuation", "Price Action",
+  "Continuation / Breakout", "Continuation", "Continuation / Breakdown",
+  "Reversal / Continuation", "Reversal", "Caution / Contrarian",
+  "Support & Resistance", "Volume / Momentum",
+  "Candlestick — Reversal", "Harmonic",
+];
+
 function Patterns() {
   const { data, isLoading } = useQuery({ queryKey: ["pattern-library"], queryFn: api.patternLibrary });
   if (isLoading) return <Skeleton className="h-96" />;
+
+  const sorted = [...(data ?? [])].sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a.category);
+    const bi = CATEGORY_ORDER.indexOf(b.category);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a.name.localeCompare(b.name);
+  });
+
+  // Group by category
+  const groups = sorted.reduce<Record<string, typeof sorted>>((acc, p) => {
+    (acc[p.category] ??= []).push(p);
+    return acc;
+  }, {});
+
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-      {(data ?? []).map((p) => (
-        <Card key={p.name}>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-2">
-              <CardTitle>{p.name}</CardTitle>
-              <Badge variant={p.direction === "Bullish" ? "success" : p.direction === "Bearish" ? "danger" : "default"}>
-                {p.direction}
-              </Badge>
-            </div>
-            <CardDescription>{p.category} · best on {p.best_timeframes}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-[var(--color-text)] leading-relaxed">{p.description}</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      {Object.entries(groups).map(([cat, patterns]) => (
+        <div key={cat}>
+          <h3 className="text-xs uppercase tracking-widest text-[var(--color-text-muted)] mb-3 border-b border-[var(--color-border)] pb-1">{cat}</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            {patterns.map((p) => (
+              <Card key={p.name}>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base">{p.name}</CardTitle>
+                    <Badge variant={p.direction === "Bullish" ? "success" : p.direction === "Bearish" ? "danger" : "default"}>
+                      {p.direction}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-[11px]">Best on {p.best_timeframes}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <p className="text-[var(--color-text)] leading-relaxed">{p.description}</p>
+                  {(p as any).when_to_trade && (
+                    <div className="rounded bg-[var(--color-surface-2)] p-2.5 space-y-1.5 text-[12px]">
+                      <p><span className="text-[var(--color-text-muted)]">Entry: </span>{(p as any).when_to_trade}</p>
+                      {(p as any).target_rule && <p><span className="text-[var(--color-text-muted)]">Target: </span>{(p as any).target_rule}</p>}
+                      {(p as any).stop && <p><span className="text-[var(--color-text-muted)]">Stop: </span>{(p as any).stop}</p>}
+                    </div>
+                  )}
+                  {(p as any).confidence_factors?.length > 0 && (
+                    <ul className="space-y-0.5 text-[11px] text-[var(--color-text-muted)]">
+                      {(p as any).confidence_factors.map((f: string, i: number) => (
+                        <li key={i} className="flex gap-1.5"><span className="text-green-400 shrink-0">✓</span>{f}</li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -186,27 +229,21 @@ const EQUITY_GUIDE: GuideSection[] = [
   {
     title: "Scanner",
     icon: "🔍",
-    path: "/scanner",
-    summary: "Scan an entire index for technical setups in seconds: RSI extremes, MACD crossovers, moving average alignments, and more.",
+    path: "/equity-scanner",
+    summary: "Scan an entire universe for 60+ technical patterns across Daily, Weekly, and Monthly timeframes. Select specific patterns by name and filter by confidence.",
     steps: [
-      "Select a universe (e.g. NIFTY 500) and a scan type (e.g. 'RSI Oversold').",
-      "Click Run Scan — results appear as a ranked table.",
-      "Click any result row to open the Stock Analyzer for deeper analysis.",
+      "Select a universe (e.g. NIFTY 50, Nifty 500, All NSE) from the dropdown.",
+      "Pick patterns by clicking individual chips — they are grouped by family (Candlestick, Price Action, Volume, Chart, Harmonic). Expand or collapse each group.",
+      "Click 'Select all' within a group to enable the full family, or pick individual patterns.",
+      "Set a minimum confluence threshold (0–100) and minimum pattern confidence.",
+      "Click Run Scan — results stream in real time showing symbol, score, and matched patterns.",
+      "Click any card to open the Stock Analyzer for that symbol.",
     ],
-    tips: ["Scans run over live data; larger universes (500 stocks) take 15–30 s.", "Combine Scanner findings with Pattern Lab for high-confidence setups."],
-  },
-  {
-    title: "Pattern Lab",
-    icon: "🧪",
-    path: "/patterns",
-    summary: "Detect classic chart patterns (Head & Shoulders, Cup & Handle, Flags, Wedges, etc.) on any stock across all timeframes.",
-    steps: [
-      "Enter a symbol and select a timeframe.",
-      "The app scans recent bars and returns all detected patterns with confidence scores.",
-      "Click a pattern name to see the example chart and description in the Learn tab.",
-      "Use Multi-TF Breakout to check alignment across Daily, Weekly, and Monthly.",
+    tips: [
+      "Weekly and Monthly patterns carry significantly more weight than intraday ones.",
+      "Higher confluence threshold (≥60) filters for only the strongest setups.",
+      "Deselecting all pattern chips runs the scanner without any pattern filter — returns all stocks above the threshold.",
     ],
-    tips: ["Higher confidence (>70%) patterns on higher timeframes (Weekly/Monthly) carry more weight.", "Patterns work best on liquid, high-volume stocks."],
   },
   {
     title: "Compare",

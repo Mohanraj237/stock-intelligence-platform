@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   // Equity nav icons
-  LayoutDashboard, Compass, LineChart, Radar, Beaker, GitCompare,
+  LayoutDashboard, Compass, LineChart, GitCompare,
   Wallet, Star, FileText, Calendar, Newspaper, Sliders, Settings, GraduationCap,
   TestTube2, Calculator,
   // F&O nav icons
@@ -35,8 +35,7 @@ const EQUITY_NAV: NavItem[] = [
   { group: "Market",   href: "/news",             label: "News",              icon: Newspaper },
   { group: "Market",   href: "/earnings",         label: "Earnings",          icon: Calendar },
   { group: "Analysis", href: "/analyzer",         label: "Stock Analyzer",    icon: LineChart },
-  { group: "Analysis", href: "/scanner",          label: "Scanner",           icon: Radar },
-  { group: "Analysis", href: "/patterns",         label: "Pattern Lab",       icon: Beaker },
+  { group: "Analysis", href: "/equity-scanner",   label: "Scanner",           icon: BarChart2 },
   { group: "Analysis", href: "/compare",          label: "Compare",           icon: GitCompare },
   { group: "Analysis", href: "/backtest",         label: "Backtest",          icon: TestTube2 },
   { group: "Tools",    href: "/position-sizing",  label: "Position Sizing",   icon: Calculator },

@@ -170,7 +170,7 @@ export function CandleChart({
           },
           timeScale: {
             borderColor:    "rgba(255,255,255,0.12)",
-            timeVisible:    interval !== "1d",
+            timeVisible:    !["1d", "1wk", "1mo"].includes(interval),
             secondsVisible: false,
           },
           handleScroll: true,
@@ -190,7 +190,7 @@ export function CandleChart({
 
         // ── Fetch data ────────────────────────────────────────────────────
         const res = await fetch(
-          `/api/live-scanner/chart-data?symbol=${encodeURIComponent(symbol)}&interval=${interval}&bars=${bars}`,
+          `/api/equity-scanner/chart-data?symbol=${encodeURIComponent(symbol)}&interval=${interval}&bars=${bars}`,
         );
         if (destroyed) return;
         if (!res.ok) { setStatus("error"); return; }
@@ -314,13 +314,14 @@ export function CandleChart({
         candleSeries.setMarkers(markers as any);
 
         chart.timeScale().fitContent();
+        if (destroyed || !containerRef.current) return;
         setStatus("ok");
 
         const ro = new ResizeObserver(() => {
           if (containerRef.current && !destroyed)
             chart.applyOptions({ width: containerRef.current.clientWidth });
         });
-        ro.observe(containerRef.current!);
+        ro.observe(containerRef.current);
         return () => ro.disconnect();
 
       } catch (err) {

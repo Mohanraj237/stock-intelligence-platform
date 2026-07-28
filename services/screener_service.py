@@ -140,13 +140,18 @@ def _clean_num(text: Optional[str]) -> Optional[float]:
 def _parse_ratio(soup: BeautifulSoup, label: str) -> Optional[float]:
     for li in soup.select("li.flex.flex-space-between, li.flex, #top-ratios li"):
         name_el = li.select_one(".name, span:first-child")
-        val_el = li.select_one(".number, span.number, .value")
+        val_el = li.select_one(".number, span.number, .nowrap, .value")
         if name_el and val_el:
             if label.lower() in name_el.get_text(" ", strip=True).lower():
                 return _clean_num(val_el.get_text(" ", strip=True))
-    text = soup.get_text(" ", strip=True)
-    m = re.search(rf"{re.escape(label)}\s+(-?\d[\d,\.]*)", text, re.IGNORECASE)
-    return _clean_num(m.group(1)) if m else None
+    # Limit regex fallback to the top-ratios section only — searching full page text
+    # causes false matches against table column headers (e.g. "Sales growth 10" where
+    # 10 is a year abbreviation in the historical ratios table).
+    top = soup.find("section", id="top-ratios") or soup.find("ul", id="top-ratios")
+    if top:
+        m = re.search(rf"{re.escape(label)}\s+(-?\d[\d,\.]*)", top.get_text(" ", strip=True), re.IGNORECASE)
+        return _clean_num(m.group(1)) if m else None
+    return None
 
 
 def _parse_table(section) -> dict:
@@ -467,6 +472,13 @@ def get_full_screener_data(symbol: str) -> dict[str, Any]:
         vals = [v for v in row_data.values() if v is not None]
         return vals[-1] if vals else None
 
+    def _growth_from_history(label_partial: str) -> Optional[float]:
+        """Get most-recent-year growth % from the historical key-metrics table."""
+        for key in historical_ratios:
+            if label_partial.lower() in key.lower():
+                return _latest(historical_ratios, key)
+        return None
+
     # Derive ratios from tables where not in top-ratios
     opm = _latest(pl_annual, "OPM %")
     eps = _latest(pl_annual, "EPS in Rs")
@@ -504,8 +516,8 @@ def get_full_screener_data(symbol: str) -> dict[str, Any]:
         "npm": npm,
         "debt_equity": debt_equity,
         "interest_coverage": interest_coverage,
-        "sales_growth": r("Sales growth"),
-        "profit_growth": r("Profit growth"),
+        "sales_growth": r("Sales growth") or _growth_from_history("Sales Growth"),
+        "profit_growth": r("Profit growth") or _growth_from_history("Profit Growth"),
         "promoter_holding": promoter_holding,
     }
 

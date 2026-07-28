@@ -193,11 +193,7 @@
     "UNIONBANK",
     "UNITDSPR",
     "VBL",
-    "VAML",
-    "VISL",
     "VEDL",
-    "VOGL",
-    "VEDPOWER",
     "VMM",
     "IDEA",
     "VOLTAS",
@@ -399,11 +395,7 @@
     "UNIONBANK": "Union Bank of India",
     "UNITDSPR": "United Spirits Ltd.",
     "VBL": "Varun Beverages Ltd.",
-    "VAML": "Vedanta Aluminium Metal Ltd.",
-    "VISL": "Vedanta Iron and Steel Ltd.",
     "VEDL": "Vedanta Ltd.",
-    "VOGL": "Vedanta Oil and Gas Ltd.",
-    "VEDPOWER": "Vedanta Power Ltd.",
     "VMM": "Vishal Mega Mart Ltd.",
     "IDEA": "Vodafone Idea Ltd.",
     "VOLTAS": "Voltas Ltd.",
@@ -412,6 +404,6 @@
     "YESBANK": "Yes Bank Ltd.",
     "ZYDUSLIFE": "Zydus Lifesciences Ltd."
   },
-  "count": 204,
-  "synced_at": 1781343802.4852724
+  "count": 200,
+  "synced_at": 1785234292.3892846
 }

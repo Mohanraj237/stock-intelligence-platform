@@ -1,11 +1,12 @@
 """
 Confluence scorer — the core brain of the live scanner.
 
-Scores each symbol 0-100 across four independent categories:
+Scores each symbol 0-100 across five independent categories:
   1. Trend / Structure   0-30
   2. Momentum            0-25
-  3. Volume confirmation 0-20
+  3. Volume confirmation 0-15  (reduced from 20 to prevent volume-only setups)
   4. Candle trigger      0-25
+  5. Structural bonus    0-5   (chart/price-action Tier-2 confirmed patterns)
 
 Only show setups above threshold (default 65).
 Direction is determined from categories 1+2, then validated by the candle.
@@ -24,6 +25,7 @@ import pandas as pd
 import ta
 
 from services.pattern_detector import PatternSignal, detect, NO_PATTERN
+from services.pattern_registry import run_detectors, best_for_confluence, PatternResult
 
 log = logging.getLogger(__name__)
 
@@ -115,36 +117,52 @@ class ConfluenceResult:
     total: int              # 0-100
     trend_score: int        # 0-30
     momentum_score: int     # 0-25
-    volume_score: int       # 0-20
+    volume_score: int       # 0-15
     candle_score: int       # 0-25
+    structural_score: int = 0  # 0-5 (chart/price-action Tier-2 bonus)
     pattern: PatternSignal = field(default_factory=lambda: NO_PATTERN)
     spot_price: float = 0.0
     atr: float = 0.0
     rel_vol: float = 1.0
     reasons: list[str] = field(default_factory=list)
+    patterns: list[dict] = field(default_factory=list)  # full registry output
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Scorer
 # ─────────────────────────────────────────────────────────────────────────────
 
-def score(symbol: str, df: pd.DataFrame) -> ConfluenceResult | None:
+def score(
+    symbol: str,
+    df: pd.DataFrame,
+    timeframe: str = "",
+    enabled_pattern_names: set[str] | None = None,
+) -> ConfluenceResult | None:
     """
     Score the last bar of df for a tradeable setup.
     Returns None if data is insufficient (< 30 bars).
+    Pass timeframe so the pattern registry uses correct TF gates.
+    enabled_pattern_names: if given, only these exact pattern names contribute to
+    the Candle Trigger (0-25) and Structural bonus (0-5) categories — everything
+    else in the 100-pt total (trend/momentum/volume) is unaffected.
     """
     if df.empty or len(df) < 20:
         log.debug("Skipping %s — only %d bars", symbol, len(df))
         return None
 
     try:
-        return _score(symbol, df)
+        return _score(symbol, df, timeframe, enabled_pattern_names)
     except Exception as exc:
         log.warning("Scorer error for %s: %s", symbol, exc)
         return None
 
 
-def _score(symbol: str, df: pd.DataFrame) -> ConfluenceResult:
+def _score(
+    symbol: str,
+    df: pd.DataFrame,
+    timeframe: str = "",
+    enabled_pattern_names: set[str] | None = None,
+) -> ConfluenceResult:
     i = len(df) - 1
     last = df.iloc[i]
     reasons: list[str] = []
@@ -253,47 +271,84 @@ def _score(symbol: str, df: pd.DataFrame) -> ConfluenceResult:
 
     momentum_pts = min(25, momentum_pts)
 
-    # ── Category 3: Volume (0-20) ────────────────────────────────────────────
+    # ── Category 3: Volume (0-15) ────────────────────────────────────────────
     rel_vol = float(last.get("rel_vol", np.nan))
     volume_pts = 0
 
     if not np.isnan(rel_vol):
         if rel_vol >= 2.5:
-            volume_pts = 20
+            volume_pts = 15
             reasons.append(f"Vol surge {rel_vol:.1f}×")
         elif rel_vol >= 1.8:
-            volume_pts = 15
+            volume_pts = 11
             reasons.append(f"High vol {rel_vol:.1f}×")
         elif rel_vol >= 1.3:
-            volume_pts = 10
+            volume_pts = 7
             reasons.append(f"Vol above avg {rel_vol:.1f}×")
         else:
-            volume_pts = 4
+            volume_pts = 3
     else:
-        volume_pts = 8  # no volume data (index) — neutral score
+        volume_pts = 6  # no volume data (index) — neutral score
 
-    # ── Category 4: Candle Trigger (0-25) ────────────────────────────────────
-    pattern = detect(df, i)
+    # ── Category 4: Candle Trigger (0-25) — fed from pattern registry ────────
+    # Run the full registry on this DataFrame so all patterns are detected once.
+    # Fix: guarantee _tf is never empty — empty string causes run_detectors to
+    # skip all chart-pattern detectors (their valid_timeframes doesn't include "").
+    if timeframe:
+        _tf = timeframe
+    elif len(df) <= 390:   # ≤5d × 78 bars/day → 5m intraday
+        _tf = "5m"
+    elif len(df) <= 480:
+        _tf = "15m"
+    elif len(df) <= 1300:
+        _tf = "1h"
+    else:
+        _tf = "1d"
+
+    all_patterns = run_detectors(df, _tf)
+    if enabled_pattern_names:
+        all_patterns = [p for p in all_patterns if p.name in enabled_pattern_names]
+
+    # ── Category 5: Structural bonus (0-5) ───────────────────────────────────
+    structural_fams = {"chart", "price_action"}
+    has_structural = any(
+        p.family in structural_fams and p.tier == 2 and p.state == "confirmed"
+        for p in all_patterns
+    )
+    structural_pts = 5 if has_structural else 0
+    if has_structural:
+        reasons.append("Structural pattern confirmed")
+
+    # Pick the best aligned pattern for the candle trigger
+    best_reg = best_for_confluence(all_patterns, trend_dir)
+
+    # Convert to PatternSignal for backward-compat scoring logic
+    if best_reg is not None:
+        pattern = PatternSignal(best_reg.name, best_reg.direction, best_reg.strength)
+    elif not enabled_pattern_names:
+        # Fall back to the legacy single-bar detector for short DataFrames.
+        # Skipped when a pattern filter is active — the fallback ignores the
+        # filter entirely, which would silently defeat a user's selection.
+        pattern = detect(df, i)
+    else:
+        pattern = NO_PATTERN
+
     candle_pts = 0
-
     if pattern.strength > 0:
         if pattern.direction == trend_dir:
-            candle_pts = pattern.points   # full credit when aligned
+            candle_pts = pattern.points
             reasons.append(f"Pattern: {pattern.name}")
         elif trend_dir == "range":
             candle_pts = max(0, pattern.points - 8)
             reasons.append(f"Pattern: {pattern.name}")
-        # opposite direction → 0 pts (contradicts trend)
 
     # ── Total & final direction ───────────────────────────────────────────────
-    total = trend_pts + momentum_pts + volume_pts + candle_pts
+    total = trend_pts + momentum_pts + volume_pts + candle_pts + structural_pts
 
-    # If pattern direction contradicts trend direction significantly, penalise
     if pattern.strength >= 2 and pattern.direction not in (trend_dir, "neutral"):
         total = max(0, total - 15)
         reasons.append("Pattern contradicts trend (penalised)")
 
-    # Consolidate direction: pattern can upgrade "range"
     if trend_dir == "range" and pattern.direction in ("bullish", "bearish"):
         final_dir = pattern.direction
     else:
@@ -301,7 +356,7 @@ def _score(symbol: str, df: pd.DataFrame) -> ConfluenceResult:
 
     atr = float(last.get("atr", close * 0.005))
     if np.isnan(atr) or atr <= 0:
-        atr = close * 0.005  # 0.5% fallback
+        atr = close * 0.005
 
     rv = rel_vol if not np.isnan(rel_vol) else 1.0
 
@@ -313,9 +368,11 @@ def _score(symbol: str, df: pd.DataFrame) -> ConfluenceResult:
         momentum_score=int(momentum_pts),
         volume_score=int(volume_pts),
         candle_score=int(candle_pts),
+        structural_score=int(structural_pts),
         pattern=pattern,
         spot_price=close,
         atr=atr,
         rel_vol=rv,
         reasons=reasons,
+        patterns=[p.as_dict() for p in all_patterns],
     )

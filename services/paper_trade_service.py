@@ -84,10 +84,13 @@ def get_portfolio_summary() -> dict:
     gross_loss = abs(sum(float(t.get("pnl_rs", 0)) for t in closed_trades if float(t.get("pnl_rs", 0)) < 0))
     profit_factor = round(gross_profit / gross_loss, 2) if gross_loss > 0 else (999.0 if gross_profit > 0 else 0.0)
 
+    current_value = deployed + open_pnl  # market value of open positions
+
     return {
-        "initial_capital":  initial,
+        "initial_capital":   initial,
         "available_capital": available,
         "deployed_capital":  deployed,
+        "current_value":     current_value,
         "total_equity":      total_equity,
         "open_pnl":          open_pnl,
         "closed_pnl":        closed_pnl,
@@ -267,10 +270,9 @@ def _normalize_expiry(exp: str) -> str:
 def _ltp_from_chain(sym: str, strike: float, expiry: str, instr: str) -> tuple[float | None, str]:
     """
     Resolve a single option LTP using the same get_option_chain() path the scanner uses.
-    This path is: live NSE → disk cache (last-traded prices) → synthetic BS.
-    Synthetic prices are REJECTED because they are model estimates, not traded prices.
+    Priority: live NSE → disk cache (real last-traded prices) → synthetic BS.
 
-    Returns (ltp, source) where source is "live" | "cached" | "none".
+    Returns (ltp, source) where source is "live" | "cached" | "synthetic" | "none".
     """
     from services.fno_data_service import get_option_chain
     try:
@@ -280,11 +282,6 @@ def _ltp_from_chain(sym: str, strike: float, expiry: str, instr: str) -> tuple[f
         return None, "none"
 
     if df is None or df.empty:
-        return None, "none"
-
-    # Reject synthetic (Black-Scholes) prices — they are not real traded prices.
-    if meta.get("synthetic"):
-        logger.debug("Skipping synthetic chain for %s — not real market data", sym)
         return None, "none"
 
     col = f"{instr}_ltp"
@@ -307,7 +304,13 @@ def _ltp_from_chain(sym: str, strike: float, expiry: str, instr: str) -> tuple[f
         logger.info("Chain row found for %s %.1f %s but lastPrice=0", sym, strike, instr)
         return None, "none"
 
-    source = "cached" if meta.get("cached") else "live"
+    if meta.get("synthetic"):
+        source = "synthetic"
+        logger.debug("Using synthetic (BS model) price for %s %.1f %s: %.2f", sym, strike, instr, ltp)
+    elif meta.get("cached"):
+        source = "cached"
+    else:
+        source = "live"
     return ltp, source
 
 

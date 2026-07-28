@@ -12,11 +12,11 @@
     "GLAND",
     "GLENMARK",
     "IPCALAB",
-    "JBCHEPHARM",
     "LAURUSLABS",
     "LUPIN",
     "MANKIND",
     "PPLPHARMA",
+    "SAILIFE",
     "SUNPHARMA",
     "TORNTPHARM",
     "WOCKPHARMA",
@@ -34,16 +34,16 @@
     "GLAND": "Gland Pharma Ltd.",
     "GLENMARK": "Glenmark Pharmaceuticals Ltd.",
     "IPCALAB": "Ipca Laboratories Ltd.",
-    "JBCHEPHARM": "J.B. Chemicals & Pharmaceuticals Ltd.",
     "LAURUSLABS": "Laurus Labs Ltd.",
     "LUPIN": "Lupin Ltd.",
     "MANKIND": "Mankind Pharma Ltd.",
     "PPLPHARMA": "Piramal Pharma Ltd.",
+    "SAILIFE": "Sai Life Sciences Ltd.",
     "SUNPHARMA": "Sun Pharmaceutical Industries Ltd.",
     "TORNTPHARM": "Torrent Pharmaceuticals Ltd.",
     "WOCKPHARMA": "Wockhardt Ltd.",
     "ZYDUSLIFE": "Zydus Lifesciences Ltd."
   },
   "count": 20,
-  "synced_at": 1781343802.8714411
+  "synced_at": 1785234292.7084615
 }

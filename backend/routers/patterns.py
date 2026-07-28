@@ -103,49 +103,41 @@ def _to_breakout_classification(d: dict, tf: Optional[Timeframe] = None) -> Brea
 
 @router.get("/library")
 async def pattern_library() -> List[dict]:
-    """All patterns the engine can detect (39), enriched with curated metadata
-    from the Learn library where available. The UI uses this list to populate
-    the multi-select filter — every option here will actually match detections."""
+    """All 69 registry patterns enriched with curated Learn-page metadata.
+    Source of truth for both the Learn page and the scanner pattern chips."""
     from services.pattern_examples import PATTERN_LIBRARY
-    from engines.pattern_engine import ALL_PATTERN_NAMES
+    from services.pattern_registry import REGISTRY
 
-    # Curated metadata from Learn library, keyed by canonical name
     curated = {p["name"]: p for p in PATTERN_LIBRARY}
 
-    def _direction_for(name: str) -> str:
-        n = name.lower()
-        if any(k in n for k in ("bottom", "bull", "ascend", "cup", "morn", "engulf", "hammer", "high break", "near 52w high", "rounding", "v bot", "oversold", "support", "accumulation", "pullback", "volume surge", "volume break", "fall wedge", "descending wedge")):
-            return "Bullish"
-        if any(k in n for k in ("top", "bear", "descend", "shoot", "even", "rising wedge", "breakdown", "near 52w low", "distribution", "overbought", "resistance")):
-            return "Bearish"
-        return "Neutral"
-
-    def _category_for(name: str) -> str:
-        n = name.lower()
-        if "triangle" in n or "wedge" in n or "channel" in n or "rectangle" in n: return "Continuation / Breakout"
-        if "head" in n or "double" in n or "rounding" in n or "v bot" in n or "cup" in n: return "Reversal"
-        if "engulf" in n or "hammer" in n or "doji" in n or "shoot" in n or "morn" in n or "even" in n: return "Candlestick"
-        if "volume" in n or "gap" in n: return "Volume / Momentum"
-        if "52w" in n or "trendline" in n or "flag" in n or "breakout" in n or "breakdown" in n: return "Breakout / Momentum"
-        if "pullback" in n or "ema" in n or "dma" in n: return "Mean Reversion"
-        if "support" in n or "resistance" in n or "accumulation" in n or "distribution" in n: return "Support & Resistance"
-        if "oversold" in n or "overbought" in n: return "Mean Reversion"
-        return "Other"
+    DIRECTION_MAP = {
+        "bullish": "Bullish",
+        "bearish": "Bearish",
+        "neutral": "Neutral",
+    }
+    FAMILY_CATEGORY = {
+        "candlestick":  "Candlestick — Reversal",
+        "price_action": "Price Action",
+        "volume":       "Volume / Momentum",
+        "chart":        "Chart Pattern",
+        "harmonic":     "Harmonic",
+    }
 
     out = []
-    for name in sorted(ALL_PATTERN_NAMES):
-        c = curated.get(name)
+    for entry in sorted(REGISTRY, key=lambda e: (e.family, e.name)):
+        name = entry.name
+        c    = curated.get(name)
         out.append({
-            "name": name,
-            "category": (c or {}).get("category") or _category_for(name),
-            "direction": (c or {}).get("direction") or _direction_for(name),
-            "description": (c or {}).get("description") or "",
-            "when_to_trade": (c or {}).get("when_to_trade"),
-            "target_rule": (c or {}).get("target_rule"),
-            "stop": (c or {}).get("stop"),
+            "name":               name,
+            "category":           (c or {}).get("category") or FAMILY_CATEGORY.get(entry.family, "Other"),
+            "direction":          (c or {}).get("direction") or DIRECTION_MAP.get(entry.direction_bias, "Neutral"),
+            "description":        (c or {}).get("description") or "",
+            "when_to_trade":      (c or {}).get("when_to_trade"),
+            "target_rule":        (c or {}).get("target_rule"),
+            "stop":               (c or {}).get("stop"),
             "confidence_factors": (c or {}).get("confidence_factors") or [],
-            "best_timeframes": (c or {}).get("best_timeframes") or "1d, 1w",
-            "has_example": name in curated,
+            "best_timeframes":    (c or {}).get("best_timeframes") or "1d, 1w",
+            "has_example":        name in curated,
         })
     return out
 

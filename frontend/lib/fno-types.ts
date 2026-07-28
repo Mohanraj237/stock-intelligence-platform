@@ -205,7 +205,7 @@ export type TradeStatus = "OPEN" | "CLOSED" | "CANCELLED";
 export type TradeSource = "MANUAL" | "AI";
 
 /** How the current_price was last set. */
-export type PriceSource = "live" | "cached" | "manual" | "none";
+export type PriceSource = "live" | "cached" | "manual" | "synthetic" | "none";
 
 export interface PaperTrade {
   trade_id: string;
@@ -239,6 +239,7 @@ export interface PortfolioSummary {
   initial_capital: number;
   available_capital: number;
   deployed_capital: number;
+  current_value: number;
   total_equity: number;
   open_pnl: number;
   closed_pnl: number;

@@ -1,10 +1,11 @@
 // Types for the F&O Live Scanner — /api/live-scanner/scan
 
 export interface ScoreBreakdown {
-  trend: number;      // 0-30
-  momentum: number;   // 0-25
-  volume: number;     // 0-20
-  candle: number;     // 0-25
+  trend:      number;  // 0-30
+  momentum:   number;  // 0-25
+  volume:     number;  // 0-15
+  candle:     number;  // 0-25
+  structural: number;  // 0-5
 }
 
 export interface OptionPlan {
@@ -35,18 +36,23 @@ export interface BacktestInfo {
 }
 
 export interface SetupCard {
-  symbol: string;
-  timeframe: string;          // "5m" | "15m" | "1h" | "1d"
-  direction: "bullish" | "bearish" | "range";
-  confluence_score: number;   // 0-100
-  score_breakdown: ScoreBreakdown;
-  pattern: string;
-  trigger_price: number;
-  atr: number;
-  rel_vol: number;
-  reasons: string[];
-  plan: OptionPlan | null;
-  backtest: BacktestInfo | null;
+  symbol:           string;
+  timeframe:        string;          // "5m" | "15m" | "1h" | "1d"
+  direction:        "bullish" | "bearish" | "range";
+  confluence_score: number;          // 0-100
+  score_breakdown:  ScoreBreakdown;
+  pattern:          string;
+  trigger_price:    number;
+  atr:              number;
+  rel_vol:          number;
+  reasons:          string[];
+  plan:             OptionPlan | null;
+  backtest:         BacktestInfo | null;
+  patterns?:        Array<{ name: string; family: string; confidence: number; direction: string; tier: number }>;
+  breakout_state:   string;          // "FRESH_BREAKOUT" | "CONFIRMED_BREAKOUT" | etc.
+  breakout_label:   string;
+  breakout_color:   string;
+  structural_score: number;
 }
 
 export interface ScanSummary {
@@ -70,6 +76,8 @@ export interface ScanResponse {
 }
 
 export interface ScanParams {
-  universe:  "indices" | "stocks";
-  threshold: number;
+  universe:       "indices" | "stocks";
+  threshold:      number;
+  timeframes?:    string;   // comma-separated subset of the 8 TFs; omitted/empty = all
+  pattern_names?: string;   // comma-separated exact pattern names; omitted/empty = all patterns
 }
