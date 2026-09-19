@@ -18,6 +18,21 @@ interface Props {
   direction: "bullish" | "bearish" | "range";
   height?:   number;   // default 360
   bars?:     number;   // default 120
+  /**
+   * Which scanner's chart-data endpoint to read from. Timeframes are not
+   * interchangeable: only the live scanner knows how to build "4h" (Yahoo has
+   * no native 4h interval), so an F&O card must not be charted through the
+   * equity endpoint or it renders empty.
+   */
+  api?: "equity-scanner" | "live-scanner";
+}
+
+/** Timeframes only the live scanner can serve. */
+const LIVE_ONLY_INTERVALS = new Set(["5m", "15m", "30m", "1h", "4h"]);
+
+function chartApiFor(interval: string, api?: Props["api"]): string {
+  if (api) return api;
+  return LIVE_ONLY_INTERVALS.has(interval) ? "live-scanner" : "equity-scanner";
 }
 
 // ── Pattern marker spans ──────────────────────────────────────────────────────
@@ -135,6 +150,7 @@ export function CandleChart({
   direction,
   height = 360,
   bars   = 120,
+  api,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef     = useRef<any>(null);
@@ -190,7 +206,8 @@ export function CandleChart({
 
         // ── Fetch data ────────────────────────────────────────────────────
         const res = await fetch(
-          `/api/equity-scanner/chart-data?symbol=${encodeURIComponent(symbol)}&interval=${interval}&bars=${bars}`,
+          `/api/${chartApiFor(interval, api)}/chart-data` +
+          `?symbol=${encodeURIComponent(symbol)}&interval=${interval}&bars=${bars}`,
         );
         if (destroyed) return;
         if (!res.ok) { setStatus("error"); return; }
@@ -337,7 +354,7 @@ export function CandleChart({
       chartRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol, interval, height, bars]);
+  }, [symbol, interval, height, bars, api]);
 
   return (
     <div className="relative w-full">

@@ -1,10 +1,10 @@
 """
 Pattern Registry — unified detection engine for the live F&O scanner.
 
-Coverage:
-  Tier 1: Candlesticks (21 patterns), Price Action (5), Volume (6)
-  Tier 2: Classic chart patterns (19)
-  Tier 3: Wyckoff experimental (2, gated)
+Coverage (two tiers only — there is no Tier 3):
+  Tier 1: Candlesticks (23), Price Action (11), Volume (7)
+  Tier 2: Classic chart patterns (25), 52W High Breakout, Wyckoff (2),
+          SMC / ICT — Fair Value Gap, Order Block, BOS, CHoCH (4)
 
 Architecture:
   Each detector is a pure function: (pd.DataFrame) -> PatternResult | None
@@ -14,6 +14,7 @@ Architecture:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -21,6 +22,65 @@ import numpy as np
 import pandas as pd
 
 log = logging.getLogger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stable pattern identity
+#
+# Every emitted pattern name maps to a stable `pattern_id` (a slug) so filters
+# match on identity rather than on display text. Directional variants emitted by
+# a shared detector (e.g. "Inside Bar Breakout" from the Inside Bar detector)
+# carry a `parent_id` pointing at their base pattern, so selecting the parent in
+# the UI also selects its variants.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def pattern_slug(name: str) -> str:
+    """Display name → stable id. 'Inside Bar Breakout' → 'inside_bar_breakout'."""
+    return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", name.strip().lower())).strip("_")
+
+
+# variant display name → parent display name
+_VARIANT_PARENTS: dict[str, str] = {
+    "Inside Bar Breakout":  "Inside Bar",
+    "Inside Bar Breakdown": "Inside Bar",
+    "Breakdown Retest":     "Breakout Retest",
+    "Rectangle Breakdown":  "Rectangle Breakout",
+    "Channel Breakdown":    "Channel Breakout",
+    "Trendline Breakdown":  "Trendline Breakout",
+    # legacy-detector name for the registry's "Hammer"
+    "Hammer / Pin Bar":     "Hammer",
+    # SMC / ICT directional pairs — one detector, two possible emitted names
+    "Bearish FVG":          "Bullish FVG",
+    "Bearish Order Block":  "Bullish Order Block",
+    "Bearish BOS":          "Bullish BOS",
+    "Bearish CHoCH":        "Bullish CHoCH",
+}
+
+# Names emitted by detectors but not registered as their own REGISTRY entry.
+# (name, family, tier, direction)
+_VARIANT_META: list[tuple[str, str, int, str]] = [
+    ("Inside Bar Breakout",  "price_action", 1, "bullish"),
+    ("Inside Bar Breakdown", "price_action", 1, "bearish"),
+    ("Breakdown Retest",     "price_action", 1, "bearish"),
+    ("Rectangle Breakdown",  "chart",        2, "bearish"),
+    ("Channel Breakdown",    "chart",        2, "bearish"),
+    ("Trendline Breakdown",  "chart",        2, "bearish"),
+    ("Bearish FVG",          "smc",          2, "bearish"),
+    ("Bearish Order Block",  "smc",          2, "bearish"),
+    ("Bearish BOS",          "smc",          2, "bearish"),
+    ("Bearish CHoCH",        "smc",          2, "bearish"),
+]
+
+# Names only the legacy fallback detector (services/pattern_detector.py) emits.
+_LEGACY_ONLY_META: list[tuple[str, str, int, str]] = [
+    ("Hammer / Pin Bar", "candlestick", 1, "bullish"),
+    ("Bullish Marubozu", "candlestick", 1, "bullish"),
+    ("Bearish Marubozu", "candlestick", 1, "bearish"),
+]
+
+_PARENT_ID_BY_ID: dict[str, str] = {
+    pattern_slug(child): pattern_slug(parent) for child, parent in _VARIANT_PARENTS.items()
+}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,6 +99,14 @@ class PatternResult:
     span_bars: int
     state: str         # "forming" | "confirmed"
     timeframe: str = ""
+    pattern_id: str = ""   # stable slug — derived from name when omitted
+    parent_id: str = ""    # base pattern for directional variants
+
+    def __post_init__(self) -> None:
+        if not self.pattern_id:
+            self.pattern_id = pattern_slug(self.name)
+        if not self.parent_id:
+            self.parent_id = _PARENT_ID_BY_ID.get(self.pattern_id, self.pattern_id)
 
     @property
     def points(self) -> int:
@@ -47,6 +115,8 @@ class PatternResult:
     def as_dict(self) -> dict:
         return {
             "name":       self.name,
+            "pattern_id": self.pattern_id,
+            "parent_id":  self.parent_id,
             "family":     self.family,
             "tier":       self.tier,
             "direction":  self.direction,
@@ -63,12 +133,15 @@ class PatternResult:
 class RegistryEntry:
     name: str
     family: str
-    tier: int
+    tier: int          # 1 = fast/local signal, 2 = structural multi-bar formation
     direction_bias: str
     valid_timeframes: list[str]
     min_bars: int
     detector_fn: Callable[[pd.DataFrame], PatternResult | None]
-    needs_confirmation: bool = False
+
+    @property
+    def pattern_id(self) -> str:
+        return pattern_slug(self.name)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -154,6 +227,10 @@ def _det_hammer(df: pd.DataFrame) -> PatternResult | None:
     conf = min(0.90, 0.55 + (ratio - 2) * 0.10)
     if len(df) >= 6:
         prev = df.iloc[-6:-1]["close"].astype(float)
+        if float(prev.iloc[0]) < float(prev.iloc[-1]):
+            # Same shape in a confirmed prior uptrend is Hanging Man's context,
+            # not Hammer's — keep the two mutually exclusive.
+            return None
         if float(prev.iloc[0]) > float(prev.iloc[-1]):
             conf = min(0.95, conf + 0.05)
     return PatternResult("Hammer", "candlestick", 1, "bullish", str_, conf,
@@ -227,10 +304,19 @@ def _det_doji(df: pd.DataFrame) -> PatternResult | None:
     r = _rng(h, l)
     if _body(o, cl) > r * 0.08 or r == 0:
         return None
-    # skip if already matched by dragonfly/gravestone/long-legged
+    # Skip if already matched by dragonfly/gravestone/long-legged. Note: since
+    # uw_ratio + lw_ratio = 1 - body_ratio identically, any bar passing the
+    # body gate above (<=0.08x range) combined with the dragonfly/gravestone
+    # ceiling below (each wick <=0.5x range) has its SMALLER wick bounded
+    # below by ~0.42x range — always inside the long-legged exclusion. This
+    # means "plain Doji" always resolves to Long-Legged/Dragonfly/Gravestone
+    # Doji in practice; that is the correct fix for the overlap this closes,
+    # not an accidental regression.
     lw = _lw(o, cl, l); uw = _uw(o, cl, h)
     if lw > r * 0.5 or uw > r * 0.5:
-        return None  # specialised doji — handled separately
+        return None  # specialised doji — handled separately (dragonfly/gravestone)
+    if lw >= r * 0.3 and uw >= r * 0.3:
+        return None  # specialised doji — handled separately (long-legged)
     return PatternResult("Doji", "candlestick", 1, "neutral", 1, 0.55, {}, 1, "confirmed")
 
 
@@ -577,6 +663,14 @@ def _det_accumulation(df: pd.DataFrame) -> PatternResult | None:
     dn_v   = float(vols[chg < 0].mean()) if (chg < 0).any() else 0.0
     if up_v <= dn_v * 1.4:
         return None
+    # "Phase" implies an actual basing/consolidation structure, not just any
+    # 10-bar window with skewed volume — require the range to have tightened.
+    if len(close) < 30:
+        return None
+    recent_range = float(close.tail(10).max() - close.tail(10).min())
+    prior_range  = float(close.iloc[-30:-10].max() - close.iloc[-30:-10].min())
+    if prior_range <= 0 or recent_range >= prior_range * 0.7:
+        return None
     return PatternResult("Accumulation Phase", "volume", 1, "bullish", 2, 0.68, {}, 10, "forming")
 
 
@@ -590,6 +684,14 @@ def _det_distribution(df: pd.DataFrame) -> PatternResult | None:
     up_v  = float(vols[chg > 0].mean()) if (chg > 0).any() else 0.0
     dn_v  = float(vols[chg < 0].mean()) if (chg < 0).any() else 0.0
     if dn_v <= up_v * 1.4:
+        return None
+    # "Phase" implies an actual basing/consolidation structure, not just any
+    # 10-bar window with skewed volume — require the range to have tightened.
+    if len(close) < 30:
+        return None
+    recent_range = float(close.tail(10).max() - close.tail(10).min())
+    prior_range  = float(close.iloc[-30:-10].max() - close.iloc[-30:-10].min())
+    if prior_range <= 0 or recent_range >= prior_range * 0.7:
         return None
     return PatternResult("Distribution Phase", "volume", 1, "bearish", 2, 0.68, {}, 10, "forming")
 
@@ -610,6 +712,11 @@ def _det_selling_climax(df: pd.DataFrame) -> PatternResult | None:
     prev_l = float(low.iloc[-21:-1].min())
     curr_l = float(low.iloc[-1])
     if curr_l >= prev_l:
+        return None
+    # A "climax" implies capitulation after a real decline, not just one bad
+    # day — require a meaningful prior drawdown into this low.
+    decline_pct = (float(cls.iloc[-21]) - curr_l) / max(float(cls.iloc[-21]), 1) * 100
+    if decline_pct < 8:
         return None
     r = float(high.iloc[-1]) - curr_l
     if r > 0 and (float(cls.iloc[-1]) - curr_l) / r > 0.5:
@@ -654,6 +761,15 @@ def _det_head_and_shoulders(df: pd.DataFrame) -> PatternResult | None:
         return None
     if abs(ls[1] - rs[1]) / max(ls[1], 1) * 100 > 8:
         return None
+    # A real Head & Shoulders needs a genuine trough (a selloff) separating each
+    # shoulder from the head — not just three swing highs at the right heights.
+    idx = list(df.index)
+    i_ls, i_head, i_rs = idx.index(ls[0]), idx.index(head[0]), idx.index(rs[0])
+    sl = _swing_pts(df, "low", "low")
+    t1 = [p[1] for p in sl if i_ls < idx.index(p[0]) < i_head]
+    t2 = [p[1] for p in sl if i_head < idx.index(p[0]) < i_rs]
+    if not t1 or not t2 or min(t1) >= min(ls[1], head[1]) or min(t2) >= min(head[1], rs[1]):
+        return None
     neckline = float(cls.tail(30).min())
     confirmed = float(cls.iloc[-1]) < neckline
     target    = neckline - (head[1] - neckline)
@@ -673,6 +789,15 @@ def _det_inverse_hs(df: pd.DataFrame) -> PatternResult | None:
     if head[1] >= ls[1] * 0.98 or head[1] >= rs[1] * 0.98:
         return None
     if abs(ls[1] - rs[1]) / max(ls[1], 1) * 100 > 8:
+        return None
+    # Mirror of the Head & Shoulders trough check: require a genuine peak
+    # separating each shoulder from the head.
+    idx = list(df.index)
+    i_ls, i_head, i_rs = idx.index(ls[0]), idx.index(head[0]), idx.index(rs[0])
+    sh_pts = _swing_pts(df, "high", "high")
+    t1 = [p[1] for p in sh_pts if i_ls < idx.index(p[0]) < i_head]
+    t2 = [p[1] for p in sh_pts if i_head < idx.index(p[0]) < i_rs]
+    if not t1 or not t2 or max(t1) <= max(ls[1], head[1]) or max(t2) <= max(head[1], rs[1]):
         return None
     neckline  = float(cls.tail(30).max())
     confirmed = float(cls.iloc[-1]) > neckline
@@ -884,6 +1009,12 @@ def _det_bull_flag(df: pd.DataFrame) -> PatternResult | None:
         fs = np.polyfit(range(len(flag)), flag["close"].astype(float).values, 1)[0]
         if fs > 0:
             continue
+        # A converging high/low channel is a pennant, not a flag — leave it to
+        # Bull Pennant rather than double-counting the same consolidation.
+        flag_h = [float(flag.iloc[j]["high"]) for j in range(len(flag))]
+        flag_l = [float(flag.iloc[j]["low"])  for j in range(len(flag))]
+        if _slope(range(len(flag_h)), flag_h) < 0 and _slope(range(len(flag_l)), flag_l) > 0:
+            continue
         target = float(cls.iloc[-1]) * (1 + pm / 100)
         return PatternResult("Bull Flag", "chart", 2, "bullish",
                              3 if pm > 15 else 2, min(0.88, 0.70 + min(0.18, abs(pm) * 0.01)),
@@ -909,6 +1040,12 @@ def _det_bear_flag(df: pd.DataFrame) -> PatternResult | None:
             continue
         fs = np.polyfit(range(len(flag)), flag["close"].astype(float).values, 1)[0]
         if fs < 0:
+            continue
+        # A converging high/low channel is a pennant, not a flag — leave it to
+        # Bear Pennant rather than double-counting the same consolidation.
+        flag_h = [float(flag.iloc[j]["high"]) for j in range(len(flag))]
+        flag_l = [float(flag.iloc[j]["low"])  for j in range(len(flag))]
+        if _slope(range(len(flag_h)), flag_h) < 0 and _slope(range(len(flag_l)), flag_l) > 0:
             continue
         target = float(cls.iloc[-1]) * (1 + pm / 100)
         return PatternResult("Bear Flag", "chart", 2, "bearish",
@@ -1040,9 +1177,10 @@ def _det_cup_and_handle(df: pd.DataFrame) -> PatternResult | None:
     hdl = cc.iloc[-15:]
     hp  = (float(hdl.max()) - float(hdl.min())) / max(float(hdl.max()), 1) * 100
     has_handle = hp < 10 and float(hdl.iloc[-1]) > float(hdl.mean())
+    if not has_handle:
+        return None  # a rounded base with no handle is Rounding Bottom, not Cup & Handle
     target = float(cc.iloc[-1]) + (hl - fl)
-    return PatternResult("Cup & Handle", "chart", 2, "bullish",
-                         3 if has_handle else 2, 0.80 if has_handle else 0.68,
+    return PatternResult("Cup & Handle", "chart", 2, "bullish", 3, 0.80,
                          {"support": round(fl, 2), "resistance": round(hr, 2),
                           "target":  round(target, 2)}, 90, "forming")
 
@@ -1401,9 +1539,17 @@ def _det_descending_channel(df: pd.DataFrame) -> PatternResult | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _det_wyckoff_accum(df: pd.DataFrame) -> PatternResult | None:
+    if len(df) < 60:
+        return None
     cls = df["close"].tail(40).astype(float)
     rng = (float(cls.max()) - float(cls.min())) / max(float(cls.mean()), 1) * 100
     if rng > 15 or rng < 3:
+        return None
+    # "Accumulation" implies the range follows a decline, not just any quiet
+    # chop — otherwise this is indistinguishable from a plain Rounding Bottom.
+    range_start = float(cls.iloc[0])
+    pre_level   = float(df["close"].iloc[-60])
+    if pre_level <= range_start * 1.03:
         return None
     if _has_vol(df):
         vol  = df["volume"].astype(float)
@@ -1416,9 +1562,17 @@ def _det_wyckoff_accum(df: pd.DataFrame) -> PatternResult | None:
 
 
 def _det_wyckoff_dist(df: pd.DataFrame) -> PatternResult | None:
+    if len(df) < 60:
+        return None
     cls = df["close"].tail(40).astype(float)
     rng = (float(cls.max()) - float(cls.min())) / max(float(cls.mean()), 1) * 100
     if rng > 15 or rng < 3:
+        return None
+    # "Distribution" implies the range follows an advance, not just any quiet
+    # chop — otherwise this is indistinguishable from a plain Rounding Top.
+    range_start = float(cls.iloc[0])
+    pre_level   = float(df["close"].iloc[-60])
+    if pre_level >= range_start * 0.97:
         return None
     if _has_vol(df):
         vol = df["volume"].astype(float)
@@ -1433,22 +1587,227 @@ def _det_wyckoff_dist(df: pd.DataFrame) -> PatternResult | None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# SMC / ICT patterns (smart-money-concepts family, Tier 2)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _structure_trend(df: pd.DataFrame) -> str:
+    """Classify recent swing structure as 'up' (higher highs + higher lows),
+    'down' (lower highs + lower lows), or 'range' (mixed/insufficient)."""
+    sh = _swing_pts(df, "high", "high")[-4:]
+    sl = _swing_pts(df, "low", "low")[-4:]
+    if len(sh) < 2 or len(sl) < 2:
+        return "range"
+    sh_v = [p[1] for p in sh]
+    sl_v = [p[1] for p in sl]
+    hh = all(sh_v[i] > sh_v[i - 1] for i in range(1, len(sh_v)))
+    hl = all(sl_v[i] > sl_v[i - 1] for i in range(1, len(sl_v)))
+    lh = all(sh_v[i] < sh_v[i - 1] for i in range(1, len(sh_v)))
+    ll = all(sl_v[i] < sl_v[i - 1] for i in range(1, len(sl_v)))
+    if hh and hl:
+        return "up"
+    if lh and ll:
+        return "down"
+    return "range"
+
+
+def _det_fair_value_gap(df: pd.DataFrame) -> PatternResult | None:
+    """
+    ICT Fair Value Gap: a 3-candle imbalance where candle i's low sits above
+    candle (i-2)'s high (bullish) or candle i's high sits below candle
+    (i-2)'s low (bearish), leaving a gap price hasn't traded through yet.
+    Scans the recent window for the most recent still-open gap and fires
+    when price is now reacting inside that zone.
+    """
+    n = len(df)
+    if n < 20:
+        return None
+    lookback = min(20, n - 2)
+    high, low, close = df["high"].astype(float), df["low"].astype(float), df["close"].astype(float)
+
+    best = None  # (i, direction, gap_top, gap_bottom)
+    for i in range(max(2, n - lookback), n):
+        h_im2, l_im2 = float(high.iloc[i - 2]), float(low.iloc[i - 2])
+        h_i, l_i = float(high.iloc[i]), float(low.iloc[i])
+        if l_i > h_im2:
+            best = (i, "bullish", l_i, h_im2)
+        elif h_i < l_im2:
+            best = (i, "bearish", l_im2, h_i)
+    if best is None:
+        return None
+
+    i, direction, top, bottom = best
+    if i < n - 1:
+        # already fully filled since it formed?
+        if direction == "bullish" and float(low.iloc[i + 1:].min()) <= bottom:
+            return None
+        if direction == "bearish" and float(high.iloc[i + 1:].max()) >= top:
+            return None
+
+    curr = float(close.iloc[-1])
+    if i == n - 1:
+        state, conf = "forming", 0.55
+    else:
+        if not (bottom <= curr <= top):
+            return None
+        reacting = (direction == "bullish" and curr > float(close.iloc[-2])) or \
+                   (direction == "bearish" and curr < float(close.iloc[-2]))
+        if not reacting:
+            return None
+        state, conf = "confirmed", 0.72
+
+    levels = {"gap_top": round(top, 2), "gap_bottom": round(bottom, 2)}
+    if direction == "bullish":
+        levels["stop"] = round(bottom * 0.99, 2)
+        return PatternResult("Bullish FVG", "smc", 2, "bullish", 2, conf, levels, n - i, state)
+    levels["stop"] = round(top * 1.01, 2)
+    return PatternResult("Bearish FVG", "smc", 2, "bearish", 2, conf, levels, n - i, state)
+
+
+def _det_order_block(df: pd.DataFrame) -> PatternResult | None:
+    """
+    ICT Order Block: the last opposite-colored candle immediately before a
+    displacement move (body >= 1.5x ATR) that breaks the prior swing high/low.
+    Fires when a later bar returns into that candle's range and reacts.
+    """
+    n = len(df)
+    if n < 30:
+        return None
+    open_, high = df["open"].astype(float), df["high"].astype(float)
+    low, close = df["low"].astype(float), df["close"].astype(float)
+
+    h, l, c = high.to_numpy(), low.to_numpy(), close.to_numpy()
+    prev_c = np.roll(c, 1); prev_c[0] = c[0]
+    tr = np.maximum(h - l, np.maximum(np.abs(h - prev_c), np.abs(l - prev_c)))
+    atr = float(pd.Series(tr).rolling(14).mean().iloc[-1])
+    if not atr or np.isnan(atr) or atr <= 0:
+        return None
+
+    sh = _swing_pts(df, "high", "high")
+    sl = _swing_pts(df, "low", "low")
+    idx = list(df.index)
+    lookback = min(25, n - 5)
+
+    best = None  # (ob_i, direction, ob_low, ob_high)
+    for i in range(n - lookback, n - 1):
+        o_i, c_i = float(open_.iloc[i]), float(close.iloc[i])
+        if abs(c_i - o_i) < 1.5 * atr:
+            continue
+        prior_sh = [p[1] for p in sh if idx.index(p[0]) < i]
+        prior_sl = [p[1] for p in sl if idx.index(p[0]) < i]
+        bullish_disp = c_i > o_i and prior_sh and c_i > prior_sh[-1]
+        bearish_disp = c_i < o_i and prior_sl and c_i < prior_sl[-1]
+        if not (bullish_disp or bearish_disp):
+            continue
+        j = i - 1
+        o_j, c_j = float(open_.iloc[j]), float(close.iloc[j])
+        if bullish_disp and c_j < o_j:
+            best = (i, "bullish", float(low.iloc[j]), float(high.iloc[j]))
+        elif bearish_disp and c_j > o_j:
+            best = (i, "bearish", float(low.iloc[j]), float(high.iloc[j]))
+
+    if best is None:
+        return None
+    ob_i, direction, ob_low, ob_high = best
+    curr = float(close.iloc[-1])
+    if ob_i == n - 1:
+        state, conf = "forming", 0.60
+    else:
+        if not (ob_low <= curr <= ob_high):
+            return None
+        reacting = (direction == "bullish" and curr > float(close.iloc[-2])) or \
+                   (direction == "bearish" and curr < float(close.iloc[-2]))
+        if not reacting:
+            return None
+        state, conf = "confirmed", 0.75
+
+    levels = {"zone_low": round(ob_low, 2), "zone_high": round(ob_high, 2)}
+    if direction == "bullish":
+        levels["stop"] = round(ob_low * 0.99, 2)
+        return PatternResult("Bullish Order Block", "smc", 2, "bullish", 2, conf, levels, n - ob_i, state)
+    levels["stop"] = round(ob_high * 1.01, 2)
+    return PatternResult("Bearish Order Block", "smc", 2, "bearish", 2, conf, levels, n - ob_i, state)
+
+
+def _det_break_of_structure(df: pd.DataFrame) -> PatternResult | None:
+    """
+    ICT Break of Structure: a fresh close beyond the most recent swing high/low
+    in the SAME direction as the prevailing swing structure — continuation.
+    """
+    trend = _structure_trend(df)
+    if trend == "range":
+        return None
+    cls = df["close"].astype(float)
+    sh = _swing_pts(df, "high", "high")
+    sl = _swing_pts(df, "low", "low")
+    if trend == "up":
+        if not sh:
+            return None
+        level = sh[-1][1]
+        if _break_status(cls, level, above=True) != "fresh":
+            return None
+        stop = sl[-1][1] if sl else float(cls.tail(20).min())
+        return PatternResult("Bullish BOS", "smc", 2, "bullish", 3, 0.75,
+                             {"level": round(level, 2), "stop": round(stop, 2)},
+                             len(df) // 2, "confirmed")
+    if not sl:
+        return None
+    level = sl[-1][1]
+    if _break_status(cls, level, above=False) != "fresh":
+        return None
+    stop = sh[-1][1] if sh else float(cls.tail(20).max())
+    return PatternResult("Bearish BOS", "smc", 2, "bearish", 3, 0.75,
+                         {"level": round(level, 2), "stop": round(stop, 2)},
+                         len(df) // 2, "confirmed")
+
+
+def _det_change_of_character(df: pd.DataFrame) -> PatternResult | None:
+    """
+    ICT Change of Character: a fresh close beyond the most recent swing
+    high/low AGAINST the prevailing swing structure — first sign of reversal.
+    """
+    trend = _structure_trend(df)
+    if trend == "range":
+        return None
+    cls = df["close"].astype(float)
+    sh = _swing_pts(df, "high", "high")
+    sl = _swing_pts(df, "low", "low")
+    if trend == "up":
+        if not sl:
+            return None
+        level = sl[-1][1]
+        if _break_status(cls, level, above=False) != "fresh":
+            return None
+        stop = sh[-1][1] if sh else float(cls.tail(20).max())
+        return PatternResult("Bearish CHoCH", "smc", 2, "bearish", 2, 0.68,
+                             {"level": round(level, 2), "stop": round(stop, 2)},
+                             len(df) // 2, "confirmed")
+    if not sh:
+        return None
+    level = sh[-1][1]
+    if _break_status(cls, level, above=True) != "fresh":
+        return None
+    stop = sl[-1][1] if sl else float(cls.tail(20).min())
+    return PatternResult("Bullish CHoCH", "smc", 2, "bullish", 2, 0.68,
+                         {"level": round(level, 2), "stop": round(stop, 2)},
+                         len(df) // 2, "confirmed")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Registry definition
 # ─────────────────────────────────────────────────────────────────────────────
 
 _A  = ["5m", "15m", "30m", "1h", "4h", "1d", "1wk", "1mo"]   # all timeframes (incl. equity)
 _C  = ["15m", "30m", "1h", "4h", "1d", "1wk", "1mo"]         # chart-appropriate timeframes
 _EQ = ["1d", "1wk", "1mo"]                       # equity only (52W / EMA / RSI)
-_S  = ["1h", "4h", "1d"]                         # slow (Tier 3)
 
 REGISTRY: list[RegistryEntry] = [
     # Tier 1 — single candle
     RegistryEntry("Hammer",                   "candlestick", 1, "bullish", _A,   3,  _det_hammer),
-    RegistryEntry("Inverted Hammer",          "candlestick", 1, "bullish", _A,   3,  _det_inverted_hammer,    True),
-    RegistryEntry("Dragonfly Doji",           "candlestick", 1, "bullish", _A,   3,  _det_dragonfly_doji,     True),
-    RegistryEntry("Hanging Man",              "candlestick", 1, "bearish", _A,   6,  _det_hanging_man,        True),
+    RegistryEntry("Inverted Hammer",          "candlestick", 1, "bullish", _A,   3,  _det_inverted_hammer),
+    RegistryEntry("Dragonfly Doji",           "candlestick", 1, "bullish", _A,   3,  _det_dragonfly_doji),
+    RegistryEntry("Hanging Man",              "candlestick", 1, "bearish", _A,   6,  _det_hanging_man),
     RegistryEntry("Shooting Star",            "candlestick", 1, "bearish", _A,   3,  _det_shooting_star),
-    RegistryEntry("Gravestone Doji",          "candlestick", 1, "bearish", _A,   3,  _det_gravestone_doji,    True),
+    RegistryEntry("Gravestone Doji",          "candlestick", 1, "bearish", _A,   3,  _det_gravestone_doji),
     RegistryEntry("Doji",                     "candlestick", 1, "neutral", _A,   3,  _det_doji),
     RegistryEntry("Long-Legged Doji",         "candlestick", 1, "neutral", _A,   3,  _det_long_legged_doji),
     RegistryEntry("Spinning Top",             "candlestick", 1, "neutral", _A,   3,  _det_spinning_top),
@@ -1483,45 +1842,184 @@ REGISTRY: list[RegistryEntry] = [
     # Tier 1 — volume
     RegistryEntry("Volume Surge on Breakout", "volume",    1, "bullish", _A,  22,  _det_vol_expansion_breakout),
     RegistryEntry("Volume Dry Up",            "volume",    1, "bullish", _A,  22,  _det_vol_dry_up),
-    RegistryEntry("Accumulation Phase",       "volume",    1, "bullish", _A,  12,  _det_accumulation),
-    RegistryEntry("Distribution Phase",       "volume",    1, "bearish", _A,  12,  _det_distribution),
+    RegistryEntry("Accumulation Phase",       "volume",    1, "bullish", _A,  30,  _det_accumulation),
+    RegistryEntry("Distribution Phase",       "volume",    1, "bearish", _A,  30,  _det_distribution),
     RegistryEntry("Selling Climax",           "volume",    1, "bullish", _A,  22,  _det_selling_climax),
     RegistryEntry("Volume Breakdown",         "volume",    1, "bearish", _A,  22,  _det_volume_breakdown),
     RegistryEntry("Gap Up with Volume",       "volume",    1, "bullish", _A,  10,  _det_gap_up_volume),
     # Tier 2 — price action (equity-focused)
     RegistryEntry("52W High Breakout",        "price_action", 2, "bullish", _EQ, 52, _det_52w_high_breakout),
     # Tier 2 — chart
-    RegistryEntry("Head & Shoulders",         "chart", 2, "bearish", _C, 40,  _det_head_and_shoulders, True),
-    RegistryEntry("Inverse Head & Shoulders", "chart", 2, "bullish", _C, 40,  _det_inverse_hs,         True),
-    RegistryEntry("Double Bottom",            "chart", 2, "bullish", _C, 25,  _det_double_bottom,      True),
-    RegistryEntry("Double Top",               "chart", 2, "bearish", _C, 25,  _det_double_top,         True),
-    RegistryEntry("Triple Bottom",            "chart", 2, "bullish", _C, 40,  _det_triple_bottom,      True),
-    RegistryEntry("Triple Top",               "chart", 2, "bearish", _C, 40,  _det_triple_top,         True),
+    RegistryEntry("Head & Shoulders",         "chart", 2, "bearish", _C, 40,  _det_head_and_shoulders),
+    RegistryEntry("Inverse Head & Shoulders", "chart", 2, "bullish", _C, 40,  _det_inverse_hs),
+    RegistryEntry("Double Bottom",            "chart", 2, "bullish", _C, 25,  _det_double_bottom),
+    RegistryEntry("Double Top",               "chart", 2, "bearish", _C, 25,  _det_double_top),
+    RegistryEntry("Triple Bottom",            "chart", 2, "bullish", _C, 40,  _det_triple_bottom),
+    RegistryEntry("Triple Top",               "chart", 2, "bearish", _C, 40,  _det_triple_top),
     RegistryEntry("Rounding Bottom",          "chart", 2, "bullish", _C, 60,  _det_rounding_bottom),
     RegistryEntry("Rounding Top",             "chart", 2, "bearish", _C, 60,  _det_rounding_top),
-    RegistryEntry("Ascending Triangle",       "chart", 2, "bullish", _C, 25,  _det_ascending_triangle, True),
-    RegistryEntry("Descending Triangle",      "chart", 2, "bearish", _C, 25,  _det_descending_triangle,True),
-    RegistryEntry("Symmetrical Triangle Breakout", "chart", 2, "neutral", _C, 25,  _det_symmetrical_triangle,True),
+    RegistryEntry("Ascending Triangle",       "chart", 2, "bullish", _C, 25,  _det_ascending_triangle),
+    RegistryEntry("Descending Triangle",      "chart", 2, "bearish", _C, 25,  _det_descending_triangle),
+    RegistryEntry("Symmetrical Triangle Breakout", "chart", 2, "neutral", _C, 25,  _det_symmetrical_triangle),
     RegistryEntry("Bull Flag",                "chart", 2, "bullish", _C, 30,  _det_bull_flag),
     RegistryEntry("Bull Pennant",             "chart", 2, "bullish", _C, 30,  _det_bull_pennant),
     RegistryEntry("Bear Flag",                "chart", 2, "bearish", _C, 30,  _det_bear_flag),
     RegistryEntry("Bear Pennant",             "chart", 2, "bearish", _C, 30,  _det_bear_pennant),
-    RegistryEntry("Descending Wedge Breakout", "chart", 2, "bullish", _C, 30,  _det_falling_wedge,      True),
-    RegistryEntry("Rising Wedge",             "chart", 2, "bearish", _C, 30,  _det_rising_wedge,       True),
-    RegistryEntry("Rectangle Breakout",       "chart", 2, "neutral", _C, 20,  _det_rectangle,          True),
+    RegistryEntry("Descending Wedge Breakout", "chart", 2, "bullish", _C, 30,  _det_falling_wedge),
+    RegistryEntry("Rising Wedge",             "chart", 2, "bearish", _C, 30,  _det_rising_wedge),
+    RegistryEntry("Rectangle Breakout",       "chart", 2, "neutral", _C, 20,  _det_rectangle),
     RegistryEntry("Cup & Handle",             "chart", 2, "bullish", _C, 90,  _det_cup_and_handle),
     RegistryEntry("High Tight Flag",          "chart", 2, "bullish", _C, 20,  _det_high_tight_flag),
     RegistryEntry("V Bottom",                 "chart", 2, "bullish", _C, 20,  _det_v_bottom),
     RegistryEntry("Channel Breakout",         "chart", 2, "bullish", _C, 25,  _det_channel_breakout),
-    RegistryEntry("Trendline Breakout",       "chart", 2, "bullish", _C, 30,  _det_trendline_breakout),
+    # 35 = the detector's own guard (30 + _BREAKOUT_RECENCY_BARS). Registering 30
+    # meant the gate said one thing and the detector another.
+    RegistryEntry("Trendline Breakout",       "chart", 2, "bullish", _C, 35,  _det_trendline_breakout),
     RegistryEntry("Ascending Channel",        "chart", 2, "bullish", _C, 30,  _det_ascending_channel),
     RegistryEntry("Descending Channel",       "chart", 2, "bearish", _C, 30,  _det_descending_channel),
     # Tier 2 — Wyckoff structural patterns
-    RegistryEntry("Wyckoff Accumulation",     "harmonic", 2, "bullish", _C, 40, _det_wyckoff_accum),
-    RegistryEntry("Wyckoff Distribution",     "harmonic", 2, "bearish", _C, 40, _det_wyckoff_dist),
+    RegistryEntry("Wyckoff Accumulation",     "harmonic", 2, "bullish", _C, 60, _det_wyckoff_accum),
+    RegistryEntry("Wyckoff Distribution",     "harmonic", 2, "bearish", _C, 60, _det_wyckoff_dist),
+    # Tier 2 — SMC / ICT (smart money concepts)
+    RegistryEntry("Bullish FVG",              "smc", 2, "neutral", _C, 20, _det_fair_value_gap),
+    RegistryEntry("Bullish Order Block",      "smc", 2, "neutral", _C, 30, _det_order_block),
+    RegistryEntry("Bullish BOS",              "smc", 2, "neutral", _C, 40, _det_break_of_structure),
+    RegistryEntry("Bullish CHoCH",            "smc", 2, "neutral", _C, 40, _det_change_of_character),
 ]
 
-DEFAULT_ENABLED_FAMILIES: set[str] = {"candlestick", "price_action", "volume", "chart", "harmonic"}
+DEFAULT_ENABLED_FAMILIES: set[str] = {"candlestick", "price_action", "volume", "chart", "harmonic", "smc"}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pattern catalog — every name any detector can emit
+#
+# REGISTRY only lists the 73 detectors. Ten directional variants are emitted by
+# shared detectors, and three names come only from the legacy fallback detector.
+# The catalog is the complete, selectable set served by GET /patterns.
+# ─────────────────────────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class CatalogEntry:
+    pattern_id: str
+    name: str
+    family: str
+    tier: int
+    direction: str
+    parent_id: str
+    source: str          # "registry" | "variant" | "legacy"
+
+    @property
+    def is_variant(self) -> bool:
+        return self.parent_id != self.pattern_id
+
+
+def _build_catalog() -> list[CatalogEntry]:
+    out: list[CatalogEntry] = []
+    for e in REGISTRY:
+        pid = e.pattern_id
+        out.append(CatalogEntry(pid, e.name, e.family, e.tier, e.direction_bias,
+                                _PARENT_ID_BY_ID.get(pid, pid), "registry"))
+    for name, fam, tier, direction in _VARIANT_META:
+        pid = pattern_slug(name)
+        out.append(CatalogEntry(pid, name, fam, tier, direction,
+                                _PARENT_ID_BY_ID.get(pid, pid), "variant"))
+    for name, fam, tier, direction in _LEGACY_ONLY_META:
+        pid = pattern_slug(name)
+        out.append(CatalogEntry(pid, name, fam, tier, direction,
+                                _PARENT_ID_BY_ID.get(pid, pid), "legacy"))
+    return out
+
+
+PATTERN_CATALOG: list[CatalogEntry] = _build_catalog()
+CATALOG_BY_ID: dict[str, CatalogEntry] = {c.pattern_id: c for c in PATTERN_CATALOG}
+# lower-cased display name → id, so `pattern_names` keeps accepting display names
+_ID_BY_LOWER_NAME: dict[str, str] = {c.name.lower(): c.pattern_id for c in PATTERN_CATALOG}
+# parent id → ids of that parent and all of its variants
+_FAMILY_TREE: dict[str, set[str]] = {}
+for _c in PATTERN_CATALOG:
+    _FAMILY_TREE.setdefault(_c.parent_id, set()).add(_c.pattern_id)
+    _FAMILY_TREE[_c.parent_id].add(_c.parent_id)
+
+
+class UnknownPatternError(ValueError):
+    """Raised when a requested pattern name/id resolves to nothing."""
+
+    def __init__(self, unknown: list[str]):
+        self.unknown = unknown
+        super().__init__(
+            "Unknown pattern name(s): " + ", ".join(unknown)
+            + ". See GET /patterns for the selectable set."
+        )
+
+
+def resolve_pattern_selection(raw: str | None) -> set[str] | None:
+    """
+    Comma-separated pattern ids **or** display names → set of pattern ids.
+
+    Matching is case-insensitive and by identity, not by display string.
+    Selecting a parent (e.g. "Inside Bar") also selects its directional
+    variants ("Inside Bar Breakout" / "Inside Bar Breakdown").
+
+    Returns None when nothing was requested (= no pattern filter).
+    Raises UnknownPatternError naming every token that resolved to nothing —
+    an unresolvable selection must never silently produce an empty scan.
+    """
+    if not raw or not raw.strip():
+        return None
+
+    wanted: set[str] = set()
+    unknown: list[str] = []
+    for token in raw.split(","):
+        t = token.strip()
+        if not t:
+            continue
+        pid = _ID_BY_LOWER_NAME.get(t.lower())
+        if pid is None:
+            slug = pattern_slug(t)
+            pid = slug if slug in CATALOG_BY_ID else None
+        if pid is None:
+            unknown.append(t)
+            continue
+        wanted |= _FAMILY_TREE.get(pid, {pid})
+
+    if unknown:
+        raise UnknownPatternError(unknown)
+    return wanted or None
+
+
+def patterns_grouped_by_family() -> dict[str, list[dict]]:
+    """
+    Complete emitted pattern set for GET /patterns, grouped by family with
+    directional variants nested under their parent.
+    """
+    order = ["candlestick", "price_action", "volume", "chart", "harmonic", "smc"]
+    by_parent: dict[str, list[CatalogEntry]] = {}
+    for c in PATTERN_CATALOG:
+        if c.is_variant:
+            by_parent.setdefault(c.parent_id, []).append(c)
+
+    groups: dict[str, list[dict]] = {}
+    for c in PATTERN_CATALOG:
+        if c.is_variant:
+            continue          # rendered nested under its parent
+        groups.setdefault(c.family, []).append({
+            "pattern_id": c.pattern_id,
+            "name":       c.name,
+            "direction":  c.direction,
+            "tier":       c.tier,
+            "source":     c.source,
+            "variants": [
+                {
+                    "pattern_id": v.pattern_id,
+                    "name":       v.name,
+                    "direction":  v.direction,
+                    "tier":       v.tier,
+                    "source":     v.source,
+                }
+                for v in sorted(by_parent.get(c.pattern_id, []), key=lambda x: x.name)
+            ],
+        })
+    return {fam: groups[fam] for fam in order if fam in groups}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1532,12 +2030,14 @@ def run_detectors(
     df: pd.DataFrame,
     timeframe: str,
     enabled_families: set[str] | None = None,
-    max_tier: int = 2,
 ) -> list[PatternResult]:
     """
     Run all applicable registry detectors for the given OHLCV DataFrame.
     Returns list sorted by confidence descending.
     Deduplicates per (family, direction, name) to prevent double-counting.
+
+    The `max_tier` parameter is gone: the registry has only Tier 1 and Tier 2,
+    so a tier gate could only ever be a no-op that implied a Tier 3 exists.
     """
     if enabled_families is None:
         enabled_families = DEFAULT_ENABLED_FAMILIES
@@ -1547,8 +2047,6 @@ def run_detectors(
 
     for entry in REGISTRY:
         if entry.family not in enabled_families:
-            continue
-        if entry.tier > max_tier:
             continue
         if timeframe not in entry.valid_timeframes:
             continue
@@ -1561,8 +2059,8 @@ def run_detectors(
             continue
         if r is None:
             continue
-        # Confidence penalty for chart/harmonic on noisy short TFs
-        if entry.family in ("chart", "harmonic") and timeframe in ("5m", "15m", "30m"):
+        # Confidence penalty for chart/harmonic/smc on noisy short TFs
+        if entry.family in ("chart", "harmonic", "smc") and timeframe in ("5m", "15m", "30m"):
             r = PatternResult(
                 r.name, r.family, r.tier, r.direction, r.strength,
                 max(0.0, r.confidence - 0.10), r.key_levels, r.span_bars, r.state,
@@ -1606,7 +2104,7 @@ def best_for_confluence(
     def confirmed(p: PatternResult) -> bool:
         return p.state == "confirmed"
 
-    structural_fams = {"chart", "price_action"}
+    structural_fams = {"chart", "price_action", "smc"}
 
     # Stage 1: confirmed structural (Tier-2) aligned with trend
     s1 = [p for p in patterns

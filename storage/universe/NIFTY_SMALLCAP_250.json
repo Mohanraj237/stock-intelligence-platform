@@ -79,6 +79,7 @@
     "DELHIVERY",
     "DEVYANI",
     "LALPATHLAB",
+    "DUMMYHEG",
     "EIDPARRY",
     "EIHOTEL",
     "ELECON",
@@ -105,8 +106,8 @@
     "GRAVITA",
     "GESHIP",
     "GMDCLTD",
-    "HEG",
     "HBLENGINE",
+    "HEG",
     "HFCL",
     "HSCL",
     "HINDCOPPER",
@@ -277,7 +278,7 @@
     "ANURAS": "Anupam Rasayan India Ltd.",
     "APTUS": "Aptus Value Housing Finance India Ltd.",
     "ASAHIINDIA": "Asahi India Glass Ltd.",
-    "ASTERDM": "Aster DM Healthcare Ltd.",
+    "ASTERDM": "Aster DM Quality Care Ltd.",
     "ATHERENERG": "Ather Energy Ltd.",
     "ATUL": "Atul Ltd.",
     "BEML": "BEML Ltd.",
@@ -331,6 +332,7 @@
     "DELHIVERY": "Delhivery Ltd.",
     "DEVYANI": "Devyani International Ltd.",
     "LALPATHLAB": "Dr. Lal Path Labs Ltd.",
+    "DUMMYHEG": "Dummy HEG Ltd.",
     "EIDPARRY": "E.I.D. Parry (India) Ltd.",
     "EIHOTEL": "EIH Ltd.",
     "ELECON": "Elecon Engineering Co. Ltd.",
@@ -357,8 +359,8 @@
     "GRAVITA": "Gravita India Ltd.",
     "GESHIP": "Great Eastern Shipping Co. Ltd.",
     "GMDCLTD": "Gujarat Mineral Development Corporation Ltd.",
-    "HEG": "H.E.G. Ltd.",
     "HBLENGINE": "HBL Engineering Ltd.",
+    "HEG": "HEG Ltd.",
     "HFCL": "HFCL Ltd.",
     "HSCL": "Himadri Speciality Chemical Ltd.",
     "HINDCOPPER": "Hindustan Copper Ltd.",
@@ -504,6 +506,6 @@
     "ZYDUSWELL": "Zydus Wellness Ltd.",
     "ECLERX": "eClerx Services Ltd."
   },
-  "count": 250,
-  "synced_at": 1785234292.5749164
+  "count": 251,
+  "synced_at": 1789728803.445556
 }

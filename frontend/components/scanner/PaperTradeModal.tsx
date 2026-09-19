@@ -99,12 +99,16 @@ function ExpiryChips({
   selected,
   onChange,
   isIndex,
+  chainExpiry,
 }: {
   selected:  string;
   onChange:  (v: string) => void;
   isIndex:   boolean;
+  /** Expiry the option chain actually reported, when the plan carried one. */
+  chainExpiry?: string;
 }) {
-  const weekly  = nearestWeeklyExpiry();
+  // Prefer the exchange's own expiry; weekday arithmetic is the last resort.
+  const weekly  = nearestWeeklyExpiry(chainExpiry);
   const monthly = nearestMonthlyExpiry();
   const options = isIndex
     ? [{ label: "Weekly", value: weekly }, { label: "Monthly", value: monthly }]
@@ -164,7 +168,7 @@ export function PaperTradeModal({ setup, onClose }: Props) {
 
   // Auto-set expiry based on market / symbol type
   const [expiry, setExpiry] = useState(
-    setup.expiry || (isIndex ? nearestWeeklyExpiry() : nearestMonthlyExpiry()),
+    setup.expiry || (isIndex ? nearestWeeklyExpiry(setup.expiry) : nearestMonthlyExpiry()),
   );
   const [entryPremium, setEntryPremium] = useState(setup.entry_premium);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -293,7 +297,8 @@ export function PaperTradeModal({ setup, onClose }: Props) {
                   <Clock className="size-3.5" />
                   <span className="uppercase tracking-wider">Expiry</span>
                 </div>
-                <ExpiryChips selected={expiry} onChange={setExpiry} isIndex={isIndex} />
+                <ExpiryChips selected={expiry} onChange={setExpiry} isIndex={isIndex}
+                             chainExpiry={setup.expiry} />
               </div>
 
               {/* ── Lots + Lot Size + Premium ─────────────────────────────── */}

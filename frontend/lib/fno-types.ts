@@ -171,33 +171,15 @@ export interface SavedStrategy {
 }
 
 // ── Lot sizes ─────────────────────────────────────────────────────────────────
+//
+// Generated from services/lot_sizes.py — the single source of truth. This file
+// used to carry its own hand-maintained copy, which had drifted from Python on
+// LT, MARUTI, POWERGRID, ONGC, NESTLEIND, TITAN and ADANIPORTS. A wrong lot size
+// is a wrong position size, so the two must never disagree again:
+// tests/test_lot_sizes.py fails the build if the generated file drifts.
 
-export const LOT_SIZES: Record<string, number> = {
-  NIFTY: 75, BANKNIFTY: 15, FINNIFTY: 40, MIDCPNIFTY: 75,
-  SENSEX: 10, BANKEX: 15,
-  RELIANCE: 250, TCS: 150, INFY: 400, HDFCBANK: 550, ICICIBANK: 700,
-  AXISBANK: 1200, KOTAKBANK: 400, SBIN: 1500, BAJFINANCE: 125, BAJAJFINSV: 500,
-  WIPRO: 1500, LT: 175, MARUTI: 100, TATAMOTORS: 1425, TATASTEEL: 5500,
-  SUNPHARMA: 700, DRREDDY: 125, CIPLA: 650, DIVISLAB: 200, HCLTECH: 700,
-  TECHM: 600, NTPC: 2250, POWERGRID: 2700, ONGC: 1975, BPCL: 1800,
-  COALINDIA: 2100, NESTLEIND: 50, ASIANPAINT: 200, HINDUNILVR: 300,
-  TITAN: 375, ULTRACEMCO: 100, GRASIM: 375, HEROMOTOCO: 150, EICHERMOT: 175,
-  APOLLOHOSP: 250, ADANIENT: 625, ADANIPORTS: 625, JSWSTEEL: 600,
-  "M&M": 700, BHARTIARTL: 950, INDUSINDBK: 500, HINDPETRO: 1000,
-  IOC: 5250, VEDL: 2000, SAIL: 6700, PNB: 8000, BANKBARODA: 3350,
-  CANBK: 3250, IDFCFIRSTB: 5500, FEDERALBNK: 5000, ZOMATO: 4500,
-  HAL: 150, BEL: 3700, BHEL: 4350, HDFCLIFE: 1100, SBILIFE: 750, ITC: 3200,
-  IRCTC: 1375, LICI: 700, DMART: 450, TATACONSUM: 1100, BRITANNIA: 200,
-  UPL: 1300, "BAJAJ-AUTO": 250,
-  // Additional live-scanner equities
-  RBLBANK: 3175, AUBANK: 1000, ABCAPITAL: 6000, MFSL: 4000,
-  PERSISTENT: 125, "360ONE": 1000, POLICYBZR: 2000, NAUKRI: 200,
-  PIIND: 500, DEEPAKNTR: 500, AARTIIND: 1500, ASTRAL: 700,
-  TATAPOWER: 4000, NHPC: 8000, RECLTD: 2250, PFC: 2700,
-  RVNL: 3000, IRFC: 6000, APLAPOLLO: 500,
-};
-
-export const INDEX_SYMBOLS = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX"];
+export { LOT_SIZES, DEFAULT_LOT_SIZE, INDEX_SYMBOLS } from "./lot-sizes.generated";
+import { LOT_SIZES as LOT_SIZES_TABLE } from "./lot-sizes.generated";
 
 // ── Paper Trading ─────────────────────────────────────────────────────────────
 
@@ -285,7 +267,7 @@ export interface PriceRefreshResult {
 }
 
 export function getLotSize(symbol: string): number {
-  return LOT_SIZES[symbol.toUpperCase()] ?? 1;
+  return LOT_SIZES_TABLE[symbol.toUpperCase()] ?? 1;
 }
 
 export function parseExpiryDate(expiry: string): Date | null {

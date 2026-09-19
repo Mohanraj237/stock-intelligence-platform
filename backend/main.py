@@ -44,7 +44,7 @@ from backend.config import get_settings
 from backend.routers import (
     market, stocks, patterns, scans, news, earnings, positions,
     backtests, portfolio, watchlist, rules, universe, settings as settings_router,
-    reports, fno, live_scanner, equity_scanner,
+    reports, fno, live_scanner, equity_scanner, scoring_config,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -82,12 +82,38 @@ async def lifespan(app: FastAPI):
         )
     )
     log.info("Stock Intelligence Platform backend v%s starting (log: %s)", __version__, LOG_FILE)
+
+    # A US symbol that resolves to a `.NS` ticker will never return data — it is
+    # a silent, per-symbol data outage. Fail loudly at startup instead.
+    try:
+        from services.intraday_data import assert_no_us_symbol_maps_to_ns, get_all_us_listed
+        bad = assert_no_us_symbol_maps_to_ns(get_all_us_listed())
+        if bad:
+            log.error("US universe misresolution — %d symbol(s) resolve to .NS: %s",
+                      len(bad), ", ".join(bad[:20]))
+    except Exception as e:
+        log.warning("US ticker resolution check skipped: %s", e)
+
+    sync_task: asyncio.Task | None = None
     try:
         from services.universe_sync import startup_sync
-        asyncio.create_task(asyncio.to_thread(startup_sync, True))
+        # Hold a reference so the task can't be garbage-collected mid-flight
+        # (a bare fire-and-forget task risks a "Task was destroyed but it is
+        # pending!" warning) and so we can cancel it cleanly on shutdown.
+        sync_task = asyncio.create_task(asyncio.to_thread(startup_sync, True))
     except Exception as e:
         log.warning("Background universe sync skipped: %s", e)
+
     yield
+
+    if sync_task is not None and not sync_task.done():
+        sync_task.cancel()
+        try:
+            await sync_task
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log.warning("Background universe sync raised during shutdown: %s", e)
     log.info("Backend shutting down")
 
 
@@ -160,6 +186,7 @@ def create_app() -> FastAPI:
     app.include_router(fno.router)
     app.include_router(live_scanner.router)
     app.include_router(equity_scanner.router)
+    app.include_router(scoring_config.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> JSONResponse:

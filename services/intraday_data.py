@@ -12,6 +12,7 @@ A fresh Session per request avoids that entirely.
 from __future__ import annotations
 
 import logging
+import threading
 import time as _time
 from typing import Optional
 
@@ -100,22 +101,56 @@ _US_EQUITY_TECH: list[str] = [
 # US indices — symbol names mapped in _INDEX_MAP above
 _US_INDICES: list[str] = ["SP500", "NASDAQ100", "DOW", "RUSSELL2000"]
 
-# All US tickers — eagerly loads every US_*.json at import time so _ticker() never
-# appends .NS to any symbol fetched from the US sector/index JSON files.
+# All US tickers — eagerly loads every US universe JSON at import time so
+# _ticker() never appends .NS to any symbol fetched from a US file.
+#
+# The glob is US_*.json **plus** ALL_US_LISTED.json: the latter does not match
+# the US_ prefix, so a symbol living only in that file used to be resolved as
+# {SYMBOL}.NS and silently fail to fetch.
+_US_UNIVERSE_GLOBS: tuple[str, ...] = ("US_*.json", "ALL_US_LISTED.json")
+
+
 def _build_us_symbols() -> frozenset[str]:
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent.parent / "storage" / "universe"
     syms: set[str] = set(_US_EQUITY_TOP30 + _US_EQUITY_TECH + _US_INDICES)
-    for f in base.glob("US_*.json"):
-        try:
-            data = _json.loads(f.read_text(encoding="utf-8"))
-            syms.update(s.strip().upper() for s in data.get("symbols", []) if isinstance(s, str) and s.strip())
-        except Exception:
-            pass
+    seen: set[_Path] = set()
+    for pattern in _US_UNIVERSE_GLOBS:
+        for f in base.glob(pattern):
+            if f in seen:
+                continue
+            seen.add(f)
+            try:
+                data = _json.loads(f.read_text(encoding="utf-8"))
+                syms.update(s.strip().upper() for s in data.get("symbols", []) if isinstance(s, str) and s.strip())
+            except Exception:
+                pass
     return frozenset(syms)
 
 _ALL_US_SYMBOLS: frozenset[str] = _build_us_symbols()
+
+
+def is_us_symbol(symbol: str) -> bool:
+    """True when the symbol resolves to a US ticker (no .NS suffix)."""
+    return symbol.upper() in _ALL_US_SYMBOLS
+
+
+def exchange_tz(symbol: str) -> str:
+    """
+    IANA timezone of the exchange the symbol trades on. Used to group intraday
+    bars into sessions — grouping a US session by IST calendar date splits it
+    across IST midnight.
+    """
+    return "America/New_York" if is_us_symbol(symbol) else "Asia/Kolkata"
+
+
+def assert_no_us_symbol_maps_to_ns(symbols: list[str]) -> list[str]:
+    """
+    Startup guard: no symbol from a US universe may resolve to a `.NS` ticker.
+    Returns the offending symbols (empty when healthy).
+    """
+    return [s for s in symbols if _ticker(s).endswith(".NS")]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # India equity universes
@@ -382,18 +417,118 @@ def _ticker(symbol: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Bar cache
+#
+# Every scan used to re-fetch every symbol/timeframe from Yahoo. A 503-symbol
+# S&P 500 scan across 3 timeframes is ~1,500 HTTP requests. The cache is keyed
+# on (symbol, interval, range) and holds the *fetched frame*, never a score, so
+# a cache hit and a live fetch produce identical results.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# TTL in seconds per interval.
+_CACHE_TTL: dict[str, float] = {
+    "1m":   60,
+    "5m":   60,
+    "15m":  60,
+    "30m":  300,
+    "1h":   300,
+    "4h":   900,
+    "1d":   900,      # during market hours; outside them → until the next open
+    "1wk":  6 * 3600,
+    "1mo":  6 * 3600,
+}
+_DEFAULT_TTL = 900.0
+
+_bar_cache: dict[tuple[str, str, str], tuple[float, pd.DataFrame]] = {}
+_bar_cache_lock = threading.Lock()
+_cache_stats = {"hits": 0, "misses": 0}
+
+
+def _ist_now() -> pd.Timestamp:
+    return pd.Timestamp.now(tz="Asia/Kolkata")
+
+
+def _market_is_open_ist(now: pd.Timestamp | None = None) -> bool:
+    """NSE cash session, 09:15–15:30 IST, Mon–Fri. Holidays are not modelled."""
+    now = now or _ist_now()
+    if now.weekday() >= 5:
+        return False
+    minutes = now.hour * 60 + now.minute
+    return 9 * 60 + 15 <= minutes < 15 * 60 + 30
+
+
+def _seconds_until_next_open(now: pd.Timestamp | None = None) -> float:
+    """Seconds from `now` to the next 09:15 IST weekday open."""
+    now = now or _ist_now()
+    nxt = now.normalize() + pd.Timedelta(hours=9, minutes=15)
+    if nxt <= now:
+        nxt += pd.Timedelta(days=1)
+    while nxt.weekday() >= 5:
+        nxt += pd.Timedelta(days=1)
+    return max(60.0, (nxt - now).total_seconds())
+
+
+def _ttl_for(interval: str) -> float:
+    if interval == "1d" and not _market_is_open_ist():
+        # Closed: the last daily bar cannot change until the next session opens.
+        return _seconds_until_next_open()
+    return _CACHE_TTL.get(interval, _DEFAULT_TTL)
+
+
+def cache_stats() -> dict:
+    """Snapshot of cache counters plus the derived hit rate."""
+    with _bar_cache_lock:
+        hits, misses = _cache_stats["hits"], _cache_stats["misses"]
+    total = hits + misses
+    return {
+        "hits":     hits,
+        "misses":   misses,
+        "hit_rate": round(hits / total, 3) if total else 0.0,
+        "entries":  len(_bar_cache),
+    }
+
+
+def reset_cache_stats() -> None:
+    with _bar_cache_lock:
+        _cache_stats["hits"] = 0
+        _cache_stats["misses"] = 0
+
+
+def clear_bar_cache() -> None:
+    with _bar_cache_lock:
+        _bar_cache.clear()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Core fetch — one symbol, one interval, fresh Session every time
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_ohlcv(symbol: str, interval: str = "1d") -> pd.DataFrame:
+# Yahoo `range` values, longest-first, used to honour a caller's `period`.
+_PERIOD_ORDER = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"]
+
+
+def get_ohlcv(symbol: str, interval: str = "1d", period: str | None = None) -> pd.DataFrame:
     """
     Fetch OHLCV from Yahoo Finance REST API.
     Fresh requests.Session() per call — avoids shared-session rate limiting.
     Tries query1 first; falls back to query2 on 404.
+
+    period: Yahoo `range` override (e.g. "6mo"). Defaults to the per-interval
+    range in _YF_RANGE. Results are cached per (symbol, interval, range).
     """
     ticker   = _ticker(symbol.upper())
-    yf_range = _YF_RANGE.get(interval, "1y")
+    yf_range = period if period in _PERIOD_ORDER else _YF_RANGE.get(interval, "1y")
     params   = {"interval": interval, "range": yf_range}
+
+    key = (ticker, interval, yf_range)
+    ttl = _ttl_for(interval)
+    now = _time.time()
+    with _bar_cache_lock:
+        hit = _bar_cache.get(key)
+        if hit is not None and now - hit[0] < ttl:
+            _cache_stats["hits"] += 1
+            return hit[1].copy()
+        _cache_stats["misses"] += 1
 
     for base in _YF_BASES:
         try:
@@ -424,7 +559,10 @@ def get_ohlcv(symbol: str, interval: str = "1d") -> pd.DataFrame:
             )
             df.index.name = "datetime"
             df = df.dropna(subset=["close"])
-            return _drop_incomplete_trailing_bar(df, interval)
+            df = _drop_incomplete_trailing_bar(df, interval)
+            with _bar_cache_lock:
+                _bar_cache[key] = (_time.time(), df)
+            return df.copy()
         except Exception as exc:
             log.debug("YF REST %s/%s (%s): %s", symbol, interval, base, exc)
             continue
@@ -479,15 +617,36 @@ def _drop_incomplete_trailing_bar(df: pd.DataFrame, interval: str) -> pd.DataFra
 _ALL_TIMEFRAMES = ["5m", "15m", "30m", "1h", "4h", "1d", "1wk", "1mo"]
 
 
-def resample_to_4h(df_1h: pd.DataFrame) -> pd.DataFrame:
+# NSE cash session open, IST. get_ohlcv() returns tz-naive IST timestamps.
+SESSION_OPEN_HOUR   = 9
+SESSION_OPEN_MINUTE = 15
+
+
+def resample_to_4h(
+    df_1h: pd.DataFrame,
+    session_open_hour: int = SESSION_OPEN_HOUR,
+    session_open_minute: int = SESSION_OPEN_MINUTE,
+) -> pd.DataFrame:
     """
     Derive 4h candles from 1h bars — Yahoo Finance has no native 4h interval.
-    Uses plain calendar 4h buckets (no market-session alignment).
+
+    Buckets are anchored to the **session open**, not to calendar midnight, so
+    on NSE they run 09:15–13:15 and 13:15–15:30 (the final bucket is short).
+    Plain `resample("4h")` produced 00:00/04:00/08:00/12:00/16:00 buckets, which
+    straddle the open and the close, so every 4h pattern was detected on bars
+    that never existed as a tradeable period.
+
+    4h divides 24h exactly, so a single origin at the first session's open
+    repeats the same boundaries every day.
     """
     if df_1h.empty:
         return df_1h
     agg = {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
-    out = df_1h.resample("4h").agg(agg).dropna(subset=["close"])
+    origin = (pd.Timestamp(df_1h.index[0]).normalize()
+              + pd.Timedelta(hours=session_open_hour, minutes=session_open_minute))
+    if origin > df_1h.index[0]:
+        origin -= pd.Timedelta(days=1)
+    out = df_1h.resample("4h", origin=origin).agg(agg).dropna(subset=["close"])
     out.index.name = "datetime"
     return out
 
@@ -628,6 +787,9 @@ def get_dynamic_universe() -> list[str]:
     return _ALL_INDICES + get_nse_stocks()
 
 
-def get_daily(symbol: str, period: str = "6mo") -> pd.DataFrame:
-    """Alias: daily OHLCV for backtest use."""
-    return get_ohlcv(symbol, interval="1d")
+def get_daily(symbol: str, period: str = "1y") -> pd.DataFrame:
+    """
+    Daily OHLCV. `period` is a Yahoo `range` value and is honoured — it used to
+    be accepted and silently ignored, so callers asking for "6mo" got 1y.
+    """
+    return get_ohlcv(symbol, interval="1d", period=period)

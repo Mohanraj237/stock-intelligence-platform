@@ -4,12 +4,22 @@
       "date": "2026-06-09",
       "atm_iv": 15.58,
       "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 15.0,
+      "synthetic": true
     }
   ],
   "BANKNIFTY": [
     {
       "date": "2026-06-09",
       "atm_iv": 15.58,
+      "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 15.0,
       "synthetic": true
     }
   ],
@@ -18,12 +28,22 @@
       "date": "2026-06-09",
       "atm_iv": 15.58,
       "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 15.0,
+      "synthetic": true
     }
   ],
   "MIDCPNIFTY": [
     {
       "date": "2026-06-09",
       "atm_iv": 15.58,
+      "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 15.0,
       "synthetic": true
     }
   ],
@@ -32,12 +52,22 @@
       "date": "2026-06-09",
       "atm_iv": 15.58,
       "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 15.0,
+      "synthetic": true
     }
   ],
   "BANKEX": [
     {
       "date": "2026-06-09",
       "atm_iv": 15.58,
+      "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 15.0,
       "synthetic": true
     }
   ],
@@ -46,12 +76,22 @@
       "date": "2026-06-09",
       "atm_iv": 15.58,
       "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 34.6,
+      "synthetic": true
     }
   ],
   "TCS": [
     {
       "date": "2026-06-09",
       "atm_iv": 15.58,
+      "synthetic": true
+    },
+    {
+      "date": "2026-09-01",
+      "atm_iv": 34.61,
       "synthetic": true
     }
   ]

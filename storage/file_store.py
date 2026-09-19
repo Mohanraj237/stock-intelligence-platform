@@ -121,6 +121,25 @@ def save_anthropic_key(key: str):
     s["anthropic_api_key"] = key.strip()
     save_settings(s)
 
+# ── Confluence scoring weights ───────────────────────────────────────────────
+_SCORING_CONFIG_PATH = DIRS["config"] / "scoring.json"
+_DEFAULT_SCORING_CONFIG = {
+    "trend_weight": 30, "momentum_weight": 25, "volume_weight": 15,
+    "candle_weight": 25, "structural_weight": 5, "default_threshold": 65,
+}
+
+def get_scoring_config() -> dict:
+    data = read_json(_SCORING_CONFIG_PATH, {})
+    return {**_DEFAULT_SCORING_CONFIG, **data}
+
+def save_scoring_config(config: dict):
+    cleaned = {k: v for k, v in config.items() if k in _DEFAULT_SCORING_CONFIG}
+    cleaned["updated_at"] = datetime.now().isoformat()
+    write_json(_SCORING_CONFIG_PATH, cleaned)
+
+def reset_scoring_config():
+    write_json(_SCORING_CONFIG_PATH, {})
+
 # ── Rules ──────────────────────────────────────────────────────────────────
 _RULES_PATH = DIRS["config"] / "rules.json"
 

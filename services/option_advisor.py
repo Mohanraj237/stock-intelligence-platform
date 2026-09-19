@@ -22,37 +22,9 @@ log = logging.getLogger(__name__)
 # Symbol data
 # ─────────────────────────────────────────────────────────────────────────────
 
-LOT_SIZES: dict[str, int] = {
-    "NIFTY": 75, "BANKNIFTY": 15, "FINNIFTY": 40,
-    "MIDCPNIFTY": 75, "SENSEX": 10, "BANKEX": 15,
-    "RELIANCE": 250, "TCS": 150, "INFY": 400,
-    "HDFCBANK": 550, "ICICIBANK": 700, "AXISBANK": 1200,
-    "SBIN": 1500, "WIPRO": 1500, "LT": 150,
-    "BAJFINANCE": 125, "TATAMOTORS": 1425, "MARUTI": 75,
-    "ADANIPORTS": 1250, "ONGC": 1925, "POWERGRID": 4700,
-    "NTPC": 2250, "BPCL": 1800, "HINDUNILVR": 300,
-    "NESTLEIND": 40, "TITAN": 175,
-    "ETERNAL": 4500,  # formerly ZOMATO — renamed Feb 2025
-    "NAUKRI":     200,
-    "RBLBANK":    3175,
-    "AUBANK":     1000,
-    "ABCAPITAL":  6000,
-    "MFSL":       4000,
-    "PERSISTENT": 125,
-    "360ONE":     1000,
-    "POLICYBZR":  2000,
-    "PIIND":      500,
-    "DEEPAKNTR":  500,
-    "AARTIIND":   1500,
-    "ASTRAL":     700,
-    "TATAPOWER":  4000,
-    "NHPC":       8000,
-    "RECLTD":     2250,
-    "PFC":        2700,
-    "RVNL":       3000,
-    "IRFC":       6000,
-    "APLAPOLLO":  500,
-}
+# Single source of truth lives in services/lot_sizes.py and is mirrored into
+# frontend/lib/lot-sizes.generated.ts. Re-exported here for backward compat.
+from services.lot_sizes import DEFAULT_LOT_SIZE, LOT_SIZES, lot_size_for  # noqa: F401
 
 STRIKE_INTERVALS: dict[str, int] = {
     "NIFTY": 50, "BANKNIFTY": 100, "FINNIFTY": 50, "MIDCPNIFTY": 25,
@@ -101,29 +73,68 @@ class OptionPlan:
     iv_note: str = ""    # warning when IV rank is elevated
     liquidity_ok: bool = True
     raw_risk_pts: float = 0.0  # spot move from entry to SL (informational)
+    lot_size_estimated: bool = False   # True → symbol missing from the lot table
+    delta_assumption: float = 0.5      # premium levels assume this flat ATM delta
+    rr_basis: str = ""                 # how `rr` was arrived at
+    iv_rank: float | None = None       # 0-100, None when it could not be computed
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Builder
 # ─────────────────────────────────────────────────────────────────────────────
 
-_RR_FLOOR = 1.3
 _ATR_SL_MULT = 1.5   # stop = 1.5 × ATR from entry
 _T1_MULT = 1.5       # T1  = 1.5 × risk
 _T2_MULT = 2.5       # T2  = 2.5 × risk
 _DELTA_ATM = 0.5     # approximate delta for ATM option
+
+# Premium-sell levels: stop at 2.5× the credit, targets at 50% and 90% decay.
+_SELL_SL_MULT = 2.5
+_SELL_T1_MULT = 0.5
+_SELL_T2_MULT = 0.1
+
+# There is no R:R floor. Both of the plans this module builds have an `rr` that
+# is fixed by construction, so a floor could only ever be a gate that never
+# fires — which reads as a safety check without being one:
+#
+#   directional : rr = _T1_MULT               = 1.50, always
+#   premium sell: rr = (1 − 0.5) / (2.5 − 1)  = 0.33, always (the premium cancels)
+#
+# The old 1.3 floor rejected every premium-sell plan for that second reason,
+# on top of the iv_rank default that could never clear the range gate. An R:R
+# below 1 is inherent to a credit strategy anyway — the edge there is decay
+# probability, not payoff ratio — so the floor was also the wrong test.
+RR_BASIS_FIXED = "fixed: T1 = 1.5 × risk by construction"
+RR_BASIS_PREMIUM = (
+    "fixed: credit strategy, T1 = 50% decay against a 2.5× stop. "
+    "R:R below 1 is inherent — the edge is decay probability, not payoff ratio."
+)
 
 
 def build_plan(
     result: ConfluenceResult,
     option_chain: list[dict] | None = None,
     nearest_expiry: str = "",
-    iv_rank: float = 30.0,    # 0-100; use 30 as neutral default
+    iv_rank: float | None = None,
 ) -> OptionPlan | None:
     """
-    Build an OptionPlan from a ConfluenceResult.
-    Returns None if R:R is below the floor (setup rejected).
+    Build an OptionPlan from a ConfluenceResult. See build_plan_with_reason()
+    when you need to tell the user *why* no plan came back.
+
+    iv_rank: 0-100 from the option chain's IV history. None means it could not
+    be computed — the range-sell path then declines with a stated reason instead
+    of silently failing a gate against a hardcoded default.
     """
+    return build_plan_with_reason(result, option_chain, nearest_expiry, iv_rank)[0]
+
+
+def build_plan_with_reason(
+    result: ConfluenceResult,
+    option_chain: list[dict] | None = None,
+    nearest_expiry: str = "",
+    iv_rank: float | None = None,
+) -> tuple[OptionPlan | None, str]:
+    """(plan, reason). `reason` is empty when a plan was produced."""
     symbol    = result.symbol
     direction = result.direction
     spot      = result.spot_price
@@ -136,7 +147,7 @@ def build_plan(
     # ── Directional setup ────────────────────────────────────────────────────
     option_type = "CE" if direction == "bullish" else "PE"
     strike = _atm(spot, symbol)
-    lot_size = LOT_SIZES.get(symbol, 500)
+    lot_size, lot_estimated = lot_size_for(symbol)
     expiry = nearest_expiry or "Weekly"
 
     # Stop-loss
@@ -150,11 +161,7 @@ def build_plan(
         t1_spot = round(spot - _T1_MULT * risk_pts, 2)
         t2_spot = round(spot - _T2_MULT * risk_pts, 2)
 
-    rr = round(_T1_MULT, 2)  # always 1.5 by design; spot R:R
-
-    if rr < _RR_FLOOR:
-        log.debug("Rejected %s — R:R %.2f < floor %.2f", symbol, rr, _RR_FLOOR)
-        return None
+    rr = round(_T1_MULT, 2)  # fixed by construction; see RR_BASIS_FIXED
 
     # ── Premium estimation ───────────────────────────────────────────────────
     entry_premium = _get_premium(option_chain, strike, option_type) or _estimate_premium(spot)
@@ -164,13 +171,21 @@ def build_plan(
 
     # ── IV note ──────────────────────────────────────────────────────────────
     iv_note = ""
-    if iv_rank > 70:
+    if iv_rank is None:
+        iv_note = "IV rank unavailable — premium richness not assessed."
+    elif iv_rank > 70:
         iv_note = (
             f"IV rank {iv_rank:.0f} — premium is expensive. "
             "Consider a debit spread instead of an outright buy."
         )
     elif iv_rank > 50 and result.total < 75:
         iv_note = f"Moderate IV rank {iv_rank:.0f} — ensure conviction before buying."
+
+    if lot_estimated:
+        iv_note = (iv_note + " | " if iv_note else "") + (
+            f"Lot size not in the contract table — using an estimated {lot_size}. "
+            "Verify before sizing."
+        )
 
     # ── Exit rule ────────────────────────────────────────────────────────────
     if direction == "bullish":
@@ -195,7 +210,7 @@ def build_plan(
                 "Liquidity unverified at this strike — check chain before trading."
             liquidity_ok = False
 
-    return OptionPlan(
+    plan = OptionPlan(
         action="BUY",
         option_type=option_type,
         strike=strike,
@@ -214,23 +229,43 @@ def build_plan(
         iv_note=iv_note,
         liquidity_ok=liquidity_ok,
         raw_risk_pts=round(risk_pts, 2),
+        lot_size_estimated=lot_estimated,
+        delta_assumption=_DELTA_ATM,
+        rr_basis=RR_BASIS_FIXED,
+        iv_rank=iv_rank,
     )
+    return plan, ""
 
 
 def _range_sell_plan(
     result: ConfluenceResult,
     option_chain: list[dict] | None,
     nearest_expiry: str,
-    iv_rank: float,
-) -> OptionPlan | None:
-    """Range-bound + high IV → sell OTM premium."""
+    iv_rank: float | None,
+) -> tuple[OptionPlan | None, str]:
+    """
+    Range-bound + high IV → sell OTM premium.
+
+    Selling premium is only an edge when IV is rich, so the plan needs a real
+    IV rank. When one cannot be computed the plan is declined *with a reason*
+    rather than silently failing the gate against a hardcoded default.
+    """
+    if iv_rank is None:
+        return None, (
+            "Range setup: an option plan here would be a premium-sell, which needs "
+            "an IV rank. Not enough stored IV history for this symbol yet "
+            "(30 daily snapshots required)."
+        )
     if iv_rank < 40:
-        return None   # not worth selling when IV is low
+        return None, (
+            f"Range setup: IV rank {iv_rank:.0f} is below 40 — selling premium is "
+            "not worth the risk at this volatility level."
+        )
 
     spot     = result.spot_price
     symbol   = result.symbol
     atr      = result.atr
-    lot_size = LOT_SIZES.get(symbol, 500)
+    lot_size, lot_estimated = lot_size_for(symbol)
 
     # Sell 1 strike OTM on both sides conceptually; return the higher-premium side
     interval = _strike_interval(symbol, spot)
@@ -244,16 +279,12 @@ def _range_sell_plan(
     option_type = lean
 
     entry_premium = _get_premium(option_chain, strike, option_type) or _estimate_premium(spot) * 0.6
-    max_loss_premium = entry_premium * 2.5  # 2.5× premium collected = stop
 
-    # For selling: stop is when premium doubles, target is premium × 0.3
-    sl_premium  = round(entry_premium * 2.5, 1)
-    t1_premium  = round(entry_premium * 0.5, 1)
-    t2_premium  = round(entry_premium * 0.1, 1)
-    rr          = round((entry_premium - t1_premium) / (sl_premium - entry_premium), 2)
-
-    if rr < _RR_FLOOR:
-        return None
+    # For selling: stop is when premium hits 2.5×, targets are decay levels.
+    sl_premium  = round(entry_premium * _SELL_SL_MULT, 1)
+    t1_premium  = round(entry_premium * _SELL_T1_MULT, 1)
+    t2_premium  = round(entry_premium * _SELL_T2_MULT, 1)
+    rr          = round((1 - _SELL_T1_MULT) / (_SELL_SL_MULT - 1), 2)
 
     exit_rule = (
         f"SELL {option_type} {strike} expiry {nearest_expiry or 'Weekly'}. "
@@ -261,6 +292,13 @@ def _range_sell_plan(
         f"premium < {t1_premium:.0f} T1 | {t2_premium:.0f} T2. "
         f"Also exit if spot breaks out of range by > {atr:.0f}."
     )
+
+    iv_note = f"IV rank {iv_rank:.0f} — selling premium is the edge here."
+    if lot_estimated:
+        iv_note += (
+            f" | Lot size not in the contract table — using an estimated {lot_size}. "
+            "Verify before sizing."
+        )
 
     return OptionPlan(
         action="SELL",
@@ -278,10 +316,14 @@ def _range_sell_plan(
         rr=rr,
         exit_rule=exit_rule,
         lot_size=lot_size,
-        iv_note=f"IV rank {iv_rank:.0f} — selling premium is the edge here.",
+        iv_note=iv_note,
         liquidity_ok=True,
         raw_risk_pts=0.0,
-    )
+        lot_size_estimated=lot_estimated,
+        delta_assumption=_DELTA_ATM,
+        rr_basis=RR_BASIS_PREMIUM,
+        iv_rank=iv_rank,
+    ), ""
 
 
 # ─────────────────────────────────────────────────────────────────────────────

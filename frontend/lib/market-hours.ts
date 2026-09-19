@@ -39,20 +39,53 @@ export function fmtISTTime(d: Date): string {
 }
 
 /**
- * Get the nearest WEEKLY expiry Thursday.
- * - If today IS Thursday and market is still open → current week.
- * - Otherwise → next Thursday (or the Thursday after if today is Thursday after-hours).
+ * Weekday NSE weekly contracts expire on, used ONLY when no live chain expiry
+ * is available. NSE has moved this before and will again, so anything computed
+ * from it is an estimate — always prefer the exchange's own expiry list.
+ * 0=Sun … 6=Sat.
  */
-export function nearestWeeklyExpiry(): string {
+export const FALLBACK_WEEKLY_EXPIRY_DOW = 4; // Thursday
+
+/** Parse a list of "DD-Mon-YYYY" expiries and return the nearest one not in the past. */
+export function nearestExpiryFromChain(expiries?: string[] | null): string | null {
+  if (!expiries?.length) return null;
+  const today = toIST();
+  today.setHours(0, 0, 0, 0);
+  const future = expiries
+    .map((e) => ({ raw: e, d: parseExpiry(e) }))
+    .filter((x): x is { raw: string; d: Date } => x.d !== null && x.d.getTime() >= today.getTime())
+    .sort((a, b) => a.d.getTime() - b.d.getTime());
+  // All expiries in the past is still better than inventing one from a weekday.
+  return future[0]?.raw ?? expiries[0];
+}
+
+function parseExpiry(expiry: string): Date | null {
+  const d = new Date(expiry.replaceAll("-", " "));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Nearest WEEKLY expiry.
+ *
+ * Prefers the exchange's own expiry list (pass the chain's expiry_dates, or the
+ * single chain-derived expiry a scanner plan already carries). Falls back to
+ * weekday arithmetic only when no live expiry is available — that fallback
+ * hardcodes a weekday NSE has since changed, so it is a last resort, not the
+ * primary path.
+ */
+export function nearestWeeklyExpiry(chainExpiries?: string[] | string | null): string {
+  const list = typeof chainExpiries === "string" ? [chainExpiries] : chainExpiries;
+  const fromChain = nearestExpiryFromChain(list);
+  if (fromChain) return fromChain;
+
   const ist  = toIST();
   const dow  = ist.getDay(); // 0=Sun … 6=Sat
   const hm   = ist.getHours() * 60 + ist.getMinutes();
   const CLOSE = 15 * 60 + 30;
 
-  let d = new Date(ist);
-  // days until Thursday (0 if already Thursday)
-  let diff = (4 - dow + 7) % 7;
-  if (diff === 0 && hm >= CLOSE) diff = 7; // Thursday after close → next week
+  const d = new Date(ist);
+  let diff = (FALLBACK_WEEKLY_EXPIRY_DOW - dow + 7) % 7;
+  if (diff === 0 && hm >= CLOSE) diff = 7; // expiry day after close → next week
   d.setDate(d.getDate() + diff);
   return fmtISTDate(d);
 }

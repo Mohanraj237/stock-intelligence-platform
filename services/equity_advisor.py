@@ -16,7 +16,11 @@ log = logging.getLogger(__name__)
 _ATR_SL_MULT = 1.5   # stop = 1.5 × ATR from entry
 _T1_MULT     = 1.5   # T1  = 1.5 × risk
 _T2_MULT     = 2.5   # T2  = 2.5 × risk
-_RR_FLOOR    = 1.0   # reject if R:R at T1 < 1.0
+
+# T1 is defined as 1.5 × risk, so `rr` is a fixed design parameter, not a
+# measured property of the setup. There is deliberately no R:R floor here: a
+# gate that can never fire reads as a safety check that isn't one.
+RR_BASIS_FIXED = "fixed: T1 = 1.5 × risk by construction"
 
 
 @dataclass
@@ -26,10 +30,11 @@ class EquityPlan:
     sl_price:       float
     t1_price:       float
     t2_price:       float
-    rr:             float  # risk:reward at T1
+    rr:             float  # risk:reward at T1 — fixed at _T1_MULT by construction
     exit_rule:      str
     risk_per_share: float  # |entry - sl|
     currency:       str = "₹"  # "₹" India, "$" US
+    rr_basis:       str = RR_BASIS_FIXED
 
 
 def build_equity_plan(
@@ -72,18 +77,15 @@ def build_equity_plan(
             f"Trail SL to entry after T1 hit. Max hold: 3–5 sessions."
         )
 
-    rr = round(_T1_MULT, 2)  # always 1.5 by design
-    if rr < _RR_FLOOR:
-        return None
-
     return EquityPlan(
         action=action,
         entry_price=round(spot, 2),
         sl_price=round(sl, 2),
         t1_price=round(t1, 2),
         t2_price=round(t2, 2),
-        rr=rr,
+        rr=round(_T1_MULT, 2),
         exit_rule=exit_rule,
         risk_per_share=round(risk, 2),
         currency=currency,
+        rr_basis=RR_BASIS_FIXED,
     )

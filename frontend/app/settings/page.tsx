@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import type { AppSettings } from "@/lib/types";
+import type { AppSettings, ScoringConfig } from "@/lib/types";
+import { DEFAULT_SCORING_CONFIG, scoringWeightsTotal } from "@/lib/types";
+import { WeightSlider } from "@/components/scanner/WeightSlider";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -48,6 +50,7 @@ export default function SettingsPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="data">Data Sources</TabsTrigger>
           <TabsTrigger value="cache">Cache</TabsTrigger>
+          <TabsTrigger value="scoring">Scoring</TabsTrigger>
           <TabsTrigger value="ai">AI Agent</TabsTrigger>
         </TabsList>
 
@@ -107,11 +110,100 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="scoring">
+          <ScoringTab />
+        </TabsContent>
+
         <TabsContent value="ai">
           <AIAgentTab draft={draft} upd={upd} onSave={() => m.mutate(draft)} saving={m.isPending} />
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function ScoringTab() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ["scoring-config"], queryFn: api.scoringConfig });
+  const [draft, setDraft] = useState<ScoringConfig | null>(null);
+  useEffect(() => { if (data) setDraft(data); }, [data]);
+
+  const save = useMutation({
+    mutationFn: (c: Partial<ScoringConfig>) => api.patchScoringConfig(c),
+    onSuccess: (c) => { setDraft(c); qc.invalidateQueries({ queryKey: ["scoring-config"] }); toast.success("Scoring weights saved"); },
+    onError: (e) => toast.error(`Save failed: ${(e as Error).message}`),
+  });
+  const reset = useMutation({
+    mutationFn: () => api.resetScoringConfig(),
+    onSuccess: (c) => { setDraft(c); qc.invalidateQueries({ queryKey: ["scoring-config"] }); toast.success("Reset to defaults"); },
+    onError: (e) => toast.error(`Reset failed: ${(e as Error).message}`),
+  });
+
+  if (isLoading || !draft) {
+    return <Skeleton className="h-96" />;
+  }
+
+  const upd = <K extends keyof ScoringConfig>(k: K) => (v: number) => setDraft({ ...draft, [k]: v });
+  const total = scoringWeightsTotal(draft);
+  const isDefault = JSON.stringify(draft) === JSON.stringify(DEFAULT_SCORING_CONFIG);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Confluence Scoring</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Both scanners (Equity Scanner and F&amp;O Live Scanner) share this scoring engine.
+          Adjust how much each category counts toward the 0–100 confluence score — weights are
+          automatically rescaled so the total always stays on a 0–100 scale, regardless of what
+          they add up to below. Applies to every scan going forward until you change it again.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <WeightSlider
+            label="Trend / Structure" value={draft.trend_weight} min={0} max={60}
+            onChange={upd("trend_weight")}
+          />
+          <WeightSlider
+            label="Momentum" value={draft.momentum_weight} min={0} max={60}
+            onChange={upd("momentum_weight")}
+          />
+          <WeightSlider
+            label="Volume confirmation" value={draft.volume_weight} min={0} max={60}
+            onChange={upd("volume_weight")}
+          />
+          <WeightSlider
+            label="Candle trigger" value={draft.candle_weight} min={0} max={60}
+            onChange={upd("candle_weight")}
+          />
+          <WeightSlider
+            label="Structural bonus" value={draft.structural_weight} min={0} max={30}
+            onChange={upd("structural_weight")}
+          />
+          <WeightSlider
+            label="Default qualifying threshold" value={draft.default_threshold} min={40} max={90} step={5}
+            onChange={upd("default_threshold")}
+            helperText="Scans use this when a page doesn't override it."
+          />
+        </div>
+
+        <p className="text-sm">
+          Configured total: <span className="font-semibold">{total}</span>
+          {total !== 100 && (
+            <span className="text-muted-foreground"> — auto-normalized to 100 when scoring</span>
+          )}
+        </p>
+
+        <div className="flex gap-2">
+          <Button onClick={() => save.mutate(draft)} disabled={save.isPending}>
+            {save.isPending ? "Saving…" : "Save"}
+          </Button>
+          <Button variant="outline" onClick={() => reset.mutate()} disabled={reset.isPending || isDefault}>
+            Reset to defaults
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

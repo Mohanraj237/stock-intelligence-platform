@@ -365,3 +365,28 @@ export interface AppSettings {
   universe_cache_ttl_hours: number;
   anthropic_api_key?: string | null;
 }
+
+// ── Confluence scoring config ───────────────────────
+export interface ScoringConfig {
+  trend_weight: number;
+  momentum_weight: number;
+  volume_weight: number;
+  candle_weight: number;
+  structural_weight: number;
+  default_threshold: number;
+}
+
+export const DEFAULT_SCORING_CONFIG: ScoringConfig = {
+  trend_weight: 30,
+  momentum_weight: 25,
+  volume_weight: 15,
+  candle_weight: 25,
+  structural_weight: 5,
+  default_threshold: 65,
+};
+
+/** Sum of the 5 category weights — the backend rescales this to 100 at score
+ * time regardless of what it adds up to; this is purely the display total. */
+export function scoringWeightsTotal(c: ScoringConfig): number {
+  return c.trend_weight + c.momentum_weight + c.volume_weight + c.candle_weight + c.structural_weight;
+}

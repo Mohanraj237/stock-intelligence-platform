@@ -121,6 +121,7 @@ async def pattern_library() -> List[dict]:
         "volume":       "Volume / Momentum",
         "chart":        "Chart Pattern",
         "harmonic":     "Harmonic",
+        "smc":          "Smart Money Concepts",
     }
 
     out = []

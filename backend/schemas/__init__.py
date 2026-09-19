@@ -20,6 +20,7 @@ from backend.schemas.portfolio import Holding, PortfolioRow, PortfolioSummary
 from backend.schemas.watchlist import WatchlistItem, WatchlistRow
 from backend.schemas.rule import Rule, RuleCondition, RuleSet, RuleMatchRow
 from backend.schemas.settings import AppSettings
+from backend.schemas.scoring import ScoringConfig
 
 __all__ = [
     "Timeframe", "Direction", "Verdict", "BreakoutState",
@@ -37,4 +38,5 @@ __all__ = [
     "WatchlistItem", "WatchlistRow",
     "Rule", "RuleCondition", "RuleSet", "RuleMatchRow",
     "AppSettings",
+    "ScoringConfig",
 ]

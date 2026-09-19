@@ -2,6 +2,8 @@
 from __future__ import annotations
 import pytest
 
+from services import universe_sync
+
 
 class TestUniverseList:
     def test_list_india(self, client):
@@ -66,3 +68,19 @@ class TestUniverseSync:
         r = client.post("/api/universe/NIFTY%2050/sync?region=IN", json={})
         # Sync may succeed or fail on network issues — should not be 500
         assert r.status_code in (200, 202, 502, 503)
+
+
+class TestUniverseSyncUrls:
+    """NSE retired archives.nseindia.com for bulk CSV downloads (it now returns a
+    hard 403 from Akamai's WAF regardless of headers/cookies/session — verified
+    live) and moved the same files to nsearchives.nseindia.com. Guard against
+    silently drifting back to the dead host."""
+
+    def test_index_urls_use_live_archive_host(self):
+        for name, url in universe_sync.INDEX_URLS.items():
+            assert url.startswith("https://nsearchives.nseindia.com/"), (name, url)
+
+    def test_equity_master_url_uses_live_archive_host(self):
+        assert universe_sync.EQUITY_MASTER_URL.startswith(
+            "https://nsearchives.nseindia.com/"
+        )

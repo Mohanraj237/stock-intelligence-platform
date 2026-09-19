@@ -47,7 +47,7 @@ Per-symbol pipeline, identical in both scanners:
 symbol
   └─► get_ohlcv(symbol, interval)         one HTTP call per timeframe
         └─► add_indicators(df)             EMA20/50, VWAP, RSI14, MACD-hist, ATR14, RelVol
-              └─► run_detectors(df, tf)    69 pattern detectors, TF-gated
+              └─► run_detectors(df, tf)    73 pattern detectors, TF-gated
                     └─► score(...)         confluence 0–100
                           └─► threshold?   keep if total >= threshold
                                 └─► build_equity_plan()  |  build_plan()  (options)
@@ -59,8 +59,10 @@ Key modules:
 |---|---|
 | `services/intraday_data.py` | Yahoo Finance fetch, ticker mapping, universes, TF→range map |
 | `services/confluence_scorer.py` | Indicators + the 0–100 score |
-| `services/pattern_registry.py` | 69 pattern detectors (the modern engine) |
+| `services/pattern_registry.py` | 73 pattern detectors (the modern engine) |
 | `services/pattern_detector.py` | 10-pattern legacy fallback detector |
+| `services/scan_support.py` | Input validation, pattern post-filter, backtest, scan diagnostics |
+| `services/lot_sizes.py` | Single source of truth for F&O lot sizes |
 | `services/equity_advisor.py` | ATR-based stock trade plan |
 | `services/option_advisor.py` | ATR-based option trade plan (strike/premium) |
 | `services/breakout_service.py` | Breakout state badge |
@@ -89,8 +91,9 @@ https://query2.finance.yahoo.com/...        ← fallback on HTTP 404
 ```
 
 A **fresh `requests.Session()` per call** avoids shared-session rate limiting.
-Timeout 15s. On total failure an empty DataFrame is returned and the symbol is
-silently skipped.
+Timeout 15s. On total failure an empty DataFrame is returned — and the symbol is
+**counted and reported**, not silently dropped: see
+[scan diagnostics](#scan-diagnostics).
 
 ### Ticker resolution (`_ticker`, `intraday_data.py:369`)
 
@@ -98,12 +101,13 @@ Resolution order:
 
 1. **Index map** — `NIFTY→^NSEI`, `BANKNIFTY→^NSEBANK`, `FINNIFTY→NIFTY_FIN_SERVICE.NS`, `SENSEX→^BSESN`, `MIDCPNIFTY→NIFTY_MID_SELECT.NS`, `BANKEX→BSE-BANK.BO`, `INDIAVIX→^INDIAVIX`, `SP500→^GSPC`, `NASDAQ100→^NDX`, `DOW→^DJI`, `RUSSELL2000→^RUT`, `NASDAQ→^IXIC`
 2. **Equity overrides** — `TATAMOTORS→TMCV.NS`, `ETERNAL→ETERNAL.NS`
-3. **US symbols** — used **as-is, no suffix**. The US set is built at import time by eagerly loading every `storage/universe/US_*.json`
+3. **US symbols** — used **as-is, no suffix**. The US set is built at import time by eagerly loading every `storage/universe/US_*.json` **and `ALL_US_LISTED.json`**
 4. **Default** — append `.NS` (NSE equity)
 
 > This is the single branch point between India and US. A symbol is "US" purely
-> because it appears in a `US_*.json` file. If a US ticker is missing from those
-> files it silently becomes `TICKER.NS` and returns no data.
+> because it appears in one of those files. A startup assertion logs an error if
+> any symbol in a US universe still resolves to a `.NS` ticker, so this can no
+> longer be a silent per-symbol data outage.
 
 ### Incomplete-bar guard (`_drop_incomplete_trailing_bar`)
 
@@ -117,10 +121,25 @@ detectors key off the final bar and get fooled by partial ones:
 
 ### Caching & market hours
 
-- **No persistent cache.** Every scan re-fetches from Yahoo. The only caches are
-  per-request dicts (`daily_cache`, `chain_cache`) that dedupe work *within* one scan.
-- **No market-hours gating.** Scans run any time; off-hours simply return the
-  last closed bars.
+**Process-level bar cache.** Fetched frames are cached on
+`(ticker, interval, range)` with a per-timeframe TTL. The *frame* is cached,
+never a score, so a cache hit and a live fetch produce identical results.
+Callers get a copy, so a mutation downstream cannot poison the cache.
+
+| Timeframe | TTL |
+|---|---|
+| `5m`, `15m` | 60s |
+| `30m`, `1h` | 5 min |
+| `4h`, `1d` | 15 min during market hours |
+| `1d` (market closed) | until the next 09:15 IST weekday open |
+| `1wk`, `1mo` | 6 h |
+
+`cache_hit_rate` is reported in the scan summary. Per-request dicts
+(`daily_cache`, `chain_cache`, `iv_cache`) still dedupe enrichment work within
+one scan.
+
+- **No market-hours gating on scanning.** Scans run any time; off-hours simply
+  return the last closed bars. Market hours only affect the `1d` cache TTL.
 
 ---
 
@@ -132,9 +151,12 @@ The timeframe filter is a **fetch-level** filter, not a display filter. Unselect
 timeframes are **never requested from Yahoo at all**, so deselecting timeframes
 cuts external API calls (and scan time) proportionally.
 
-Wire format: comma-separated, e.g. `timeframes=1d,1wk`. Empty string = **all**.
-Values not in the scanner's allowed set are silently dropped; if nothing valid
-remains the filter falls back to "all".
+Wire format: comma-separated, e.g. `timeframes=1d,1wk`. **Omitting the parameter
+entirely** = all. Passing it with an empty value (every timeframe deselected) is
+an error, not a request to scan everything — it returns **HTTP 400**
+`"Select at least one timeframe."`, and both UIs disable the scan button in that
+state. A value outside the scanner's allowed set returns **HTTP 400** naming the
+offending value rather than silently dropping it.
 
 | Scanner | Allowed values | Default |
 |---|---|---|
@@ -162,10 +184,15 @@ yields up to three separate cards. This is why the summary distinguishes
 | `1wk` | `1wk` | `5y` | ~260 |
 | `1mo` | `1mo` | `5y` | ~60 |
 
-**`4h` has no native Yahoo interval.** It is resampled from `1h` bars using plain
-calendar 4-hour buckets (`resample("4h")`, aggregating first/max/min/last/sum) —
-**not** market-session aligned. If you select `4h` without `1h`, `1h` is still
-fetched internally as a dependency and then discarded.
+**`4h` has no native Yahoo interval.** It is resampled from `1h` bars into
+**session-aligned** buckets anchored to the 09:15 IST open, so on NSE they run
+**09:15–13:15** and **13:15–15:30** (the final bucket is short). 4h divides 24h
+exactly, so one origin at the first session open repeats the same boundaries
+every day. If you select `4h` without `1h`, `1h` is still fetched internally as a
+dependency and then discarded.
+
+The F&O mini-chart reads `4h` from `/api/live-scanner/chart-data`, the endpoint
+that owns the resample — `CandleChart` routes by interval.
 
 ### What the timeframe does NOT change
 
@@ -185,8 +212,11 @@ tuning:
 So "EMA20" means 20 five-minute bars on `5m` and 20 months on `1mo`. The
 timeframe changes what a bar *means*, never how many bars are measured.
 
-**Minimum 20 bars** to score at all — below that the symbol/TF is skipped.
-Practically this only bites on `1mo` for recently-listed symbols.
+**Minimum 50 bars** to score at all — EMA50 is a trend-vote input, so a shorter
+history would be scored on a systematically smaller vote set than its peers.
+Below that the symbol/TF is skipped and counted in
+`skipped_insufficient_bars`. Practically this bites on `1mo` (~60 bars of
+history) and on `1wk` for recently-listed symbols.
 
 ### Timeframe → which patterns can fire
 
@@ -224,59 +254,106 @@ Cup & Handle (90) and Rounding Bottom/Top (60, borderline) rarely or never fire.
 
 ## 4. Filter — Patterns
 
-### Two independent pattern filters
+### Pattern selection is a filter, not a score modifier
 
-This is the most commonly misunderstood part of the scanner. There are **two**
-pattern filters and they work at different stages:
+`pattern_names` selects which setups you want to **see**. It does not change what
+a setup is **worth**.
+
+The full detector set always runs, and the confluence score is always computed
+from the full set. The selection is then applied as a **hard post-filter**: a
+card survives only if at least one of its detected patterns — or the pattern
+displayed on the card — is in your selection.
+
+> **A score of 72 means the same thing with a pattern filter as without one.**
+> This is a hard guarantee, covered by a test.
 
 | Filter | Param | Stage | Effect |
 |---|---|---|---|
-| **Pattern names** | `pattern_names` | **Scoring time** | Only the named patterns may contribute to the *Candle Trigger* (0–25) and *Structural bonus* (0–5) score categories |
-| **Pattern families** | `patterns` | **After scoring** | Drops finished cards where no detected pattern is in the named families |
+| **Pattern names** | `pattern_names` | **After scoring** | Hard filter — keeps only cards containing a selected pattern |
+| **Pattern families** | `patterns` | After scoring | Drops cards where no detected pattern is in the named families |
+| **Confidence floor** | `min_pattern_conf` | After scoring | Drops cards where no detected pattern reaches that confidence |
 
-**`pattern_names` shapes the score at the source.** If you select only
-"Bullish Engulfing", every other pattern is stripped before Category 4 is
-computed. A stock that would have scored 88 on a Bull Flag now scores 88 − 16 = 72
-from trend/momentum/volume alone.
+Valid families: `candlestick`, `price_action`, `volume`, `chart`, `harmonic`.
+Matching is case-insensitive.
 
-Important: a card that still clears the threshold on trend/momentum/volume alone
-— with *none* of your selected patterns firing — **is still returned**. This is
-deliberate: the scanner treats it as a legitimate setup that simply lacks your
-preferred trigger. `pattern_names` is not re-applied as a hard post-filter.
+> **`patterns` and `min_pattern_conf` are not reachable from the UI.** Both
+> scanner pages send `pattern_names` and `pattern_mode`. The family and
+> confidence filters are API-only.
 
-**`patterns` (families) is a hard post-filter.** Cards with no matching pattern
-are dropped entirely. Valid families: `candlestick`, `price_action`, `volume`,
-`chart`, `harmonic`. Matching is case-insensitive.
+#### Pre-scan selection vs. the post-scan Patterns filter
 
-There is also **`min_pattern_conf`** (0.0–1.0, default 0.0) — drops cards where no
-detected pattern reaches that confidence.
+Both scanner pages have **two** pattern controls, and they are not the same thing:
 
-> **Neither `patterns` nor `min_pattern_conf` is reachable from the UI.** Both
-> scanner pages only ever send `pattern_names`. The family and confidence filters
-> are API-only.
+| Control | Where | Sent to the backend? | Effect |
+|---|---|---|---|
+| **Patterns** picker (above *Run Scan*) | scan configuration | yes — `pattern_names` | Narrows what the scan returns at all |
+| **Patterns** multi-select (in *Filter results*) | after results load | no — client-side only | Narrows what is displayed, instantly, without re-scanning |
 
-> **`pattern_names` matches the *emitted* name, exactly and case-sensitively.**
-> Five detectors emit directional variants that are not in the registry list
-> served by `GET /patterns`, so selecting the registry name does **not** keep
-> them — selecting `Inside Bar` drops every `Inside Bar Breakout` hit. See
-> [caveat 8](#9-known-quirks--caveats).
+The post-scan filter sits next to **Direction**, is multi-select, and lists only
+the patterns actually present in the current result set, each with a count. An
+empty selection means "no filter". A card matches if the pattern shown on it
+**or** any pattern detected on it is selected, so filtering by a pattern visible
+in the *Pattern(s)* column always keeps that row. Both post-scan filters reset
+when a new scan completes.
 
-When a card survives the family filter via a *non-primary* pattern, the displayed
+When a card survives via a *non-primary* pattern, the displayed
 `card["pattern"]` is rewritten to the highest-confidence matched pattern, so the
 UI always shows a pattern you actually selected.
 
+#### `pattern_mode` — the old behaviour, behind an opt-in
+
+| Mode | Default | Behaviour |
+|---|---|---|
+| `filter` | ✅ | Score from the full detector set, then hard-filter. Scores match an unfiltered scan. |
+| `shape` | | Legacy. Non-selected patterns are stripped **before** Categories 4 and 5, so those collapse to 0 whenever your pattern doesn't fire. |
+
+`shape` lowers scores by up to 30 points — the reachable maximum drops from 100
+to 70 — so it must be paired with a lower threshold. It is the reason a
+pattern-filtered scan used to come back nearly empty: the default threshold of 65
+was only 5 points below the shaped ceiling, and clearing it required a perfect
+trend vote, a healthy RSI, a rising MACD histogram **and** relvol ≥ 2.5×
+simultaneously. The few cards that did survive were the ones where none of the
+selected patterns had fired — the opposite of what was asked for.
+
+### Matching is by identity, not by display text
+
+Every emitted pattern carries a stable **`pattern_id`** (e.g. `inside_bar_breakout`)
+and a **`parent_id`** linking directional variants to their base pattern.
+
+- Matching is on `pattern_id`, case-insensitively.
+- **Selecting a parent selects its variants** — `Inside Bar` also matches
+  `Inside Bar Breakout` and `Inside Bar Breakdown`.
+- `pattern_names` still accepts display names for backward compatibility; they
+  are resolved through the id map.
+- A name that resolves to nothing returns **HTTP 400** naming it, rather than
+  silently producing an empty scan.
+
+`GET /patterns` serves the **complete emitted set** — 86 entries: the 73 registry
+detectors, the 6 directional variants nested under their parents, and the 3
+names only the legacy fallback emits.
+
+| Was unselectable | Now |
+|---|---|
+| `Inside Bar Breakout` / `Breakdown` | nested under `Inside Bar` |
+| `Breakdown Retest` | nested under `Breakout Retest` |
+| `Rectangle Breakdown` | nested under `Rectangle Breakout` |
+| `Channel Breakdown` | nested under `Channel Breakout` |
+| `Trendline Breakdown` | nested under `Trendline Breakout` |
+| `Hammer / Pin Bar` | nested under `Hammer` (legacy-only) |
+| `Bullish` / `Bearish Marubozu` | top-level candlestick entries (legacy-only) |
+
 ### Legacy fallback
 
-When **no** `pattern_names` filter is active and the registry finds nothing, the
-scorer falls back to a legacy 10-pattern single-bar detector
-(`services/pattern_detector.py`): Morning Star, Evening Star, Inside Bar
-Breakout/Breakdown, Bullish/Bearish Engulfing, Hammer / Pin Bar, Shooting Star,
-Bullish/Bearish Marubozu.
+When the registry finds nothing, the scorer falls back to a legacy 10-pattern
+single-bar detector (`services/pattern_detector.py`): Morning Star, Evening Star,
+Inside Bar Breakout/Breakdown, Bullish/Bearish Engulfing, Hammer / Pin Bar,
+Shooting Star, Bullish/Bearish Marubozu.
 
-This fallback is **skipped whenever `pattern_names` is set**, because it ignores
-the filter and would silently defeat your selection.
+Under `pattern_mode=filter` this fallback **always runs** — the selection is
+applied afterwards, so the fallback can no longer defeat it. It is skipped under
+`pattern_mode=shape`, where the selection has to bite before scoring.
 
-### The registry: 69 patterns
+### The registry: 73 patterns
 
 | Family | Count | Tier | Character |
 |---|---|---|---|
@@ -285,10 +362,14 @@ the filter and would silently defeat your selection.
 | `volume` | 7 | 1 | volume-relative signals |
 | `chart` | 25 | 2 | classic multi-bar formations |
 | `harmonic` | 2 | 2 | Wyckoff accumulation/distribution |
+| `smc` | 4 | 2 | ICT/Smart-Money-Concepts — Fair Value Gap, Order Block, Break of Structure, Change of Character |
+
+`smc` patterns count as structural for `best_for_confluence` and the Category-5
+structural bonus, the same as `chart`/`price_action` Tier-2 confirmed patterns.
 
 **Tier** — Tier 1 = fast/local signals detectable on few bars. Tier 2 = structural
-multi-bar formations. Tier 3 is documented in the code but **no Tier-3 patterns
-exist**; `run_detectors` defaults to `max_tier=2` anyway.
+multi-bar formations. **There is no Tier 3** — the concept and the `max_tier`
+parameter that implied it have been removed.
 
 **State** — `"confirmed"` (the trigger has happened) or `"forming"` (structure in
 progress, no trigger yet). Candlesticks are always confirmed. Flags, channels,
@@ -400,8 +481,8 @@ Swing points come from a 3-bar-either-side pivot scan.
 | V Bottom | bull | 2 | 20 | Fall ≥8% then rise ≥8% off a mid-window low; recovery ratio ≥0.70 |
 | Channel Breakout | bull | 2 | 25 | Parallel channel (slope diff ≤0.25, not flat), close above top ×1.01 |
 | ↳ Channel Breakdown | bear | 2 | 25 | Close below bottom ×0.99 |
-| Trendline Breakout | bull | 2 | 30 (**35 effective**) | Fitted rising support line; close breaks 0.5% above it **now** but not 5 bars ago |
-| ↳ Trendline Breakdown | bear | 2 | 30 (**35 effective**) | Mirror on a falling resistance line |
+| Trendline Breakout | bull | 2 | 35 | Fitted rising support line; close breaks 0.5% above it **now** but not 5 bars ago |
+| ↳ Trendline Breakdown | bear | 2 | 35 | Mirror on a falling resistance line |
 | Ascending Channel | bull | 2 | 30 | Both slopes positive & parallel; price inside. `forming`, conf 0.68 |
 | Descending Channel | bear | 2 | 30 | Mirror. `forming`, conf 0.68 |
 
@@ -409,11 +490,31 @@ Swing points come from a 3-bar-either-side pivot scan.
 
 | Pattern | Dir | Str | Min bars | Rule |
 |---|---|---|---|---|
-| Wyckoff Accumulation | bull | 1 | 40 | 40-bar range between 3% and 15%, with volume drying up in the last 20 bars. Conf **0.35**, `forming` |
-| Wyckoff Distribution | bear | 1 | 40 | Same, plus price in the upper half of the range. Conf **0.32**, `forming` |
+| Wyckoff Accumulation | bull | 1 | 60 | 40-bar range between 3% and 15% **following a prior decline** (price ≥3% higher 20 bars before the range began), with volume drying up in the last 20 bars. Conf **0.35**, `forming` |
+| Wyckoff Distribution | bear | 1 | 60 | Same, but **following a prior advance**, plus price in the upper half of the range. Conf **0.32**, `forming` |
 
 > Both are strength 1 (8 pts) with very low confidence — they are context flags,
-> not triggers.
+> not triggers. The prior-trend requirement (added in the pattern-cleanup pass)
+> is what actually differentiates these from a plain Rounding Bottom/Top — a
+> quiet range by itself is no longer enough.
+
+#### SMC / ICT (4) — Tier 2, `_C` timeframes
+
+| Pattern | Dir | Str | Min bars | Rule |
+|---|---|---|---|---|
+| Bullish FVG | bull | 2 | 20 | 3-candle imbalance: `low[i] > high[i-2]`. Fires `confirmed` when price returns into the still-open gap and closes back up; `forming` if just created |
+| ↳ Bearish FVG | bear | 2 | 20 | Mirror: `high[i] < low[i-2]` |
+| Bullish Order Block | bull | 2 | 30 | Last bearish candle before a displacement (body ≥1.5×ATR) that breaks a recent swing high. Fires `confirmed` when price returns into that candle's range and closes back up |
+| ↳ Bearish Order Block | bear | 2 | 30 | Mirror — last bullish candle before a bearish displacement breaking a swing low |
+| Bullish BOS | bull | 3 | 40 | Break of Structure (continuation): prior swing structure is ascending (higher highs + higher lows) and a **fresh** close breaks above the last swing high |
+| ↳ Bearish BOS | bear | 3 | 40 | Mirror on a descending structure |
+| Bullish CHoCH | bull | 2 | 40 | Change of Character (reversal): prior structure descending, fresh close breaks **above** the last swing high — first sign of a reversal |
+| ↳ Bearish CHoCH | bear | 2 | 40 | Mirror: prior structure ascending, fresh close breaks below the last swing low |
+
+`smc` patterns count as structural for `best_for_confluence` (Stage 1) and the
+Category-5 structural bonus, the same as confirmed Tier-2 `chart`/`price_action`
+patterns — a confirmed BOS or CHoCH outranks a candlestick, matching how ICT
+traders would weight it.
 
 ### Which single pattern feeds the score
 
@@ -443,14 +544,25 @@ beats a volume signal, and volume-only setups can only win when nothing else fir
 Every symbol/timeframe pair gets a score from **0 to 100**, built from five
 categories:
 
-| # | Category | Max | Measures |
+| # | Category | Max (default) | Measures |
 |---|---|---|---|
 | 1 | Trend / Structure | **30** | EMA & VWAP alignment, swing structure |
 | 2 | Momentum | **25** | RSI regime, MACD histogram slope |
 | 3 | Volume confirmation | **15** | relative volume vs 20-bar average |
 | 4 | Candle trigger | **25** | the single best aligned pattern |
-| 5 | Structural bonus | **5** | a confirmed Tier-2 chart/price-action pattern exists |
+| 5 | Structural bonus | **5** | a confirmed Tier-2 chart/price-action/smc pattern exists |
 | | **Total** | **100** | |
+
+**The five "Max" values above are user-configurable defaults**, not hardcoded
+constants — `Settings → Scoring` (`GET/PATCH /api/scoring-config`,
+`storage/config/scoring.json`) lets a user re-weight the five categories. Each
+category's internal formula (RSI bands, MACD split, RelVol tiers, pattern
+strength→points, the contradiction/range penalties) is untouched by this —
+only the category *ceilings* are configurable, and the total is always
+rescaled back to 0–100 regardless of what the configured weights sum to
+(`services/confluence_scorer.py:ScoringWeights`). Both scanners resolve the
+current config once per scan request (not per symbol) and use it to fill in
+the default `threshold` when the caller doesn't pass one explicitly.
 
 > Volume is capped at 15 (reduced from 20) specifically to prevent volume-only
 > setups from clearing the threshold on a spike alone.
@@ -468,42 +580,64 @@ A **voting** system. Five possible votes, each cast bullish or bearish:
 | Swing structure | new 10-bar high | new 10-bar low |
 
 The swing vote is exclusive — a bar can be a new high **or** a new low, not both,
-so at most 5 votes are cast.
+so at most 5 votes are cast. A bar that is neither abstains, but the vote still
+counted as *available*.
+
+Points are **normalised to the votes that were actually available**:
 
 ```
-if bull_votes > bear_votes:   direction = bullish,  points = min(30, bull_votes × 5)
-elif bear_votes > bull_votes: direction = bearish,  points = min(30, bear_votes × 5)
+if bull_votes > bear_votes:   direction = bullish,  points = round(30 × bull_votes / votes_available)
+elif bear_votes > bull_votes: direction = bearish,  points = round(30 × bear_votes / votes_available)
 else:                         direction = range,    points = 5
 ```
 
-Votes are skipped when the indicator is unavailable (e.g. EMA50 needs 50 bars),
-so short histories mechanically score lower here.
-
-> **The 30-point cap is never reached.** With at most 5 votes × 5 points, this
-> category tops out at **25**. See [practical maximum](#practical-maximum).
+A vote is unavailable when its indicator is (e.g. EMA50 needs 50 bars, VWAP
+needs real volume). Normalising means a shorter history is no longer penalised
+purely for having fewer indicators, and the category genuinely reaches its
+stated **30**.
 
 **This category sets the direction** used by every later category.
+
+### VWAP is timeframe-aware
+
+| Timeframe | VWAP |
+|---|---|
+| `5m` … `4h` | session-reset, grouped by the **exchange's** local session date |
+| `1d`, `1wk`, `1mo` | rolling **20-bar** `Σ(typical_price × volume) / Σ(volume)` |
+| no volume (indices) | `NaN` — the vote is skipped, not cast |
+
+A session-reset VWAP is meaningless on daily-or-slower bars: each bar is its own
+session, so `vwap` collapses to `(high + low + close) / 3` of that same bar and
+the vote degenerates into "did the bar close in the upper part of its own
+range". The rolling window fixes that. Intraday grouping uses the exchange's own
+timezone so a US session (19:00–02:30 IST) is not split across IST midnight.
 
 ### Category 2 — Momentum (0–25)
 
 Two components, summed then capped at 25.
 
-**RSI (14)** — scored *relative to the trend direction*:
+**RSI (14)** — scored *relative to the trend direction*. Every band is
+reachable, and the overbought/oversold edge is a **taper**, not a cliff:
 
 | Trend | RSI band | Points |
 |---|---|---|
 | bullish | `45 < rsi < 70` | **12** — healthy |
-| bullish | `rsi ≥ 70` | **4** — overbought |
-| bullish | `rsi > 50` * | **8** |
+| bullish | `70 ≤ rsi < 80` | **12 → 4**, linear taper |
+| bullish | `rsi ≥ 80` | **4** — deeply overbought |
+| bullish | `40 < rsi ≤ 45` | **8** — building |
+| bullish | `rsi ≤ 40` | **4** — weak |
 | bearish | `30 < rsi < 55` | **12** — healthy |
-| bearish | `rsi ≤ 30` | **4** — oversold |
-| bearish | `rsi < 50` * | **8** |
+| bearish | `20 < rsi ≤ 30` | **12 → 4**, linear taper |
+| bearish | `rsi ≤ 20` | **4** — deeply oversold |
+| bearish | `55 ≤ rsi < 60` | **8** — rolling over |
+| bearish | `rsi ≥ 60` | **4** |
 | range | `40 < rsi < 60` | **8** |
 | range | otherwise | **4** |
 
-\* **Dead branches.** The preceding bands already cover every value these could
-match, so the 8-point RSI award is unreachable in both the bullish and bearish
-paths. Effective RSI contribution is only 12, 4, or 0.
+The old table had two unreachable 8-point branches, so the real contribution was
+only 12, 4 or 0 — and a bullish setup at RSI 70.1 scored 4 while one at 69.9
+scored 12. That 8-point step at a round number pushed genuine setups below the
+threshold; it is now a 10-point-wide ramp.
 
 **MACD histogram:**
 
@@ -525,7 +659,13 @@ Relative volume = current bar volume ÷ 20-bar rolling mean.
 | ≥ 1.8× | **11** | High vol |
 | ≥ 1.3× | **7** | Vol above avg |
 | < 1.3× | **3** | — |
-| no volume data (indices) | **6** | neutral |
+
+**Instruments with no volume (indices) are excluded from this category, not
+given neutral points.** The remaining four categories (max 85) are **rescaled to
+100**, so an index and a stock are judged on the same 0–100 basis and the same
+threshold means the same thing for both. The card carries
+`"volume_available": false` and the UI labels it `no vol`. The 7 volume patterns
+still cannot fire on a volume-less instrument.
 
 ### Category 4 — Candle trigger (0–25)
 
@@ -590,19 +730,18 @@ total = clamp(total, 0, 100)
 
 #### Practical maximum
 
-The advertised ceiling is 100, but Category 1 caps at 25 rather than 30, so the
-real ceiling is:
-
-| Category | Stated max | Reachable max |
+| Category | Max | Reachable |
 |---|---|---|
-| Trend / Structure | 30 | **25** (5 votes × 5) |
+| Trend / Structure | 30 | 30 (normalised — all available votes agree) |
 | Momentum | 25 | 25 (12 + 13) |
 | Volume | 15 | 15 |
 | Candle trigger | 25 | 25 |
 | Structural bonus | 5 | 5 |
-| **Total** | **100** | **95** |
+| **Total** | **100** | **100** |
 
-A score of 96–100 is unreachable. Treat 90+ as the top of the scale.
+100 is now a real ceiling. Under `pattern_mode=shape` the reachable maximum
+drops to **70**, because Categories 4 and 5 collapse whenever the selected
+pattern doesn't fire.
 
 The **threshold** filter keeps only setups with `total >= threshold`.
 
@@ -611,6 +750,10 @@ The **threshold** filter keeps only setups with `total >= threshold`.
 | Default threshold | **65** |
 | UI slider | min **40**, max **90**, step **5** |
 | Slider guidance | ≥80 "Strong signals only" · ≥65 "Recommended — balanced quality" · <65 "Relaxed — shows more, lower quality" |
+
+> **The default of 65 is now loose.** Correcting Categories 1–3 shifted the whole
+> distribution up. On `india_nifty50` / `1d`, 70% of symbols clear 65 (it was
+> 50%). See [threshold calibration](#threshold-calibration).
 
 Display buckets (both scanners):
 
@@ -629,12 +772,35 @@ The summary block reports `strong_80plus` as a dedicated count.
 
 ```json
 "confluence_score": 82,
-"score_breakdown": { "trend": 25, "momentum": 25, "volume": 11, "candle": 16, "structural": 5 }
+"score_breakdown": { "trend": 30, "momentum": 25, "volume": 11, "candle": 16, "structural": 5 },
+"volume_available": true,
+"bars_used": 250
 ```
 
 plus a `reasons` array of human-readable strings accumulated during scoring
 ("Price>EMA20", "RSI 58 healthy", "MACD hist rising", "Vol surge 2.7×",
 "Pattern: Bull Flag", "Structural pattern confirmed", …).
+
+### Scan diagnostics
+
+A scan reports what it could **not** do, so "no setups" is distinguishable from
+"half the universe failed to download":
+
+| Field | Meaning |
+|---|---|
+| `scanned` | symbols actually attempted |
+| `skipped_no_data` | every requested timeframe returned an empty frame |
+| `skipped_insufficient_bars` | data arrived but no timeframe reached the 50-bar gate |
+| `errors[]` | `{symbol, reason}`, capped at 50; `errors_truncated` reports the overflow |
+| `cache_hit_rate` | bar-cache hits ÷ (hits + misses) for this scan |
+
+Both UIs show a warning banner when `skipped_no_data / total_symbols > 5%`, with
+an expandable per-symbol reason list.
+
+The SSE `start` event echoes the **resolved** `universe`, `timeframes`,
+`threshold` and `pattern_mode`, so the UI can display what was actually scanned
+rather than what it thinks it asked for. Each `progress` event carries the
+symbol's `status` (`ok` / `no_data` / `insufficient_bars` / `error`).
 
 ---
 
@@ -724,36 +890,43 @@ BUY  (bullish):  entry = spot
 SELL (bearish):  mirrored
 ```
 
-- `rr` is **always 1.5** by construction (T1 is 1.5 × risk).
+- `rr` is **always 1.5** by construction (T1 is 1.5 × risk). It is a design
+  parameter, not a measurement — the plan carries `rr_basis` saying so and the
+  UI labels it `(fixed)`. There is deliberately **no R:R floor**: a gate that can
+  never fire reads as a safety check without being one.
 - Range-direction setups get **no plan** (`plan: null`).
 - Exit rule text: trail SL to entry after T1; max hold **3–5 sessions**.
 
 ### Pattern backtest
 
-Each card with a named pattern is backtested against daily data using the
-**legacy** detector:
+Each card with a named pattern is backtested with the **registry** detector, on
+the **card's own timeframe** (`services/scan_support.backtest_pattern`):
 
-- Walks bars `2 … len−6`, finds prior occurrences of the same pattern+direction.
+- Resolves the pattern to the registry entry able to emit it. Directional
+  variants use their parent's detector and match on the variant id; legacy-only
+  names map onto their registry equivalent (`Hammer / Pin Bar` → `Hammer`).
+- Walks expanding windows over the trailing **260 bars** of that timeframe,
+  starting at the pattern's own `min_bars`.
 - Entry = close, `risk = max(ATR×1.5, entry×0.003)`.
 - **Win** = T1 (`1.5 × risk`) touched within the next 5 bars *before* the stop.
-- Requires ≥30 daily bars; returns `hit_rate` only when the sample is **≥ 5**,
-  otherwise `{"hit_rate": null, "note": "Low sample — unproven"}`.
+- Returns `hit_rate` only when the sample is **≥ 5**.
 
-Two things to know before trusting this number:
+All 73 registry patterns are now coverable — a Bull Flag card can show a hit
+rate. Only the two Marubozu names have no registry detector at all.
 
-**It is not 6 months.** The call is `get_daily(sym, period="6mo")`, but
-`get_daily` ignores `period` and delegates to `get_ohlcv(sym, "1d")`, which uses
-`range=1y`. The backtest window is ~250 daily bars.
+The result is always self-describing, never a blank:
 
-**It only works for 7 pattern names.** The card's `pattern` comes from the
-registry, but the backtest walks the legacy detector, so a hit rate can only be
-produced where the two name sets overlap: `Morning Star`, `Evening Star`,
-`Bullish Engulfing`, `Bearish Engulfing`, `Shooting Star`, `Inside Bar Breakout`,
-`Inside Bar Breakdown`. Everything else yields `sample_size: 0` → `backtest: null`.
-Note registry `Hammer` does **not** match legacy `Hammer / Pin Bar`.
+```json
+"backtest": { "hit_rate": 0.62, "sample_size": 13, "timeframe": "1wk",
+              "window_bars": 260, "detector": "Bull Flag", "reason": null }
+```
 
-The same backtest runs in the F&O scanner, also against daily bars regardless of
-the card's own timeframe.
+When a hit rate cannot be produced, `hit_rate` is `null` and `reason` says why
+("Only 2 prior occurrence(s) in 260 1wk bars — needs 5 for a hit rate"). The UI
+renders `no hit rate` with the reason on hover.
+
+`get_daily(sym, period=...)` now honours `period`; it previously accepted the
+argument and ignored it, so callers asking for "6mo" silently got 1 year.
 
 ---
 
@@ -775,8 +948,11 @@ timeframes · produces an **option** trade plan.
 2. `services/fno_data_service.get_fno_symbols()` — NSE REST + lot sizes
 3. Static hardcoded list (~90 symbols) as final fallback
 
-> Any other universe string — **including the default `top30`** — falls through
-> to `indices`. See [caveats](#9-known-quirks--caveats).
+| `dynamic` | indices + F&O equities |
+
+The default is **`stocks`**. Any unregistered universe string returns **HTTP 400**
+naming it. (`top30` used to be the default and was never registered, so every
+default scan silently fell back to `indices` — 6 symbols.)
 
 ### Option plan (`services/option_advisor.py`)
 
@@ -805,22 +981,37 @@ Strike intervals:
 | Equity ≥ ₹5,000 | 200 |
 
 - Bullish → **BUY CE**, bearish → **BUY PE**.
-- **Range setups always get `plan: null`.** The range path is an OTM *sell* plan
-  that bails out when `iv_rank < 40`, and the router never passes `iv_rank`, so
-  it is always the 30.0 default. The UI shows "Option plan unavailable".
-- **R:R floor is 1.3** — plans below it are rejected. Since `rr` is hardcoded to
-  1.5, this gate never fires for directional setups.
-- Premium levels assume a flat **0.5 ATM delta**: `t1_premium = entry + 0.5 × 1.5 × risk`.
-- `iv_note` warnings are also dead for the same reason (they need `iv_rank > 50`).
+- **Range setups get an OTM premium-sell plan when IV supports it.** The router
+  computes `iv_rank` from stored ATM-IV history
+  (`fno_data_service.get_iv_rank`) and threads it through. When it cannot be
+  computed (fewer than 30 daily IV snapshots) the plan is `null` **with a stated
+  reason** on `plan_unavailable_reason`, instead of a silently failed gate. The
+  UI prints the reason.
+- **There is no R:R floor.** Both plans have an `rr` fixed by construction —
+  directional `1.5` (`T1 = 1.5 × risk`) and premium-sell `0.33`
+  (`(1 − 0.5) / (2.5 − 1)`; the premium cancels out entirely). A floor could
+  therefore only ever be a gate that never fires. Each plan carries `rr_basis`
+  explaining its number, and the UI labels it `(fixed)`. An R:R below 1 is
+  inherent to a credit strategy — the edge there is decay probability, not
+  payoff ratio.
+- Premium levels assume a flat **0.5 ATM delta**
+  (`t1_premium = entry + 0.5 × 1.5 × risk`). The plan declares this as
+  `delta_assumption: 0.5` and the UI says the targets are approximate.
+- `iv_note` warns when IV rank is elevated (>70, or >50 on a sub-75 score).
+  These fire now that a real `iv_rank` reaches the advisor.
 - Entry premium comes from the live option chain when available, otherwise an
   estimate; `liquidity_ok: false` flags an unverified strike.
-- Expiry = nearest available from the chain.
-- `iv_note` warns when IV rank is elevated.
-
+- Expiry = nearest available from the chain. The frontend's
+  `nearestWeeklyExpiry()` prefers the chain's own expiry and only falls back to
+  weekday arithmetic as a last resort — NSE has moved weekly expiry off Thursday.
 - **Liquidity is reported, not enforced.** `openInterest ≥ 500` and
   `totalTradedVolume ≥ 100` are checked; failure sets `liquidity_ok: false` and
   appends a warning, but the plan is still returned.
-- Lot size comes from a static table, defaulting to **500** for unlisted symbols.
+- Lot size comes from `services/lot_sizes.py`, the **single source of truth**;
+  `frontend/lib/lot-sizes.generated.ts` is generated from it by
+  `scripts/gen_lot_sizes.py` and `tests/test_trade_plans.py` fails the build on
+  drift. Unlisted symbols still fall back to 500 but are flagged
+  `lot_size_estimated: true`.
 
 Option chain is fetched once per symbol per scan (`chain_cache`), falling back to
 a synthetic Black-Scholes chain when NSE data is unavailable.
@@ -834,7 +1025,7 @@ a synthetic Black-Scholes chain when NSE data is unavailable.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/scan/stream` | SSE streaming scan |
-| GET | `/patterns` | All 69 patterns grouped by family |
+| GET | `/patterns` | All 86 emitted patterns grouped by family, variants nested |
 | GET | `/universe?market=IN\|US` | Universes with live counts |
 | GET | `/universe-count/{key}` | Symbol count for one universe |
 | POST | `/refresh-universe/{all_nse\|all_us}` | Rebuild a universe JSON |
@@ -845,12 +1036,16 @@ a synthetic Black-Scholes chain when NSE data is unavailable.
 
 | Param | Type | Default | Notes |
 |---|---|---|---|
-| `universe` | str | `india_nifty50` | key from the universe table |
+| `universe` | str | `india_nifty50` | key from the universe table; **400** if unregistered |
 | `threshold` | int | `65` | minimum confluence score |
-| `timeframes` | str | `""` (all) | CSV subset of `1d,1wk,1mo` |
-| `pattern_names` | str | `""` (all) | CSV exact names — shapes the score |
+| `timeframes` | str | *absent* (all) | CSV subset of `1d,1wk,1mo`; **400** on an empty or unknown value |
+| `pattern_names` | str | `""` (all) | CSV pattern ids or display names; **400** if any resolves to nothing |
+| `pattern_mode` | str | `filter` | `filter` (hard post-filter, scores unchanged) or `shape` (legacy, lowers scores); **400** otherwise |
 | `patterns` | str | `""` | CSV families — post-filter |
 | `min_pattern_conf` | float | `0.0` | 0.0–1.0 confidence floor |
+
+**400 response shape:** `{"error": "...", "field": "timeframes"}`. Both UIs
+display `error` verbatim.
 
 ### F&O Scanner — `/api/live-scanner`
 
@@ -858,24 +1053,28 @@ a synthetic Black-Scholes chain when NSE data is unavailable.
 |---|---|---|
 | GET | `/scan` | Blocking scan, single JSON response |
 | GET | `/scan/stream` | SSE streaming scan |
-| GET | `/patterns` | All 69 patterns grouped by family |
+| GET | `/patterns` | All 86 emitted patterns grouped by family, variants nested |
 | GET | `/universe` | `indices` / `stocks` / `dynamic` |
 | GET | `/chart-data?symbol=&interval=1d&bars=80` | OHLC candles (handles `4h` via resample) |
 | GET | `/health` | `{"status":"ok","scanner":"live"}` |
 
-Same parameters as the equity scanner, except `universe` defaults to `top30` and
-`timeframes` accepts all eight values.
+Same parameters as the equity scanner, except `universe` defaults to **`stocks`**
+(accepting `indices` / `stocks` / `dynamic`) and `timeframes` accepts all eight
+values.
 
 ### SSE event sequence
 
 ```
-data: {"type":"start","total":50,"universe":"india_nifty50"}
-data: {"type":"progress","symbol":"RELIANCE","found":2,"done":1,"total":50,"setups_so_far":2}
+data: {"type":"start","total":50,"universe":"india_nifty50",
+       "timeframes":["1d","1wk"],"threshold":65,"pattern_mode":"filter"}
+data: {"type":"progress","symbol":"RELIANCE","found":2,"status":"ok","done":1,"total":50,"setups_so_far":2}
 ...
 data: {"type":"enriching","setups":37}
 data: {"type":"result","setups":[...],"summary":{...},"currency":"₹",...}
 data: [DONE]
 ```
+
+`start` echoes what the backend **resolved**, not what the client sent.
 
 ### Setup card shape
 
@@ -893,9 +1092,14 @@ data: [DONE]
   "reasons": ["Price>EMA20", "EMA20>EMA50", "RSI 58 healthy", "MACD hist rising", "High vol 1.9×"],
   "plan": { "action": "BUY", "entry_price": 1432.50, "sl_price": 1396.05,
             "t1_price": 1487.18, "t2_price": 1523.63, "rr": 1.5,
+            "rr_basis": "fixed: T1 = 1.5 × risk by construction",
             "risk_per_share": 36.45, "currency": "₹", "exit_rule": "..." },
-  "backtest": { "hit_rate": 0.62, "sample_size": 13 },
-  "patterns": [ { "name": "Bull Flag", "family": "chart", "tier": 2, "direction": "bullish",
+  "backtest": { "hit_rate": 0.62, "sample_size": 13, "timeframe": "1d",
+                "window_bars": 260, "detector": "Bull Flag", "reason": null },
+  "volume_available": true,
+  "bars_used": 250,
+  "patterns": [ { "name": "Bull Flag", "pattern_id": "bull_flag", "parent_id": "bull_flag",
+                  "family": "chart", "tier": 2, "direction": "bullish",
                   "strength": 2, "confidence": 0.78, "key_levels": {...},
                   "span_bars": 25, "state": "forming", "timeframe": "1d" } ],
   "breakout_state": "FRESH_BREAKOUT",
@@ -907,108 +1111,98 @@ data: [DONE]
 
 The F&O card is identical except `plan` is an option plan (`option_type`,
 `strike`, `expiry`, `entry_premium`, `sl_premium`, `t1_premium`, `t2_premium`,
-`lot_size`, `iv_note`, `liquidity_ok`) and it carries an extra `source` field.
+`lot_size`, `lot_size_estimated`, `delta_assumption`, `iv_rank`, `iv_note`,
+`liquidity_ok`), it carries `plan_unavailable_reason` when `plan` is null, and it
+carries an extra `source` field.
 
 ### Summary shape
 
 ```json
 { "total_symbols": 50, "unique_setups": 31, "total_setups": 47,
   "bullish": 29, "bearish": 15, "range": 3,
-  "strong_80plus": 12, "by_timeframe": { "1d": 22, "1wk": 17, "1mo": 8 } }
+  "strong_80plus": 12, "by_timeframe": { "1d": 22, "1wk": 17, "1mo": 8 },
+  "scanned": 50, "skipped_no_data": 1, "skipped_insufficient_bars": 2,
+  "errors": [ { "symbol": "XYZ", "reason": "no data returned for any requested timeframe" } ],
+  "cache_hit_rate": 0.33 }
 ```
 
 ---
 
 ## 9. Known quirks & caveats
 
-These are real behaviours in the current code — worth knowing before you trust a
-number.
+Twenty caveats were listed here. The correctness pass resolved most of them;
+what follows is what is genuinely still true.
 
-**1. F&O default universe is wrong.** Both `/scan` and `/scan/stream` default to
-`universe="top30"`, which is not a registered preset, so `_resolve_symbols` falls
-back to `indices` (6 symbols). Pass `universe=stocks` explicitly to scan equities.
+### Threshold calibration
 
-**2. VWAP on Daily/Weekly/Monthly is not a VWAP.** `_vwap_daily` resets per
-calendar date. On daily-or-slower bars each bar is its own session, so
-`vwap == (high + low + close) / 3` of that same bar. The "Price > VWAP" trend vote
-therefore reduces to "did the bar close in the upper part of its own range" — a
-within-bar test, not a session-volume measure. **This affects every equity
-scanner result**, since the equity scanner only uses 1d/1wk/1mo.
+**The default threshold of 65 is now loose.** Fixing the trend normalisation,
+the VWAP and the RSI bands shifted the whole distribution upward. Measured on
+`india_nifty50`, no pattern filter:
 
-**3. VWAP on US intraday splits mid-session.** All timestamps are converted to
-`Asia/Kolkata` before grouping. A US session (19:00–02:30 IST) crosses IST
-midnight, so intraday VWAP would reset mid-session. Not currently reachable —
-the equity scanner has no intraday timeframes — but it is a live trap if
-intraday is ever enabled for US.
+| TF | n | min | p25 | median | p75 | max | ≥65 | ≥75 | ≥80 |
+|---|---|---|---|---|---|---|---|---|---|
+| `1d` | 50 | 9 | 61 | 70.5 | 88 | 100 | **70%** | 46% | 40% |
+| `1wk` | 49 | 9 | 49 | 62 | 68 | 88 | 37% | 14% | 10% |
+| `1mo` | 48 | 14 | 40 | 65 | 74.8 | 88 | 50% | 25% | 13% |
 
-**4. `4h` is calendar-bucketed, not session-aligned.** Resampled from 1h with
-`resample("4h")`, so buckets do not line up with the 09:15–15:30 IST session.
+Before the fixes, `1d` was 50% ≥65 and 22% ≥80. The threshold has **not** been
+changed — that is a product call. **Recommendation: raise the default to 75**,
+which restores roughly the old selectivity (46% on `1d`) on the corrected scale,
+and shift the slider guidance bands up by the same 10 points. Caveat: this is one
+Nifty-50 snapshot on one day in a strong tape; re-measure across a wider universe
+and a flatter market before committing.
 
-**5. Indices get a free 6 volume points.** With no volume data the Volume
-category returns a neutral 6 rather than being excluded, and all 7 volume
-patterns are unavailable. Index setups are scored on a slightly different basis
-than stock setups.
+### Still true
 
-**6. Backtest uses the legacy detector and covers only 7 pattern names.** A Bull
-Flag card can never show a hit rate. Hit rates are always computed on daily bars
-regardless of the card's timeframe, and the window is ~1 year, not the "6mo" the
-call site claims. See [Pattern backtest](#pattern-backtest).
+**1. Indicator lookbacks are fixed across all timeframes.** "EMA20" means 20
+five-minute bars on `5m` and 20 months on `1mo`. This is a deliberate design
+choice, now documented rather than implicit. The 50-bar minimum ensures every
+scored card has the full indicator set.
 
-**7. `needs_confirmation` and Tier 3 are dead.** `needs_confirmation` is set on 15
-registry entries but never read. No Tier-3 patterns exist despite the code
-documenting them.
+**2. Liquidity is reported, not enforced.** A plan with `liquidity_ok: false` is
+still returned, with a warning appended to `iv_note`.
 
-**8. Six emitted pattern names are unselectable.** `Inside Bar Breakout`,
-`Inside Bar Breakdown`, `Breakdown Retest`, `Rectangle Breakdown`,
-`Channel Breakdown`, `Trendline Breakdown` are emitted by detectors but are not
-in `GET /patterns`. Because `pattern_names` matches the emitted name exactly,
-selecting `Inside Bar` silently discards every `Inside Bar Breakout` hit, and the
-bearish breakdown variants cannot be selected at all.
+**3. `rr` is a fixed design parameter, not a measurement.** Directional plans are
+always 1.5, premium-sell plans always 0.33. Both carry `rr_basis` and the UI
+labels them `(fixed)`. Targets are not derived from swing structure.
 
-Also unselectable: `Hammer / Pin Bar`, `Bullish Marubozu`, `Bearish Marubozu` —
-these exist only in the legacy fallback detector, so they can appear in a card's
-`pattern` field but never in `patterns[]` and never in the picker.
+**4. Premium levels assume a flat 0.5 ATM delta.** Declared on the plan as
+`delta_assumption`. They are a linear approximation, not option maths.
 
-**9. `Trendline Breakout` needs 35 bars, not 30.** Its registered `min_bars` is 30
-but an internal guard requires `30 + 5`.
+**5. Lot sizes need periodic refresh from NSE.** Python is the single source of
+truth and TypeScript is generated from it, with a test that fails on drift — but
+the *values* have not been reconciled against the live NSE contract master. NSE
+revises them each expiry cycle.
 
-**10. Two registry tests appear stale.** `test_tier3_families_present` asserts
-membership in what is now an empty set, and `test_tier1_preferred_over_tier2`
-contradicts the Stage-1-first ordering in `best_for_confluence`.
+**6. IV rank needs history to exist.** `get_iv_rank` requires 30 daily ATM-IV
+snapshots. Until `append_daily_iv_snapshot()` has run that many times, range
+setups get `plan: null` with that stated as the reason.
 
-**11. Every scan re-fetches everything.** No persistent cache. A 503-symbol
-S&P 500 scan across 3 timeframes is ~1,500 Yahoo requests and takes ~10 minutes.
+**7. The `all_nse` / `all_us` universes must be refreshed before first use.**
 
-**12. The score ceiling is 95, not 100.** Category 1 caps at 25 of its stated 30.
+**8. Backtest hit rates are in-sample and unweighted.** They count prior
+occurrences of the same pattern on the same instrument over 260 bars. Small
+samples are common; anything under 5 returns `null` with a reason.
 
-**13. Two RSI branches are unreachable.** The 8-point bullish and bearish RSI
-awards can never fire; effective RSI contribution is 12, 4, or 0.
+**9. Wyckoff patterns are context flags, not triggers.** Strength 1, confidence
+0.32–0.35.
 
-**14. Unknown universe keys fail silently.** The equity scanner falls back to
-`india_nifty50`, the F&O scanner to `indices` — no error is raised.
+**10. The 4h session anchor is NSE-specific.** `resample_to_4h` defaults to an
+09:15 origin. The F&O scanner is India-only so this is correct today, but the
+function would need a different origin for another exchange.
 
-**15. Deselecting every timeframe scans all of them.** An empty `timeframes`
-string is treated as "no filter". The F&O UI warns but does not disable the
-button.
+### Resolved
 
-**16. Range setups never get an F&O option plan** (`iv_rank` is hardcoded to 30,
-below the range path's 40 floor), and `iv_note` warnings never fire for the same
-reason.
-
-**17. F&O 4h charts render empty.** `CandleChart` calls
-`/api/equity-scanner/chart-data`, which has no `4h` branch, so the live scanner's
-own 4h-resampling endpoint is dead code and Yahoo rejects the raw `4h` interval.
-
-**18. Two divergent lot-size tables.** `option_advisor.LOT_SIZES` (Python) and
-`fno-types.ts` (TypeScript) disagree on LT, MARUTI, POWERGRID, ONGC, NESTLEIND,
-TITAN and ADANIPORTS.
-
-**19. `nearestWeeklyExpiry()` hardcodes Thursday**, which NSE has since moved.
-
-**20. `ALL_US_LISTED.json` is not read by the ticker resolver.** `_build_us_symbols`
-globs `US_*.json`, which that filename does not match. Coverage is identical only
-because the same sources are re-merged — a symbol added to `ALL_US_LISTED.json`
-alone would get `.NS` appended and fail to fetch.
+For the record, these were the documented defects and are now fixed: the F&O
+`top30` default universe; VWAP on daily/weekly/monthly; VWAP splitting a US
+session at IST midnight; calendar-bucketed `4h`; indices getting free volume
+points; the legacy-detector backtest covering only 7 names; `needs_confirmation`
+and Tier 3; six unselectable pattern names; `Trendline Breakout`'s `min_bars`;
+the two stale registry tests; the absence of a bar cache; the 95-point score
+ceiling; the two unreachable RSI branches; silently-swallowed universe keys;
+empty `timeframes` scanning everything; range setups never getting an option
+plan; empty F&O 4h charts; the two divergent lot-size tables; the hardcoded
+Thursday expiry; and `ALL_US_LISTED.json` never being read.
 
 ---
 

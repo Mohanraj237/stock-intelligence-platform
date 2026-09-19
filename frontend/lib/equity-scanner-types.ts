@@ -1,12 +1,14 @@
 // Types for the Equity Live Scanner — /api/equity-scanner/scan/stream
 
-export interface ScoreBreakdown {
-  trend:      number;  // 0-30
-  momentum:   number;  // 0-25
-  volume:     number;  // 0-15
-  candle:     number;  // 0-25
-  structural: number;  // 0-5
-}
+import type {
+  BacktestInfo, DetectedPattern, PatternGroups, PatternMode, PatternOption,
+  ScanDiagnostics, ScoreBreakdown,
+} from "./scanner-types";
+
+export type {
+  BacktestInfo, DetectedPattern, PatternGroups, PatternMode, PatternOption,
+  ScanDiagnostics, ScoreBreakdown,
+};
 
 export interface EquityPlan {
   action:          "BUY" | "SELL";
@@ -15,15 +17,11 @@ export interface EquityPlan {
   t1_price:        number;
   t2_price:        number;
   rr:              number;
+  /** How `rr` was arrived at — it is a fixed design parameter, not a measurement. */
+  rr_basis:        string;
   exit_rule:       string;
   risk_per_share:  number;
   currency:        string;  // "₹" | "$"
-}
-
-export interface BacktestInfo {
-  hit_rate:    number | null;
-  sample_size: number;
-  note?:       string;
 }
 
 export interface EquitySetupCard {
@@ -39,14 +37,18 @@ export interface EquitySetupCard {
   reasons:          string[];
   plan:             EquityPlan | null;
   backtest:         BacktestInfo | null;
-  patterns?:        Array<{ name: string; family: string; confidence: number; direction: string; tier: number }>;
+  patterns?:        DetectedPattern[];
   breakout_state:   string;   // "FRESH_BREAKOUT" | "CONFIRMED_BREAKOUT" | etc.
   breakout_label:   string;
   breakout_color:   string;
   structural_score: number;
+  /** false for indices — the Volume category is excluded and the rest rescaled. */
+  volume_available?: boolean;
+  bars_used?:        number;
+  lookback_note?:    string;
 }
 
-export interface EquityScanSummary {
+export interface EquityScanSummary extends ScanDiagnostics {
   total_symbols:   number;
   unique_setups:   number;
   total_setups:    number;
@@ -64,15 +66,17 @@ export interface EquityScanResponse {
   currency:    string;
   threshold:   number;
   timeframes:  string[];
+  pattern_mode?: PatternMode;
   disclaimer:  string;
 }
 
 export interface EquityScanParams {
   universe:          string;
   threshold:         number;
-  pattern_names?:    string;   // comma-separated specific pattern names, e.g. "Hammer,Bull Flag"
+  pattern_names?:    string;   // comma-separated pattern ids, e.g. "hammer,bull_flag"
+  pattern_mode?:     PatternMode;
   min_pattern_conf?: number;   // 0.0–1.0
-  timeframes?:       string;   // comma-separated subset of "1d,1wk,1mo"; omitted/empty = all
+  timeframes?:       string;   // comma-separated subset of "1d,1wk,1mo"; omitted = all
 }
 
 export interface ScanProgressState {
@@ -82,4 +86,11 @@ export interface ScanProgressState {
   found:       number;
   setupsSoFar: number;
   enriching:   boolean;
+  /** Echoed by the SSE `start` event — what the backend actually resolved. */
+  resolved?: {
+    universe:     string;
+    timeframes:   string[];
+    threshold:    number;
+    pattern_mode: PatternMode;
+  };
 }

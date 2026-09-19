@@ -17,27 +17,27 @@ HEADERS = {
 }
 
 INDEX_URLS = {
-    "NIFTY 50": "https://archives.nseindia.com/content/indices/ind_nifty50list.csv",
-    "NIFTY NEXT 50": "https://archives.nseindia.com/content/indices/ind_niftynext50list.csv",
-    "NIFTY 100": "https://archives.nseindia.com/content/indices/ind_nifty100list.csv",
-    "NIFTY 200": "https://archives.nseindia.com/content/indices/ind_nifty200list.csv",
-    "NIFTY 500": "https://archives.nseindia.com/content/indices/ind_nifty500list.csv",
-    "NIFTY MIDCAP 150": "https://archives.nseindia.com/content/indices/ind_niftymidcap150list.csv",
-    "NIFTY SMALLCAP 250": "https://archives.nseindia.com/content/indices/ind_niftysmallcap250list.csv",
-    "NIFTY BANK": "https://archives.nseindia.com/content/indices/ind_niftybanklist.csv",
-    "NIFTY IT": "https://archives.nseindia.com/content/indices/ind_niftyitlist.csv",
-    "NIFTY PHARMA": "https://archives.nseindia.com/content/indices/ind_niftypharmalist.csv",
-    "NIFTY AUTO": "https://archives.nseindia.com/content/indices/ind_niftyautolist.csv",
-    "NIFTY FMCG": "https://archives.nseindia.com/content/indices/ind_niftyfmcglist.csv",
-    "NIFTY PSU BANK": "https://archives.nseindia.com/content/indices/ind_niftypsubanklist.csv",
-    "NIFTY ENERGY": "https://archives.nseindia.com/content/indices/ind_niftyenergylist.csv",
-    "NIFTY REALTY": "https://archives.nseindia.com/content/indices/ind_niftyrealtylist.csv",
-    "NIFTY INFRA": "https://archives.nseindia.com/content/indices/ind_niftyinfralist.csv",
-    "NIFTY METAL": "https://archives.nseindia.com/content/indices/ind_niftymetallist.csv",
-    "NIFTY MEDIA": "https://archives.nseindia.com/content/indices/ind_niftymedialist.csv",
+    "NIFTY 50": "https://nsearchives.nseindia.com/content/indices/ind_nifty50list.csv",
+    "NIFTY NEXT 50": "https://nsearchives.nseindia.com/content/indices/ind_niftynext50list.csv",
+    "NIFTY 100": "https://nsearchives.nseindia.com/content/indices/ind_nifty100list.csv",
+    "NIFTY 200": "https://nsearchives.nseindia.com/content/indices/ind_nifty200list.csv",
+    "NIFTY 500": "https://nsearchives.nseindia.com/content/indices/ind_nifty500list.csv",
+    "NIFTY MIDCAP 150": "https://nsearchives.nseindia.com/content/indices/ind_niftymidcap150list.csv",
+    "NIFTY SMALLCAP 250": "https://nsearchives.nseindia.com/content/indices/ind_niftysmallcap250list.csv",
+    "NIFTY BANK": "https://nsearchives.nseindia.com/content/indices/ind_niftybanklist.csv",
+    "NIFTY IT": "https://nsearchives.nseindia.com/content/indices/ind_niftyitlist.csv",
+    "NIFTY PHARMA": "https://nsearchives.nseindia.com/content/indices/ind_niftypharmalist.csv",
+    "NIFTY AUTO": "https://nsearchives.nseindia.com/content/indices/ind_niftyautolist.csv",
+    "NIFTY FMCG": "https://nsearchives.nseindia.com/content/indices/ind_niftyfmcglist.csv",
+    "NIFTY PSU BANK": "https://nsearchives.nseindia.com/content/indices/ind_niftypsubanklist.csv",
+    "NIFTY ENERGY": "https://nsearchives.nseindia.com/content/indices/ind_niftyenergylist.csv",
+    "NIFTY REALTY": "https://nsearchives.nseindia.com/content/indices/ind_niftyrealtylist.csv",
+    "NIFTY INFRA": "https://nsearchives.nseindia.com/content/indices/ind_niftyinfralist.csv",
+    "NIFTY METAL": "https://nsearchives.nseindia.com/content/indices/ind_niftymetallist.csv",
+    "NIFTY MEDIA": "https://nsearchives.nseindia.com/content/indices/ind_niftymedialist.csv",
 }
 
-EQUITY_MASTER_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
+EQUITY_MASTER_URL = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
 
 SEGMENT_MAP = {
     "NIFTY 50": "NIFTY 50",

@@ -1,8 +1,34 @@
 {
   "portfolio": {
-    "initial_capital": 500000.0,
-    "available_capital": 500000.0
+    "initial_capital": 2000000.0,
+    "available_capital": 2003750.0
   },
   "trades": [],
-  "closed_trades": []
+  "closed_trades": [
+    {
+      "trade_id": "96D3B553",
+      "symbol": "NIFTY",
+      "instrument_type": "CE",
+      "strike": 24000.0,
+      "expiry": "2027-12-25",
+      "action": "BUY",
+      "lots": 1,
+      "lot_size": 100,
+      "entry_price": 100.0,
+      "entry_time": "2026-09-01T23:42:22.781234",
+      "current_price": 137.5,
+      "target_price": 150.0,
+      "stop_loss": 50.0,
+      "status": "CLOSED",
+      "source": "MANUAL",
+      "ai_confidence": "",
+      "strategy_name": "",
+      "pnl_rs": 3750.0,
+      "pnl_pct": 37.5,
+      "margin_used": 10000.0,
+      "exit_price": 137.5,
+      "exit_time": "2026-09-01T23:42:22.837354",
+      "exit_reason": "MANUAL"
+    }
+  ]
 }

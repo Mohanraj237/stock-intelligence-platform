@@ -19,6 +19,7 @@ import json
 import logging
 import math
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field as dataclass_field
 from typing import Annotated, Any
 
 # Isolated thread pool — F&O scanner never competes with the equity scanner
@@ -35,14 +36,24 @@ from services.intraday_data import (
     get_daily,
     get_nse_stocks,
     resample_to_4h,
+    exchange_tz,
+    cache_stats,
+    reset_cache_stats,
     UNIVERSE_PRESETS,
     _ALL_INDICES,
     _ALL_TIMEFRAMES,
 )
-from services.confluence_scorer import add_indicators, score as confluence_score
+from services.confluence_scorer import (
+    add_indicators, score as confluence_score, MIN_BARS_TO_SCORE, ScoringWeights,
+)
 from services.pattern_registry import run_detectors, PatternResult
-from services.option_advisor import build_plan, OptionPlan
+from services.option_advisor import build_plan_with_reason, OptionPlan
 from services.breakout_service import classify_breakout
+from services.scan_support import (
+    ScanInputError, ScanDiagnostics, apply_pattern_filters, backtest_pattern,
+    parse_pattern_mode, parse_pattern_names, parse_timeframes, resolve_universe,
+)
+from backend.deps import run_sync
 
 router = APIRouter(prefix="/api/live-scanner", tags=["live-scanner"])
 log = logging.getLogger(__name__)
@@ -69,39 +80,50 @@ async def _run(fn, *args, **kwargs):
     return await asyncio.get_running_loop().run_in_executor(_SCAN_POOL, fn, *args)
 
 
+@dataclass
+class SymbolOutcome:
+    """Result of scanning one symbol — including *why* nothing came back."""
+    symbol: str
+    qualifying: list[tuple] = dataclass_field(default_factory=list)  # (result, tf, indicator df)
+    status: str = "ok"      # ok | no_data | insufficient_bars | error
+    reason: str = ""
+
+
 async def _process_symbol_async(
     symbol: str,
     threshold: int,
     timeframes: list[str] | None = None,
-    enabled_pattern_names: set[str] | None = None,
-) -> list[tuple]:
+    enabled_pattern_ids: set[str] | None = None,
+    pattern_mode: str = "filter",
+    weights: ScoringWeights | None = None,
+) -> SymbolOutcome:
     """
     Fetch only the requested timeframes concurrently, then score each concurrently.
     timeframes: subset of _ALL_TIMEFRAMES to actually fetch — unselected TFs are
     never requested from Yahoo at all. Defaults to all 8 when omitted.
-    "4h" has no native Yahoo interval — it's derived from "1h" bars. If "4h" is
-    requested but "1h" isn't, "1h" is still fetched internally (as a dependency)
-    but dropped afterwards rather than scored/returned.
+    "4h" has no native Yahoo interval — it's derived from "1h" bars, resampled on
+    session-aligned buckets. If "4h" is requested but "1h" isn't, "1h" is still
+    fetched internally (as a dependency) but dropped afterwards.
     Uses the isolated _SCAN_POOL so this scanner never starves the equity scanner
     or default-pool endpoints (paper trades, health, etc.).
     """
     want_tfs = timeframes if timeframes else _ALL_TIMEFRAMES
     need_1h_helper = "4h" in want_tfs and "1h" not in want_tfs
+    tz = exchange_tz(symbol)
 
     async def _fetch_tf(tf: str) -> tuple[str, "pd.DataFrame"]:
         df = await _run(get_ohlcv, symbol, tf)
         return tf, df
 
     async def _score_tf(tf: str, df: "pd.DataFrame"):
-        if len(df) < 20:
-            return None
         try:
-            df_ind = await _run(add_indicators, df)
+            df_ind = await _run(add_indicators, df, timeframe=tf, session_tz=tz)
             result = await _run(
                 confluence_score, symbol, df_ind,
-                timeframe=tf, enabled_pattern_names=enabled_pattern_names,
+                timeframe=tf, enabled_pattern_ids=enabled_pattern_ids,
+                pattern_mode=pattern_mode, weights=weights,
             )
-            return (result, tf) if result and result.total >= threshold else None
+            return (result, tf, df_ind) if result and result.total >= threshold else None
         except Exception as exc:
             log.warning("Score error %s/%s: %s", symbol, tf, exc)
             return None
@@ -113,8 +135,9 @@ async def _process_symbol_async(
         raw = await asyncio.gather(*[_fetch_tf(tf) for tf in fetch_tfs], return_exceptions=True)
     except Exception as exc:
         log.warning("Fetch failed %s: %s", symbol, exc)
-        return []
+        return SymbolOutcome(symbol, status="error", reason=f"fetch failed: {exc}")
 
+    failures = [r for r in raw if isinstance(r, Exception)]
     tf_data = {tf: df for r in raw if not isinstance(r, Exception)
                for tf, df in [r] if not df.empty}
 
@@ -125,13 +148,28 @@ async def _process_symbol_async(
     if need_1h_helper:
         tf_data.pop("1h", None)
 
-    scored = await asyncio.gather(*[_score_tf(tf, df) for tf, df in tf_data.items()])
+    if not tf_data:
+        if failures:
+            return SymbolOutcome(symbol, status="error",
+                                 reason=f"fetch failed: {failures[0]}")
+        return SymbolOutcome(symbol, status="no_data",
+                             reason="no data returned for any requested timeframe")
+
+    scorable = {tf: df for tf, df in tf_data.items() if len(df) >= MIN_BARS_TO_SCORE}
+    if not scorable:
+        longest = max(len(df) for df in tf_data.values())
+        return SymbolOutcome(
+            symbol, status="insufficient_bars",
+            reason=f"longest history is {longest} bars, need {MIN_BARS_TO_SCORE}",
+        )
+
+    scored = await asyncio.gather(*[_score_tf(tf, df) for tf, df in scorable.items()])
     qualifying = [r for r in scored if r is not None]
 
     if qualifying:
         log.info("  %s: %d setup(s) → TFs %s",
-                 symbol, len(qualifying), [t for _, t in qualifying])
-    return qualifying
+                 symbol, len(qualifying), [t for _, t, _ in qualifying])
+    return SymbolOutcome(symbol, qualifying=qualifying, status="ok")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -169,24 +207,23 @@ def _plan_dict(plan: OptionPlan) -> dict[str, Any]:
         "t1_premium":    _sf(plan.t1_premium),
         "t2_premium":    _sf(plan.t2_premium),
         "rr":            _sf(plan.rr),
+        "rr_basis":      plan.rr_basis,
         "exit_rule":     plan.exit_rule,
         "lot_size":      int(plan.lot_size),
+        "lot_size_estimated": bool(plan.lot_size_estimated),
+        "delta_assumption":   _sf(plan.delta_assumption),
+        "iv_rank":       None if plan.iv_rank is None else _sf(plan.iv_rank, decimals=1),
         "iv_note":       plan.iv_note or "",
         "liquidity_ok":  bool(plan.liquidity_ok),
         "raw_risk_pts":  _sf(plan.raw_risk_pts),
     }
 
 
-def _to_card(result, timeframe: str, plan, hit_rate, sample_size,
-             source: str, breakout_info: dict | None = None) -> dict[str, Any]:
-    backtest: dict[str, Any] | None = None
-    if hit_rate is not None:
-        backtest = {"hit_rate": _sf(hit_rate), "sample_size": int(sample_size)}
-    elif sample_size > 0:
-        backtest = {"hit_rate": None, "sample_size": int(sample_size),
-                    "note": "Low sample — unproven"}
+def _to_card(result, timeframe: str, plan, backtest: dict | None,
+             source: str, breakout_info: dict | None = None,
+             plan_reason: str = "") -> dict[str, Any]:
     bi = breakout_info or {}
-    return {
+    card = {
         "symbol":           result.symbol,
         "timeframe":        timeframe,
         "source":           source,
@@ -205,103 +242,69 @@ def _to_card(result, timeframe: str, plan, hit_rate, sample_size,
         "rel_vol":          _sf(result.rel_vol),
         "reasons":          list(result.reasons),
         "plan":             _plan_dict(plan) if plan else None,
+        "plan_unavailable_reason": "" if plan else plan_reason,
         "backtest":         backtest,
         "patterns":         list(result.patterns),
         "breakout_state":   bi.get("state",  "NO_BREAKOUT"),
         "breakout_label":   bi.get("label",  "—"),
         "breakout_color":   bi.get("color",  "#94a3b8"),
         "structural_score": int(result.structural_score),
+        "volume_available": bool(result.volume_available),
+        "bars_used":        int(result.bars_used),
     }
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Backtest
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _backtest_with_df(
-    daily_df,
-    pattern_name: str,
-    direction: str,
-) -> tuple[float | None, int]:
-    """Run backtest against a pre-loaded (and already indicator-enriched) daily DataFrame."""
-    if pattern_name == "None" or daily_df is None or daily_df.empty or len(daily_df) < 30:
-        return None, 0
-    try:
-        from services.pattern_detector import detect
-        hits = total = 0
-        for i in range(2, len(daily_df) - 6):
-            sig = detect(daily_df, i)
-            if sig.name != pattern_name or sig.direction != direction:
-                continue
-            entry = float(daily_df.iloc[i]["close"])
-            atr   = float(daily_df["atr"].iloc[i]) if "atr" in daily_df.columns else entry * 0.005
-            risk  = max(atr * 1.5, entry * 0.003)
-            total += 1
-            first_hit = next(
-                (j for j in range(i + 1, i + 6)
-                 if (direction == "bullish" and float(daily_df.iloc[j]["high"]) >= entry + 1.5 * risk)
-                 or (direction == "bearish" and float(daily_df.iloc[j]["low"])  <= entry - 1.5 * risk)),
-                None)
-            first_stop = next(
-                (j for j in range(i + 1, i + 6)
-                 if (direction == "bullish" and float(daily_df.iloc[j]["low"])  <= entry - risk)
-                 or (direction == "bearish" and float(daily_df.iloc[j]["high"]) >= entry + risk)),
-                None)
-            if first_hit is not None and (first_stop is None or first_hit <= first_stop):
-                hits += 1
-        return (round(hits / total, 2), total) if total >= 5 else (None, total)
-    except Exception as exc:
-        log.debug("Backtest error %s: %s", pattern_name, exc)
-        return None, 0
+    if result.lookback_note:
+        card["lookback_note"] = result.lookback_note
+    return card
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Scan helpers  (each does one thing — keeps run_scan under complexity limit)
 # ─────────────────────────────────────────────────────────────────────────────
 
+# The only universes this scanner can resolve. "top30" was the documented
+# default but was never registered, so every default scan silently fell back to
+# `indices` (6 symbols) instead of scanning F&O stocks.
+FNO_UNIVERSE_KEYS: set[str] = {"indices", "stocks", "dynamic"}
+DEFAULT_FNO_UNIVERSE = "stocks"
+
+
 def _resolve_symbols(universe: str) -> list[str]:
     """
-    Two universes only:
-      'indices' — 4 index derivatives (NIFTY/BANKNIFTY/FINNIFTY/SENSEX)
+    Three universes:
+      'indices' — index derivatives (NIFTY/BANKNIFTY/FINNIFTY/SENSEX/…)
       'stocks'  — live NSE F&O eligible equities (fetched from NSE; static fallback)
+      'dynamic' — indices + stocks
+    Anything else raises ScanInputError → HTTP 400.
     """
+    resolve_universe(universe, FNO_UNIVERSE_KEYS)
     if universe == "stocks":
         return get_nse_stocks()
-    return UNIVERSE_PRESETS.get(universe, UNIVERSE_PRESETS["indices"])
-
-
-def _parse_timeframes(raw: str) -> list[str] | None:
-    """Comma-separated TF subset → validated list, or None for 'all' (unfiltered)."""
-    if not raw:
-        return None
-    wanted = [t.strip() for t in raw.split(",") if t.strip()]
-    valid = [t for t in wanted if t in _ALL_TIMEFRAMES]
-    return valid or None
-
-
-def _parse_pattern_names(raw: str) -> set[str] | None:
-    """Comma-separated exact pattern names → set, or None for 'all patterns'."""
-    if not raw:
-        return None
-    names = {n.strip() for n in raw.split(",") if n.strip()}
-    return names or None
+    if universe == "dynamic":
+        return list(_ALL_INDICES) + get_nse_stocks()
+    return UNIVERSE_PRESETS["indices"]
 
 
 async def _scatter_workers(
     symbols: list[str],
     threshold: int,
     timeframes: list[str] | None = None,
-    enabled_pattern_names: set[str] | None = None,
-) -> tuple[list[tuple], set[str]]:
+    enabled_pattern_ids: set[str] | None = None,
+    pattern_mode: str = "filter",
+    weights: ScoringWeights | None = None,
+) -> tuple[list[tuple], set[str], ScanDiagnostics]:
     """
     Process all symbols concurrently with a Semaphore-bounded pool.
     Each symbol fetches only the requested TFs in parallel via _process_symbol_async.
     """
     sem = asyncio.Semaphore(8)
 
-    async def _bounded(sym: str):
+    async def _bounded(sym: str) -> SymbolOutcome:
         async with sem:
-            return sym, await _process_symbol_async(sym, threshold, timeframes, enabled_pattern_names)
+            try:
+                return await _process_symbol_async(
+                    sym, threshold, timeframes, enabled_pattern_ids, pattern_mode, weights)
+            except Exception as exc:
+                return SymbolOutcome(sym, status="error", reason=str(exc))
 
     outcomes = await asyncio.gather(
         *[_bounded(sym) for sym in symbols],
@@ -310,15 +313,17 @@ async def _scatter_workers(
 
     all_qualifying: list[tuple] = []
     processed: set[str] = set()
+    diag = ScanDiagnostics()
     for outcome in outcomes:
         if isinstance(outcome, Exception):
             log.warning("Worker exception: %s", outcome)
+            diag.add_error("<unknown>", str(outcome))
             continue
-        sym, results = outcome
-        if results:
-            processed.add(sym)
-        all_qualifying.extend(results)
-    return all_qualifying, processed
+        diag.record(outcome.symbol, outcome.status, outcome.reason)
+        if outcome.qualifying:
+            processed.add(outcome.symbol)
+        all_qualifying.extend(outcome.qualifying)
+    return all_qualifying, processed, diag
 
 
 def _fetch_option_chain(sym: str) -> tuple[list, str]:
@@ -390,17 +395,37 @@ def _fetch_option_chain(sym: str) -> tuple[list, str]:
         return [], ""
 
 
+def _iv_rank_for(symbol: str) -> float | None:
+    """
+    IV rank (0-100) from the stored ATM-IV history. None when there is not
+    enough history to define a range — the caller then declines to build a
+    premium-sell plan *and says why*, instead of failing a gate against a
+    hardcoded 30.0 that could never clear it.
+    """
+    try:
+        from services.fno_data_service import get_iv_rank
+        data = get_iv_rank(symbol)
+        if not data.get("sufficient_history"):
+            return None
+        rank = data.get("iv_rank")
+        return float(rank) if rank is not None else None
+    except Exception as exc:
+        log.debug("iv_rank lookup failed for %s: %s", symbol, exc)
+        return None
+
+
 def _enrich_cards(qualifying: list[tuple]) -> list[dict]:
     """
     Add option plan + backtest to each qualifying setup.
-    Caches option chain AND daily data per symbol so a symbol appearing in
-    multiple timeframes only triggers one fetch each.
+    Caches option chain, IV rank AND daily data per symbol so a symbol appearing
+    in multiple timeframes only triggers one fetch each.
     """
     cards: list[dict] = []
     chain_cache: dict[str, tuple[list, str]] = {}
+    iv_cache:    dict[str, float | None] = {}
     daily_cache: dict[str, Any] = {}   # symbol → indicator-enriched daily DataFrame
 
-    for result, timeframe in qualifying:
+    for result, timeframe, tf_df in qualifying:
         sym = result.symbol
         if timeframe == "1d":
             source = "NSE (daily)"
@@ -413,64 +438,38 @@ def _enrich_cards(qualifying: list[tuple]) -> list[dict]:
         if sym not in chain_cache:
             chain_cache[sym] = _fetch_option_chain(sym)
         opt_chain, expiry = chain_cache[sym]
-        plan = build_plan(result, option_chain=opt_chain, nearest_expiry=expiry)
 
-        # Daily data: shared between backtest and breakout_state
+        if sym not in iv_cache:
+            iv_cache[sym] = _iv_rank_for(sym)
+
+        plan, plan_reason = build_plan_with_reason(
+            result, option_chain=opt_chain, nearest_expiry=expiry,
+            iv_rank=iv_cache[sym],
+        )
+
+        # Backtest runs on the card's OWN timeframe, not always on daily.
+        backtest = backtest_pattern(tf_df, timeframe, result.pattern.name, result.direction)
+
+        # Daily data drives the breakout badge only.
         if sym not in daily_cache:
             try:
-                df = get_daily(sym, period="6mo")
-                daily_cache[sym] = add_indicators(df) if not df.empty else None
+                df = get_daily(sym, period="1y")
+                daily_cache[sym] = add_indicators(df, timeframe="1d") if not df.empty else None
             except Exception:
                 daily_cache[sym] = None
 
-        # Backtest
-        hit_rate, n = None, 0
-        if result.pattern.name != "None":
-            hit_rate, n = _backtest_with_df(
-                daily_cache.get(sym), result.pattern.name, result.direction
-            )
-
         breakout_info = _get_breakout_state(daily_cache.get(sym), result.direction)
-        cards.append(_to_card(result, timeframe, plan, hit_rate, n, source, breakout_info))
+        cards.append(_to_card(result, timeframe, plan, backtest, source,
+                              breakout_info, plan_reason))
     return cards
-
-
-def _apply_pattern_filters(
-    cards: list[dict],
-    pattern_families: str | None,
-    min_pattern_conf: float,
-) -> list[dict]:
-    """
-    Filter cards by pattern family and minimum confidence.
-    pattern_families: comma-separated list of families, e.g. "candlestick,chart"
-    min_pattern_conf: 0.0–1.0
-    A card passes if ANY of its detected patterns match the criteria.
-    """
-    if not pattern_families and min_pattern_conf <= 0.0:
-        return cards
-
-    families = {f.strip().lower() for f in pattern_families.split(",")} if pattern_families else set()
-    filtered = []
-    for card in cards:
-        pats = card.get("patterns", [])
-        if not pats:
-            continue
-        match = False
-        for p in pats:
-            conf_ok = p.get("confidence", 0.0) >= min_pattern_conf
-            fam_ok  = not families or p.get("family", "").lower() in families
-            if conf_ok and fam_ok:
-                match = True
-                break
-        if match:
-            filtered.append(card)
-    return filtered
 
 
 def _build_summary(
     cards: list[dict],
     total_symbols: int,
     unique_symbols: int,
+    diag: ScanDiagnostics,
+    cache: dict,
 ) -> dict:
     by_dir: dict[str, int] = {"bullish": 0, "bearish": 0, "range": 0}
     by_tf:  dict[str, int] = {tf: 0 for tf in _ALL_TIMEFRAMES}
@@ -492,46 +491,76 @@ def _build_summary(
         "range":           by_dir["range"],
         "strong_80plus":   strong,
         "by_timeframe":    by_tf,
+        "cache_hit_rate":  cache.get("hit_rate", 0.0),
+        **diag.as_dict(),
     }
 
 
 @router.get("/scan")
 async def run_scan(
-    universe:          Annotated[str,   Query()] = "top30",
-    threshold:         Annotated[int,   Query()] = 65,
+    universe:          Annotated[str,   Query()] = DEFAULT_FNO_UNIVERSE,
+    threshold:         Annotated[int | None, Query()] = None,
     patterns:          Annotated[str,   Query()] = "",
     min_pattern_conf:  Annotated[float, Query()] = 0.0,
-    timeframes:        Annotated[str,   Query()] = "",
+    timeframes:        Annotated[str | None, Query()] = None,
     pattern_names:     Annotated[str,   Query()] = "",
+    pattern_mode:      Annotated[str,   Query()] = "filter",
 ):
     """
     Scan all symbols across the requested timeframes (default: 5m/15m/30m/1h/4h/1d/1wk/1mo).
     timeframes: comma-separated subset to actually fetch/score — unselected TFs are
     never requested from Yahoo, cutting external API calls proportionally.
-    pattern_names: comma-separated exact pattern names — only these contribute to
-    each setup's Candle Trigger / Structural bonus score categories.
-    patterns: comma-separated family filter (legacy, post-hoc card filter).
+    pattern_names: comma-separated pattern ids or display names, matched by identity.
+    pattern_mode: "filter" (default, hard post-filter, scores unchanged) or
+      "shape" (legacy, selection lowers the reachable score).
+    patterns: comma-separated family filter (post-hoc card filter).
     min_pattern_conf: 0.0-1.0, filter cards where any pattern meets this confidence.
-    """
-    symbols  = _resolve_symbols(universe)
-    tf_list  = _parse_timeframes(timeframes)
-    names    = _parse_pattern_names(pattern_names)
-    log.info("Scan start: %d symbols | threshold=%d | tfs=%s", len(symbols), threshold, tf_list or "all")
 
-    qualifying, processed = await _scatter_workers(symbols, threshold, tf_list, names)
+    Invalid inputs return HTTP 400 rather than silently scanning something else.
+    """
+    try:
+        universe = resolve_universe(universe, FNO_UNIVERSE_KEYS)
+        symbols  = _resolve_symbols(universe)
+        tf_list  = parse_timeframes(timeframes, _ALL_TIMEFRAMES)
+        names    = parse_pattern_names(pattern_names)
+        mode     = parse_pattern_mode(pattern_mode)
+    except ScanInputError as exc:
+        return JSONResponse(exc.as_dict(), status_code=400)
+
+    from storage.file_store import get_scoring_config
+    scoring_cfg = await run_sync(get_scoring_config)
+    weights = ScoringWeights(
+        trend=scoring_cfg["trend_weight"], momentum=scoring_cfg["momentum_weight"],
+        volume=scoring_cfg["volume_weight"], candle=scoring_cfg["candle_weight"],
+        structural=scoring_cfg["structural_weight"],
+    )
+    if threshold is None:
+        threshold = scoring_cfg["default_threshold"]
+
+    resolved_tfs = tf_list or _ALL_TIMEFRAMES
+    log.info("Scan start: %d symbols | threshold=%d | tfs=%s | mode=%s",
+             len(symbols), threshold, resolved_tfs, mode)
+
+    reset_cache_stats()
+    qualifying, processed, diag = await _scatter_workers(
+        symbols, threshold, tf_list, names, mode, weights)
     log.info("Raw qualifying: %d setups", len(qualifying))
 
     qualifying.sort(key=lambda x: x[0].total, reverse=True)
 
     cards = await _run(_enrich_cards, qualifying)
-    cards = _apply_pattern_filters(cards, patterns or None, min_pattern_conf)
+    cards = apply_pattern_filters(
+        cards, patterns or None, min_pattern_conf,
+        names if mode == "filter" else None,
+    )
 
     payload = {
         "setups":    cards,
-        "summary":   _build_summary(cards, len(symbols), len(processed)),
+        "summary":   _build_summary(cards, len(symbols), len(processed), diag, cache_stats()),
         "universe":  universe,
         "threshold": threshold,
-        "timeframes": tf_list or _ALL_TIMEFRAMES,
+        "timeframes": resolved_tfs,
+        "pattern_mode": mode,
         "data_sources": {
             "all": "Yahoo Finance REST API (fresh session per request) — all symbols, all timeframes",
         },
@@ -545,64 +574,99 @@ async def run_scan(
 
 @router.get("/scan/stream")
 async def scan_stream(
-    universe:         Annotated[str,   Query()] = "top30",
-    threshold:        Annotated[int,   Query()] = 65,
+    universe:         Annotated[str,   Query()] = DEFAULT_FNO_UNIVERSE,
+    threshold:        Annotated[int | None, Query()] = None,
     patterns:         Annotated[str,   Query()] = "",
     min_pattern_conf: Annotated[float, Query()] = 0.0,
-    timeframes:       Annotated[str,   Query()] = "",
+    timeframes:       Annotated[str | None, Query()] = None,
     pattern_names:    Annotated[str,   Query()] = "",
+    pattern_mode:     Annotated[str,   Query()] = "filter",
 ):
     """
     SSE streaming scan — yields per-symbol progress events so the frontend
     shows a real-time symbol counter (like the equity scanner).
 
-    timeframes: comma-separated subset to actually fetch/score — unselected TFs
-    are never requested from Yahoo, cutting external API calls proportionally.
-    pattern_names: comma-separated exact pattern names — only these contribute
-    to each setup's Candle Trigger / Structural bonus score categories.
+    See GET /scan for parameter semantics. Invalid inputs return HTTP 400
+    before the stream starts.
 
     Event types:
-      start      — {"type":"start","total":N,"universe":"top30"}
-      progress   — {"type":"progress","symbol":"NIFTY","found":3,"done":5,"total":30}
+      start      — {"type":"start","total":N,"universe":"stocks",
+                    "timeframes":[…],"threshold":65,"pattern_mode":"filter"}
+      progress   — {"type":"progress","symbol":"NIFTY","found":3,"status":"ok",…}
       enriching  — {"type":"enriching","setups":N}
       result     — {"type":"result", ...full scan payload...}
       [DONE]     — literal string, signals stream end
     """
-    symbols = _resolve_symbols(universe)
-    tf_list = _parse_timeframes(timeframes)
-    names   = _parse_pattern_names(pattern_names)
-    log.info("SSE scan: %d symbols threshold=%d tfs=%s", len(symbols), threshold, tf_list or "all")
+    try:
+        universe = resolve_universe(universe, FNO_UNIVERSE_KEYS)
+        symbols  = _resolve_symbols(universe)
+        tf_list  = parse_timeframes(timeframes, _ALL_TIMEFRAMES)
+        names    = parse_pattern_names(pattern_names)
+        mode     = parse_pattern_mode(pattern_mode)
+    except ScanInputError as exc:
+        return JSONResponse(exc.as_dict(), status_code=400)
+
+    from storage.file_store import get_scoring_config
+    scoring_cfg = await run_sync(get_scoring_config)
+    weights = ScoringWeights(
+        trend=scoring_cfg["trend_weight"], momentum=scoring_cfg["momentum_weight"],
+        volume=scoring_cfg["volume_weight"], candle=scoring_cfg["candle_weight"],
+        structural=scoring_cfg["structural_weight"],
+    )
+    if threshold is None:
+        threshold = scoring_cfg["default_threshold"]
+
+    resolved_tfs = tf_list or _ALL_TIMEFRAMES
+    log.info("SSE scan: %d symbols threshold=%d tfs=%s mode=%s",
+             len(symbols), threshold, resolved_tfs, mode)
 
     async def generate():
         def _sse(obj) -> str:
             return f"data: {json.dumps(obj)}\n\n"
 
-        yield _sse({"type": "start", "total": len(symbols), "universe": universe})
+        # Echo what was *actually* resolved so the UI can show what it scanned.
+        yield _sse({
+            "type":         "start",
+            "total":        len(symbols),
+            "universe":     universe,
+            "timeframes":   resolved_tfs,
+            "threshold":    threshold,
+            "pattern_mode": mode,
+        })
+
+        reset_cache_stats()
 
         queue: asyncio.Queue = asyncio.Queue()
         sem   = asyncio.Semaphore(12)
 
         async def process_sym(sym: str) -> None:
             async with sem:
-                results = await _process_symbol_async(sym, threshold, tf_list, names)
-                await queue.put((sym, results))
+                try:
+                    outcome = await _process_symbol_async(
+                        sym, threshold, tf_list, names, mode, weights)
+                except Exception as exc:
+                    outcome = SymbolOutcome(sym, status="error", reason=str(exc))
+                await queue.put(outcome)
 
         tasks = [asyncio.create_task(process_sym(s)) for s in symbols]
 
         all_qualifying: list[tuple] = []
         processed_syms: set[str]   = set()
+        diag = ScanDiagnostics()
         completed = 0          # counts EVERY symbol processed (not just ones with setups)
 
         for _ in symbols:
-            sym, results = await queue.get()
+            outcome = await queue.get()
             completed += 1
-            if results:
-                processed_syms.add(sym)
-            all_qualifying.extend(results)
+            diag.record(outcome.symbol, outcome.status, outcome.reason)
+            if outcome.qualifying:
+                processed_syms.add(outcome.symbol)
+            all_qualifying.extend(outcome.qualifying)
             yield _sse({
                 "type":          "progress",
-                "symbol":        sym,
-                "found":         len(results),
+                "symbol":        outcome.symbol,
+                "found":         len(outcome.qualifying),
+                "status":        outcome.status,
                 "done":          completed,           # all scanned symbols
                 "total":         len(symbols),
                 "setups_so_far": len(all_qualifying),
@@ -614,16 +678,21 @@ async def scan_stream(
 
         all_qualifying.sort(key=lambda x: x[0].total, reverse=True)
         cards   = await _run(_enrich_cards, all_qualifying)
-        cards   = _apply_pattern_filters(cards, patterns or None, min_pattern_conf)
-        summary = _build_summary(cards, len(symbols), len(processed_syms))
+        cards   = apply_pattern_filters(
+            cards, patterns or None, min_pattern_conf,
+            names if mode == "filter" else None,
+        )
+        summary = _build_summary(cards, len(symbols), len(processed_syms),
+                                 diag, cache_stats())
 
         payload = {
-            "type":       "result",
-            "setups":     cards,
-            "summary":    summary,
-            "universe":   universe,
-            "threshold":  threshold,
-            "timeframes": tf_list or _ALL_TIMEFRAMES,
+            "type":         "result",
+            "setups":       cards,
+            "summary":      summary,
+            "universe":     universe,
+            "threshold":    threshold,
+            "timeframes":   resolved_tfs,
+            "pattern_mode": mode,
             "data_sources": {"all": "Yahoo Finance REST API"},
             "disclaimer": (
                 "Not financial advice. Algorithmically identified setups, not predictions. "
@@ -642,9 +711,16 @@ async def scan_stream(
 
 @router.get("/universe")
 async def get_universe():
-    presets = {k: {"symbols": v, "count": len(v)} for k, v in UNIVERSE_PRESETS.items()}
-    presets["dynamic"] = {"symbols": [], "count": "live NSE (~180)"}
-    return {"universes": presets}
+    """Only the universes this scanner actually accepts — see FNO_UNIVERSE_KEYS."""
+    indices = UNIVERSE_PRESETS["indices"]
+    return {
+        "universes": {
+            "indices": {"symbols": indices, "count": len(indices)},
+            "stocks":  {"symbols": [], "count": "live NSE F&O equities (~180)"},
+            "dynamic": {"symbols": [], "count": "indices + live NSE F&O equities"},
+        },
+        "default": DEFAULT_FNO_UNIVERSE,
+    }
 
 
 @router.get("/health")
@@ -655,20 +731,13 @@ async def health():
 
 @router.get("/patterns")
 async def list_patterns():
-    """Return all pattern names from the registry, grouped by family."""
-    from services.pattern_registry import REGISTRY
-    groups: dict[str, list[dict]] = {}
-    order  = ["candlestick", "price_action", "volume", "chart", "harmonic"]
-    for entry in REGISTRY:
-        fam = entry.family
-        if fam not in groups:
-            groups[fam] = []
-        groups[fam].append({
-            "name":      entry.name,
-            "direction": entry.direction_bias,
-            "tier":      entry.tier,
-        })
-    return {fam: groups[fam] for fam in order if fam in groups}
+    """
+    Every pattern name any detector can emit, grouped by family, with
+    directional variants nested under their parent. Selecting a parent selects
+    its variants.
+    """
+    from services.pattern_registry import patterns_grouped_by_family
+    return patterns_grouped_by_family()
 
 
 @router.get("/chart-data")

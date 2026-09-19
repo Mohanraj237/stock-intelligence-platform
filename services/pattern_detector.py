@@ -21,6 +21,18 @@ class PatternSignal:
         """Candle trigger score contribution (max 25)."""
         return {1: 8, 2: 16, 3: 25}.get(self.strength, 0)
 
+    @property
+    def pattern_id(self) -> str:
+        """Stable id, so a legacy-detector name can be matched by identity too."""
+        from services.pattern_registry import pattern_slug
+        return pattern_slug(self.name)
+
+    @property
+    def parent_id(self) -> str:
+        from services.pattern_registry import CATALOG_BY_ID
+        entry = CATALOG_BY_ID.get(self.pattern_id)
+        return entry.parent_id if entry else self.pattern_id
+
 
 NO_PATTERN = PatternSignal("None", "neutral", 0)
 

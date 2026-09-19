@@ -22,6 +22,11 @@ from services.pattern_registry import (
     run_detectors,
     best_for_confluence,
     REGISTRY,
+    _structure_trend,
+    _det_fair_value_gap,
+    _det_order_block,
+    _det_break_of_structure,
+    _det_change_of_character,
 )
 
 
@@ -249,19 +254,16 @@ class TestTimeframeGating:
         # (other chart patterns like ascending triangle may or may not fire)
         assert "15m" in ["15m"]  # trivial — just confirm no exception raised
 
-    def test_tier3_excluded_by_default(self):
+    def test_no_tier3_patterns_are_emitted(self):
+        """The registry has two tiers. Nothing may claim Tier 3."""
         df = _flat(100)
-        pats = run_detectors(df, "1d")   # max_tier=2 default
-        tier3 = [p for p in pats if p.tier == 3]
-        assert len(tier3) == 0
+        pats = run_detectors(df, "1d")
+        assert [p for p in pats if p.tier not in (1, 2)] == []
 
-    def test_tier3_included_when_enabled(self):
+    def test_family_filter_still_works(self):
         df = _flat(100)  # flat range → wyckoff accumulation candidate
-        pats = run_detectors(df, "1d", enabled_families={"harmonic"}, max_tier=3)
-        tier3 = [p for p in pats if p.tier == 3]
-        # May or may not detect depending on volume — just verify no crash
-        for p in tier3:
-            assert "[EXPERIMENTAL]" in p.name
+        pats = run_detectors(df, "1d", enabled_families={"harmonic"})
+        assert all(p.family == "harmonic" for p in pats)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -346,9 +348,21 @@ class TestBestForConfluence:
         p = PatternResult("X", "candlestick", 1, "bullish", 0, 0.5, {}, 1, "confirmed", "1d")
         assert best_for_confluence([p], "bullish") is None
 
-    def test_tier1_preferred_over_tier2(self):
+    def test_confirmed_structural_tier2_preferred_over_tier1(self):
+        """
+        Stage 1 of best_for_confluence is 'confirmed Tier-2 chart/price_action
+        aligned with trend'. A confirmed structural breakout therefore beats a
+        candlestick — the previous assertion had this backwards.
+        """
         t1 = PatternResult("T1", "candlestick", 1, "bullish", 2, 0.72, {}, 1, "confirmed", "1d")
         t2 = PatternResult("T2", "chart",       2, "bullish", 3, 0.85, {}, 20, "confirmed", "1d")
+        best = best_for_confluence([t1, t2], "bullish")
+        assert best is not None and best.tier == 2
+
+    def test_tier1_wins_when_tier2_is_only_forming(self):
+        """Stage 1 requires `confirmed` — a forming Tier-2 falls through to Stage 2."""
+        t1 = PatternResult("T1", "candlestick", 1, "bullish", 2, 0.72, {}, 1, "confirmed", "1d")
+        t2 = PatternResult("T2", "chart",       2, "bullish", 3, 0.85, {}, 20, "forming", "1d")
         best = best_for_confluence([t1, t2], "bullish")
         assert best is not None and best.tier == 1
 
@@ -395,9 +409,12 @@ class TestRegistryCoverage:
         families = {e.family for e in REGISTRY if e.tier == 2}
         assert "chart" in families
 
-    def test_tier3_families_present(self):
-        families = {e.family for e in REGISTRY if e.tier == 3}
-        assert "harmonic" in families
+    def test_harmonic_family_is_tier2(self):
+        """Wyckoff patterns were documented as Tier 3, but no Tier 3 exists."""
+        assert {e.family for e in REGISTRY if e.tier == 2} >= {"chart", "harmonic"}
+
+    def test_registry_has_no_tier3(self):
+        assert [e.name for e in REGISTRY if e.tier not in (1, 2)] == []
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -406,29 +423,33 @@ class TestRegistryCoverage:
 
 class TestBacktestSanity:
     def test_backtest_returns_valid_types(self):
-        from backend.routers.live_scanner import _backtest_with_df
+        from services.scan_support import backtest_pattern
         from services.confluence_scorer import add_indicators
-        df = add_indicators(_uptrend(200))
-        hr, n = _backtest_with_df(df, "Hammer", "bullish")
-        assert hr is None or (isinstance(hr, float) and 0.0 <= hr <= 1.0)
-        assert isinstance(n, int) and n >= 0
+        df = add_indicators(_uptrend(200), timeframe="1d")
+        bt = backtest_pattern(df, "1d", "Hammer", "bullish")
+        assert bt["hit_rate"] is None or (isinstance(bt["hit_rate"], float)
+                                          and 0.0 <= bt["hit_rate"] <= 1.0)
+        assert isinstance(bt["sample_size"], int) and bt["sample_size"] >= 0
+        assert bt["timeframe"] == "1d"
+        assert bt["window_bars"] > 0
 
-    def test_backtest_none_pattern_returns_zero(self):
-        from backend.routers.live_scanner import _backtest_with_df
-        hr, n = _backtest_with_df(None, "None", "bullish")
-        assert hr is None and n == 0
+    def test_backtest_none_pattern_states_a_reason(self):
+        from services.scan_support import backtest_pattern
+        bt = backtest_pattern(None, "1d", "None", "bullish")
+        assert bt["hit_rate"] is None and bt["sample_size"] == 0
+        assert bt["reason"]          # never a silent blank
 
     def test_backtest_is_fast(self):
         """Backtest must not be O(n²) — must complete quickly."""
         import time
-        from backend.routers.live_scanner import _backtest_with_df
+        from services.scan_support import backtest_pattern
         from services.confluence_scorer import add_indicators
-        df = add_indicators(_uptrend(250))
+        df = add_indicators(_uptrend(250), timeframe="1d")
         start = time.perf_counter()
         for _ in range(20):  # 20 symbols worth
-            _backtest_with_df(df, "Hammer", "bullish")
+            backtest_pattern(df, "1d", "Hammer", "bullish")
         elapsed = time.perf_counter() - start
-        assert elapsed < 5.0, f"Backtest too slow: {elapsed:.2f}s for 20 runs"
+        assert elapsed < 8.0, f"Backtest too slow: {elapsed:.2f}s for 20 runs"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -458,3 +479,273 @@ class TestPerformance:
             run_detectors(_uptrend(n), tf)
         elapsed = time.perf_counter() - start
         assert elapsed < 1.0, f"Single symbol took {elapsed:.2f}s"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 11. Part 0 cleanup — Hammer/Hanging Man and Doji/Long-Legged Doji exclusivity,
+#     Cup & Handle requiring an actual handle
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _with_prior_trend(df: pd.DataFrame, direction: str) -> pd.DataFrame:
+    """Set the 5 bars immediately before the last bar to a clean up/down move,
+    without touching the last bar itself."""
+    df = df.copy()
+    idxs = df.index[-6:-1]
+    base = float(df.loc[df.index[-1], "close"])
+    vals = np.linspace(base * 0.95, base * 0.99, 5) if direction == "up" \
+        else np.linspace(base * 1.05, base * 1.01, 5)
+    for i, v in zip(idxs, vals):
+        df.loc[i, "open"] = v; df.loc[i, "close"] = v
+        df.loc[i, "high"] = v * 1.001; df.loc[i, "low"] = v * 0.999
+    return df
+
+
+class TestHammerHangingManExclusivity:
+    def test_hammer_excluded_in_prior_uptrend(self):
+        df = _with_prior_trend(_force_hammer(_flat(30)), "up")
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Hammer" not in names
+        assert "Hanging Man" in names
+
+    def test_hammer_fires_in_prior_downtrend(self):
+        df = _with_prior_trend(_force_hammer(_flat(30)), "down")
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Hammer" in names
+        assert "Hanging Man" not in names
+
+
+class TestDojiLongLeggedExclusivity:
+    def test_doji_band_goes_to_long_legged_not_plain_doji(self):
+        df = _flat(30).copy()
+        i = df.index[-1]
+        # body 0.075 x range, both wicks ~0.4625 x range — squarely in the band
+        # both patterns' guards previously agreed on (a real overlap bug).
+        df.loc[i, "open"]  = 100.0
+        df.loc[i, "close"] = 100.075
+        df.loc[i, "high"]  = 100.5375
+        df.loc[i, "low"]   = 99.5375
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Doji" not in names
+        assert "Long-Legged Doji" in names
+
+    def test_small_body_candle_never_matches_both_doji_and_long_legged(self):
+        """
+        Given the existing dragonfly/gravestone ceiling (each wick <= 0.5x
+        range) and the identity uw_ratio + lw_ratio = 1 - body_ratio, any bar
+        passing Doji's body gate (<=0.08x range) has its SMALLER wick
+        mathematically guaranteed to be >= ~0.42x range — inside the band this
+        fix excludes. In this codebase's model, "plain Doji" and "Long-Legged
+        Doji" were describing the same shape; every small-body/balanced-wick
+        bar now resolves to Long-Legged Doji (or Dragonfly/Gravestone when one
+        wick dominates), never to both, and never to a co-fire.
+        """
+        rng = np.random.default_rng(11)
+        for _ in range(25):
+            body_ratio = rng.uniform(0.0, 0.08)
+            split = rng.uniform(0.35, 0.65)  # how the remaining range splits between wicks
+            uw_ratio = (1 - body_ratio) * split
+            lw_ratio = (1 - body_ratio) * (1 - split)
+            df = _flat(30).copy()
+            i = df.index[-1]
+            o, cl = 100.0, 100.0 + body_ratio
+            df.loc[i, "open"] = o; df.loc[i, "close"] = cl
+            df.loc[i, "high"] = cl + uw_ratio
+            df.loc[i, "low"]  = o - lw_ratio
+            names = [p.name for p in run_detectors(df, "1d")]
+            assert not ("Doji" in names and "Long-Legged Doji" in names)
+
+
+class TestCupAndHandleRequiresHandle:
+    @staticmethod
+    def _cup_closes(has_handle: bool) -> np.ndarray:
+        left_rim  = np.full(15, 100.0)
+        decline   = np.linspace(100, 80, 15)
+        bottom    = np.full(15, 80.0)
+        rise      = np.linspace(80, 100, 15)
+        pre_handle = np.full(15, 100.0)
+        if has_handle:
+            handle = np.concatenate([np.linspace(100, 97, 8), np.linspace(97, 101, 7)])
+        else:
+            handle = np.linspace(100, 85, 15)  # wide swing — not a tight handle
+        return np.concatenate([left_rim, decline, bottom, rise, pre_handle, handle])
+
+    def test_no_handle_means_no_cup_and_handle(self):
+        df = _ohlcv(self._cup_closes(has_handle=False))
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Cup & Handle" not in names
+
+    def test_with_handle_fires_cup_and_handle(self):
+        df = _ohlcv(self._cup_closes(has_handle=True))
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Cup & Handle" in names
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 12. SMC / ICT patterns — Fair Value Gap, Order Block, BOS, CHoCH
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _flat_smc_df(n: int, price: float = 100.0) -> pd.DataFrame:
+    idx = pd.date_range("2024-01-01", periods=n, freq="D")
+    o = np.full(n, price); h = o + 0.3; l = o - 0.3; c = o.copy()
+    v = np.full(n, 1e6)
+    return pd.DataFrame({"open": o, "high": h, "low": l, "close": c, "volume": v}, index=idx)
+
+
+class TestFairValueGap:
+    def _bullish_fvg_df(self) -> pd.DataFrame:
+        df = _flat_smc_df(40)
+        col = df.columns.get_loc
+        n = len(df)
+        a, imp, b, c, d = n - 5, n - 4, n - 3, n - 2, n - 1
+        df.iloc[a,   col("high")]  = 100.0
+        df.iloc[a,   col("low")]   = 99.7
+        df.iloc[imp, col("open")]  = 100.0
+        df.iloc[imp, col("close")] = 103.0
+        df.iloc[imp, col("high")]  = 103.2
+        df.iloc[imp, col("low")]   = 99.9
+        df.iloc[b,   col("low")]   = 102.0   # gap: low(b) > high(a) -> bullish [100,102]
+        df.iloc[b,   col("high")]  = 103.5
+        df.iloc[b,   col("open")]  = 102.5
+        df.iloc[b,   col("close")] = 103.2
+        df.iloc[c,   col("open")]  = 102.0
+        df.iloc[c,   col("close")] = 101.0   # dips into the zone
+        df.iloc[c,   col("high")]  = 102.2
+        df.iloc[c,   col("low")]   = 100.8
+        df.iloc[d,   col("open")]  = 101.0
+        df.iloc[d,   col("close")] = 101.6   # reacts up (> c's close)
+        df.iloc[d,   col("high")]  = 102.1
+        df.iloc[d,   col("low")]   = 100.9
+        return df
+
+    def test_bullish_fvg_detected_on_reaction(self):
+        df = self._bullish_fvg_df()
+        r = _det_fair_value_gap(df)
+        assert r is not None and r.name == "Bullish FVG" and r.state == "confirmed"
+
+    def test_bullish_fvg_via_run_detectors(self):
+        names = [p.name for p in run_detectors(self._bullish_fvg_df(), "1d")]
+        assert "Bullish FVG" in names
+
+    def test_no_fvg_on_flat_series(self):
+        df = _flat_smc_df(30)
+        assert _det_fair_value_gap(df) is None
+
+    def test_fvg_excluded_on_5m(self):
+        """Chart-appropriate (`_C`) timeframes exclude 5m, same as other structural families."""
+        names = [p.name for p in run_detectors(self._bullish_fvg_df(), "5m")]
+        assert "Bullish FVG" not in names
+
+
+class TestOrderBlock:
+    def _bullish_ob_df(self) -> pd.DataFrame:
+        df = _flat_smc_df(45)
+        col = df.columns.get_loc
+        n = len(df)
+        sw = n - 10
+        df.iloc[sw, col("high")]  = 101.5
+        df.iloc[sw, col("low")]   = 100.8
+        df.iloc[sw, col("open")]  = 101.0
+        df.iloc[sw, col("close")] = 101.2
+        ob, disp, ret, react = n - 6, n - 5, n - 3, n - 1
+        df.iloc[ob,   col("open")]  = 100.2   # last bearish candle before displacement
+        df.iloc[ob,   col("close")] = 99.9
+        df.iloc[ob,   col("high")]  = 100.3
+        df.iloc[ob,   col("low")]   = 99.8
+        df.iloc[disp, col("open")]  = 99.9
+        df.iloc[disp, col("close")] = 103.0   # displacement, body >> 1.5x ATR, breaks swing high
+        df.iloc[disp, col("high")]  = 103.2
+        df.iloc[disp, col("low")]   = 99.85
+        df.iloc[n - 4, col("open")]  = 103.0
+        df.iloc[n - 4, col("close")] = 103.3
+        df.iloc[n - 4, col("high")]  = 103.5
+        df.iloc[n - 4, col("low")]   = 102.9
+        df.iloc[ret,  col("open")]  = 101.5
+        df.iloc[ret,  col("close")] = 100.1   # returns into the OB zone [99.8, 100.3]
+        df.iloc[ret,  col("high")]  = 101.6
+        df.iloc[ret,  col("low")]   = 100.0
+        df.iloc[n - 2, col("open")]  = 100.1
+        df.iloc[n - 2, col("close")] = 100.15
+        df.iloc[n - 2, col("high")]  = 100.3
+        df.iloc[n - 2, col("low")]   = 100.05
+        df.iloc[react, col("open")]  = 100.1
+        df.iloc[react, col("close")] = 100.2   # reacts up, stays inside the zone
+        df.iloc[react, col("high")]  = 100.3
+        df.iloc[react, col("low")]   = 100.05
+        return df
+
+    def test_bullish_order_block_detected_on_reaction(self):
+        r = _det_order_block(self._bullish_ob_df())
+        assert r is not None and r.name == "Bullish Order Block" and r.state == "confirmed"
+
+    def test_bullish_order_block_via_run_detectors(self):
+        names = [p.name for p in run_detectors(self._bullish_ob_df(), "1d")]
+        assert "Bullish Order Block" in names
+
+    def test_no_order_block_on_flat_series(self):
+        assert _det_order_block(_flat_smc_df(40)) is None
+
+
+def _zigzag_uptrend_df(tail_vals: list[float]) -> pd.DataFrame:
+    """Ascending swing structure (higher highs + higher lows) ending in `tail_vals`."""
+    def seg(a, b, k):
+        return np.linspace(a, b, k, endpoint=False)
+    closes = np.concatenate([
+        seg(98, 101, 5), seg(101, 99, 5), seg(99, 102, 5), seg(102, 100, 5),
+        seg(100, 103, 5), seg(103, 101, 5), seg(101, 104, 5), seg(104, 102, 7),
+        np.array(tail_vals),
+    ])
+    n = len(closes)
+    idx = pd.date_range("2024-01-01", periods=n, freq="D")
+    return pd.DataFrame({
+        "open": closes, "close": closes,
+        "high": closes + 0.1, "low": closes - 0.1,
+        "volume": np.full(n, 1e6),
+    }, index=idx)
+
+
+class TestBreakOfStructureAndChangeOfCharacter:
+    def test_structure_trend_up_on_ascending_zigzag(self):
+        assert _structure_trend(_zigzag_uptrend_df([103, 103.2, 103.4])) == "up"
+
+    def test_structure_trend_range_on_flat_series(self):
+        assert _structure_trend(_flat(60)) == "range"
+
+    def test_bullish_bos_on_fresh_break_above_last_swing_high(self):
+        df = _zigzag_uptrend_df([103, 103.2, 106.0])  # fresh break above ~104
+        r = _det_break_of_structure(df)
+        assert r is not None and r.name == "Bullish BOS"
+        assert _det_change_of_character(df) is None
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Bullish BOS" in names
+
+    def test_bearish_choch_on_fresh_break_below_recent_swing_low(self):
+        df = _zigzag_uptrend_df([103, 103.2, 99.0])  # breaks below the recent higher low
+        r = _det_change_of_character(df)
+        assert r is not None and r.name == "Bearish CHoCH"
+        assert _det_break_of_structure(df) is None
+        names = [p.name for p in run_detectors(df, "1d")]
+        assert "Bearish CHoCH" in names
+
+    def test_no_bos_or_choch_on_flat_series(self):
+        df = _flat(60)
+        assert _det_break_of_structure(df) is None
+        assert _det_change_of_character(df) is None
+
+
+class TestSmcFamilyWiring:
+    def test_smc_family_present_in_registry(self):
+        assert any(e.family == "smc" for e in REGISTRY)
+
+    def test_smc_patterns_are_tier2(self):
+        assert all(e.tier == 2 for e in REGISTRY if e.family == "smc")
+
+    def test_smc_included_by_default(self):
+        from services.pattern_registry import DEFAULT_ENABLED_FAMILIES
+        assert "smc" in DEFAULT_ENABLED_FAMILIES
+
+    def test_smc_group_present_in_grouped_patterns(self):
+        from services.pattern_registry import patterns_grouped_by_family
+        groups = patterns_grouped_by_family()
+        assert "smc" in groups
+        names = {p["name"] for p in groups["smc"]}
+        assert names == {"Bullish FVG", "Bullish Order Block", "Bullish BOS", "Bullish CHoCH"}

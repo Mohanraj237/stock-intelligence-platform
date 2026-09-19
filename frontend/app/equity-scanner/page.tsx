@@ -10,11 +10,20 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRegion } from "@/lib/region";
+import { api } from "@/lib/api";
 import type {
   EquitySetupCard, EquityScanResponse, EquityScanParams,
   EquityPlan, BacktestInfo, EquityScanSummary, ScanProgressState,
+  PatternGroups, PatternMode,
 } from "@/lib/equity-scanner-types";
 import { CandleChart } from "@/components/scanner/CandleChart";
+import { PatternPicker } from "@/components/scanner/PatternPicker";
+import { WeightSlider } from "@/components/scanner/WeightSlider";
+import {
+  MultiSelectFilter, cardMatchesPatterns, patternOptionsFromCards,
+  cardMatchesTimeframe, timeframeOptionsFromCards, displayPatternFor,
+} from "@/components/scanner/MultiSelectFilter";
+import { ScanQualityBanner } from "@/components/scanner/ScanQualityBanner";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Universe definitions — separated by market, grouped by category
@@ -111,18 +120,6 @@ const US_UNIVERSES    = US_UNIVERSE_GROUPS.flatMap((g) => g.options);
 const REFRESH_UNIVERSES = new Set(["all_nse", "all_us"]);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pattern families — colours + display labels (keys match backend family strings)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const FAMILY_META: Record<string, { label: string; active: string; muted: string }> = {
-  candlestick:  { label: "Candlestick",   active: "text-yellow-300 border-yellow-500/50 bg-yellow-500/15", muted: "text-yellow-400/60" },
-  price_action: { label: "Price Action",  active: "text-blue-300   border-blue-500/50   bg-blue-500/15",   muted: "text-blue-400/60"   },
-  volume:       { label: "Volume",        active: "text-orange-300 border-orange-500/50 bg-orange-500/15", muted: "text-orange-400/60" },
-  chart:        { label: "Chart Pattern", active: "text-purple-300 border-purple-500/50 bg-purple-500/15", muted: "text-purple-400/60" },
-  harmonic:     { label: "Harmonic",      active: "text-pink-300   border-pink-500/50   bg-pink-500/15",   muted: "text-pink-400/60"   },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Timeframe display (equity uses positional TFs)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -181,6 +178,7 @@ async function streamScan(
     threshold: String(params.threshold),
   });
   if (params.pattern_names)      qs.set("pattern_names",     params.pattern_names);
+  if (params.pattern_mode)       qs.set("pattern_mode",      params.pattern_mode);
   if (params.min_pattern_conf)   qs.set("min_pattern_conf",  String(params.min_pattern_conf));
   if (params.timeframes)         qs.set("timeframes",        params.timeframes);
   const FASTAPI = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
@@ -188,7 +186,17 @@ async function streamScan(
     const res = await fetch(`${FASTAPI}/api/equity-scanner/scan/stream?${qs}`, {
       signal: callbacks.signal,
     });
-    if (!res.ok) { callbacks.onError(`HTTP ${res.status}`); return; }
+    if (!res.ok) {
+      // The backend rejects invalid input with a named field instead of
+      // silently scanning something else — surface its message, not "HTTP 400".
+      let msg = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.error) msg = body.error;
+      } catch { /* non-JSON error body */ }
+      callbacks.onError(msg);
+      return;
+    }
 
     const reader  = res.body!.getReader();
     const decoder = new TextDecoder();
@@ -252,17 +260,33 @@ function DirBadge({ dir }: { dir: string }) {
   return <span className="inline-flex items-center gap-0.5 text-yellow-400 text-[11px] font-semibold"><Minus className="size-3" /> Range</span>;
 }
 
-function ScorePill({ score }: { score: number }) {
+const SCORE_TIP =
+  "Confluence Score (0–100): Trend/Structure (30) + Momentum (25) + Volume (15) + " +
+  "Candle Trigger (25) + Structural Bonus (5). All five are reachable, so 100 is a " +
+  "real ceiling. For instruments with no volume (indices) the Volume category is " +
+  "excluded and the remaining 85 points are rescaled to 100, so the same threshold " +
+  "means the same thing for an index as for a stock.";
+
+function ScorePill({ score, volumeAvailable }: { score: number; volumeAvailable?: boolean }) {
   const cls =
     score >= 80 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" :
     score >= 65 ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/40" :
                   "bg-white/10 text-white/50 border-white/20";
   return (
-    <HelpTip tip="Confluence Score (0–100): Trend (30) + Momentum (25) + Volume (15) + Candle (25) + Structural (5). Only setups ≥65 are shown.">
-      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border", cls)}>
-        {score}
-      </span>
-    </HelpTip>
+    <span className="inline-flex items-center gap-1">
+      <HelpTip tip={SCORE_TIP}>
+        <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border", cls)}>
+          {score}
+        </span>
+      </HelpTip>
+      {volumeAvailable === false && (
+        <HelpTip tip="No volume data for this instrument. The Volume category is excluded and the remaining categories are rescaled to 100 — not given free neutral points.">
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold border border-white/15 text-white/40">
+            no vol
+          </span>
+        </HelpTip>
+      )}
+    </span>
   );
 }
 
@@ -302,14 +326,34 @@ function TradePill({ plan }: { plan: EquityPlan }) {
   );
 }
 
-function BacktestTag({ bt }: { bt: BacktestInfo }) {
-  if (bt.hit_rate === null)
-    return <span className="text-[10px] text-white/30">low sample</span>;
+/**
+ * Hit rate, or a stated reason — never a blank. The number is measured on the
+ * card's own timeframe, so it says which one and over how many bars.
+ */
+function BacktestTag({ bt }: { bt: BacktestInfo | null }) {
+  if (!bt) return <span className="text-[10px] text-white/20">—</span>;
+  if (bt.hit_rate === null) {
+    return (
+      <HelpTip tip={bt.reason ?? bt.note ?? "No hit rate available."}>
+        <span className="text-[10px] text-white/30 underline decoration-dotted underline-offset-2">
+          no hit rate
+        </span>
+      </HelpTip>
+    );
+  }
   const pct = Math.round(bt.hit_rate * 100);
+  const tip =
+    `${bt.sample_size} prior ${bt.detector ?? "pattern"} occurrence(s) on ` +
+    `${bt.timeframe ?? "this"} bars` +
+    (bt.window_bars ? ` over a ${bt.window_bars}-bar window` : "") +
+    ". A win is T1 (1.5 × risk) touched within 5 bars before the stop.";
   return (
-    <span className={cn("text-[10px] font-medium", pct >= 55 ? "text-emerald-400" : "text-white/40")}>
-      {pct}% ({bt.sample_size})
-    </span>
+    <HelpTip tip={tip}>
+      <span className={cn("text-[10px] font-medium", pct >= 55 ? "text-emerald-400" : "text-white/40")}>
+        {pct}% ({bt.sample_size})
+        {bt.timeframe && <span className="text-white/25"> {bt.timeframe}</span>}
+      </span>
+    </HelpTip>
   );
 }
 
@@ -387,9 +431,9 @@ function TfSection({ card }: { card: EquitySetupCard }) {
         {card.pattern !== "None" && (
           <span className="text-yellow-300/80 text-[12px] font-medium">{card.pattern}</span>
         )}
-        <ScorePill score={card.confluence_score} />
+        <ScorePill score={card.confluence_score} volumeAvailable={card.volume_available} />
         <BreakoutBadge state={card.breakout_state} label={card.breakout_label} />
-        {card.backtest && <BacktestTag bt={card.backtest} />}
+        <BacktestTag bt={card.backtest} />
         {plan && <span className="ml-auto"><TradePill plan={plan} /></span>}
       </div>
 
@@ -456,10 +500,17 @@ function TfSection({ card }: { card: EquitySetupCard }) {
                   </div>
                 ))}
               </div>
-              <div className="text-[11px] text-white/40 px-0.5">
-                T2 {currency}{Number(plan.t2_price).toLocaleString()}
-                {" · "}R:R <span className="text-white/70 font-medium">{plan.rr.toFixed(1)}</span>
-                {" · "}Risk {currency}{Number(plan.risk_per_share).toLocaleString()} / share
+              <div className="text-[11px] text-white/40 px-0.5 flex flex-wrap items-center gap-x-1.5">
+                <span>T2 {currency}{Number(plan.t2_price).toLocaleString()}</span>
+                <span>·</span>
+                <HelpTip tip={plan.rr_basis || "Fixed design parameter, not a measured property of this setup."}>
+                  <span className="underline decoration-dotted underline-offset-2">
+                    R:R <span className="text-white/70 font-medium">{plan.rr.toFixed(2)}</span>
+                    <span className="text-white/25"> (fixed)</span>
+                  </span>
+                </HelpTip>
+                <span>·</span>
+                <span>Risk {currency}{Number(plan.risk_per_share).toLocaleString()} / share</span>
               </div>
               <div className="flex items-start gap-1.5 text-[11px] text-white/40">
                 <Clock className="size-3.5 mt-0.5 text-blue-400 shrink-0" />
@@ -522,7 +573,7 @@ function GroupRow({ group, idx }: { group: SymbolGroup; idx: number }) {
 
         <td className="px-2 py-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <ScorePill score={best.confluence_score} />
+            <ScorePill score={best.confluence_score} volumeAvailable={best.volume_available} />
             <BreakoutBadge state={best.breakout_state} label={best.breakout_label} />
           </div>
         </td>
@@ -556,7 +607,7 @@ function GroupRow({ group, idx }: { group: SymbolGroup; idx: number }) {
 
         {/* Backtest */}
         <td className="px-3 py-3 text-right">
-          {best.backtest ? <BacktestTag bt={best.backtest} /> : <span className="text-[10px] text-white/20">—</span>}
+          <BacktestTag bt={best.backtest} />
         </td>
       </tr>
 
@@ -714,22 +765,41 @@ export default function EquityScannerPage() {
   const [univCount,   setUnivCount]   = useState<Record<string, number>>({});
   const abortRef = useRef<AbortController | null>(null);
 
-  // Post-scan display filter (direction can't be known until after scoring)
-  const [filterDir,             setFilterDir]             = useState("all");
+  // Post-scan display filters (none can be known until after scoring)
+  const [filterDir,      setFilterDir]      = useState("all");
+  const [filterPatterns, setFilterPatterns] = useState<Set<string>>(new Set());
+  const [filterTfs,      setFilterTfs]      = useState<Set<string>>(new Set());
 
   // Pre-scan scan configuration — sent with the scan request itself
   const [selectedTimeframes,    setSelectedTimeframes]    = useState<Set<string>>(new Set(ALL_TFS));
-  const [selectedPatternNames,  setSelectedPatternNames]  = useState<Set<string>>(new Set());
-  const [patternsOpen,          setPatternsOpen]          = useState(false);
-  const [expandedFamilies,      setExpandedFamilies]      = useState<Set<string>>(new Set());
+  const [selectedPatternIds,    setSelectedPatternIds]    = useState<Set<string>>(new Set());
+  const [patternMode,           setPatternMode]           = useState<PatternMode>("filter");
+
+  // Deselecting every timeframe used to scan all three. The backend now rejects
+  // it with a 400; the button is disabled so it never gets that far.
+  const noTimeframes = selectedTimeframes.size === 0;
 
   const FASTAPI = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-  const patternQuery = useQuery<Record<string, { name: string; direction: string; tier: number }[]>>({
+  const patternQuery = useQuery<PatternGroups>({
     queryKey: ["equity-patterns"],
     queryFn:  () => fetch(`${FASTAPI}/api/equity-scanner/patterns`).then((r) => r.json()),
     staleTime: Infinity,
   });
   const patternGroups = patternQuery.data ?? {};
+
+  // The Settings → Scoring page configures a persistent default threshold.
+  // Seed the slider from it once on load — the slider then remains a
+  // per-scan override that does not itself persist.
+  const scoringConfigQuery = useQuery({
+    queryKey: ["scoring-config"], queryFn: api.scoringConfig, staleTime: 60_000,
+  });
+  const seededThresholdRef = useRef(false);
+  useEffect(() => {
+    if (!seededThresholdRef.current && scoringConfigQuery.data) {
+      seededThresholdRef.current = true;
+      setParams((p) => ({ ...p, threshold: scoringConfigQuery.data!.default_threshold }));
+    }
+  }, [scoringConfigQuery.data]);
 
   // When market region switches, reset to default universe for that market
   useEffect(() => {
@@ -737,7 +807,7 @@ export default function EquityScannerPage() {
     setLoading(false);
     setResult(null);
     setError(null);
-    setParams({ universe: defaultUniverse, threshold: 65 });
+    setParams({ universe: defaultUniverse, threshold: scoringConfigQuery.data?.default_threshold ?? 65 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region]);
 
@@ -756,6 +826,10 @@ export default function EquityScannerPage() {
   const cancel = useCallback(() => { abortRef.current?.abort(); setLoading(false); }, []);
 
   const scan = useCallback(async () => {
+    if (noTimeframes) {
+      setError("Select at least one timeframe to scan.");
+      return;
+    }
     setLoading(true); setError(null);
     setProgress({ done: 0, total: 0, currentSym: "", found: 0, setupsSoFar: 0, enriching: false });
 
@@ -771,7 +845,8 @@ export default function EquityScannerPage() {
 
     const scanParams: EquityScanParams = {
       ...params,
-      pattern_names: selectedPatternNames.size > 0 ? Array.from(selectedPatternNames).join(",") : undefined,
+      pattern_names: selectedPatternIds.size > 0 ? Array.from(selectedPatternIds).join(",") : undefined,
+      pattern_mode:  selectedPatternIds.size > 0 ? patternMode : undefined,
       timeframes: selectedTimeframes.size < ALL_TFS.length ? Array.from(selectedTimeframes).join(",") : undefined,
     };
 
@@ -781,6 +856,8 @@ export default function EquityScannerPage() {
         setResult(data); setBackendOk(true);
         setScanAt(new Date().toLocaleTimeString("en-IN", { hour12: false }));
         setFilterDir("all");
+        setFilterPatterns(new Set());
+        setFilterTfs(new Set());
       },
       onDone:  () => setLoading(false),
       onError: (msg) => {
@@ -790,18 +867,32 @@ export default function EquityScannerPage() {
       },
       signal: ctl.signal,
     });
-  }, [params, selectedPatternNames, selectedTimeframes]);
+  }, [params, selectedPatternIds, patternMode, selectedTimeframes, noTimeframes]);
 
   const upd = (k: keyof EquityScanParams) => (v: string | number) =>
     setParams((p) => ({ ...p, [k]: v }));
 
-  // Direction is the only remaining post-scan display filter — timeframe and
-  // pattern selection are now scan-time configuration (see scanParams above),
-  // so results are already scoped/scored to them by the time they arrive here.
-  const visible = (result?.setups ?? []).filter((c) => {
-    if (filterDir !== "all" && c.direction !== filterDir) return false;
-    return true;
-  });
+  // Direction and timeframe/pattern selection above are scan-time
+  // configuration (see scanParams above) — results are already scoped/scored
+  // to them by the time they arrive here. The filters below are purely
+  // client-side display filters over the already-loaded result set.
+  const visible = (result?.setups ?? [])
+    .filter((c) => {
+      if (filterDir !== "all" && c.direction !== filterDir) return false;
+      if (!cardMatchesPatterns(c, filterPatterns)) return false;
+      if (!cardMatchesTimeframe(c, filterTfs)) return false;
+      return true;
+    })
+    // A card can survive the Patterns filter via a non-headline pattern —
+    // rewrite the displayed pattern so the row always shows one you selected.
+    .map((c) => ({ ...c, pattern: displayPatternFor(c, filterPatterns) }));
+
+  // Options come from the loaded results, so the list only ever offers
+  // patterns (or timeframes) that are actually present in this scan.
+  const patternFilterOptions = patternOptionsFromCards(result?.setups ?? []);
+  const tfFilterOptions = timeframeOptionsFromCards(
+    result?.setups ?? [], (tf) => TF_LABEL[tf] ?? tf,
+  );
 
   const selectedUniverse = universes.find((u) => u.value === params.universe);
 
@@ -911,30 +1002,21 @@ export default function EquityScannerPage() {
           </div>
 
           {/* Min score */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)]">
-              Min confluence score
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="range" min={40} max={90} step={5} value={params.threshold}
-                onChange={(e) => upd("threshold")(Number(e.target.value))}
-                className="w-40 accent-[var(--color-primary)]"
-              />
-              <span className="text-xl font-bold text-white w-8">{params.threshold}</span>
-            </div>
-            <p className="text-[11px] text-[var(--color-text-muted)]">
-              {params.threshold >= 80 ? "Strong signals only" :
-               params.threshold >= 65 ? "Recommended — balanced quality" :
-               "Relaxed — shows more, lower quality"}
-            </p>
-          </div>
+          <WeightSlider
+            label="Min confluence score"
+            value={params.threshold} min={40} max={90} step={5}
+            onChange={upd("threshold")}
+            helperText={(v) => v >= 80 ? "Strong signals only" :
+              v >= 65 ? "Recommended — balanced quality" :
+              "Relaxed — shows more, lower quality"}
+          />
 
           <button
-            onClick={scan} disabled={loading}
+            onClick={scan} disabled={loading || noTimeframes}
+            title={noTimeframes ? "Select at least one timeframe to scan." : undefined}
             className={cn(
               "flex items-center gap-2 px-8 py-3 rounded-lg font-semibold text-[14px] transition-all self-end",
-              loading
+              loading || noTimeframes
                 ? "bg-[var(--color-primary)]/50 cursor-not-allowed text-white/50"
                 : "bg-[var(--color-primary)] hover:opacity-90 text-white shadow-lg",
             )}
@@ -1000,139 +1082,14 @@ export default function EquityScannerPage() {
           )}
         </div>
 
-        {/* Pattern selector — collapsible, two-level: section + per-family */}
-        <div className="pt-3 border-t border-[var(--color-border)]">
-          {/* Section header — click to expand/collapse entire pattern area */}
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setPatternsOpen((v) => !v)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPatternsOpen((v) => !v); } }}
-            className="flex items-center gap-2 w-full text-left group cursor-pointer"
-          >
-            <ChevronDown className={cn(
-              "size-3.5 text-white/40 transition-transform duration-150 shrink-0",
-              !patternsOpen && "-rotate-90",
-            )} />
-            <span className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] group-hover:text-white/70 transition-colors">
-              Patterns
-            </span>
-            {selectedPatternNames.size > 0 ? (
-              <span className="text-[11px] text-[var(--color-primary)] font-medium">
-                {selectedPatternNames.size} selected
-              </span>
-            ) : (
-              <span className="text-[11px] text-[var(--color-text-muted)]">— all patterns (no filter)</span>
-            )}
-            {selectedPatternNames.size > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setSelectedPatternNames(new Set()); }}
-                className="ml-auto text-[10px] text-[var(--color-text-muted)] hover:text-white underline underline-offset-2"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
-
-          {/* Family groups — only visible when section is open */}
-          {patternsOpen && (
-            <div className="mt-3 space-y-2">
-              {patternQuery.isLoading && (
-                <p className="text-[11px] text-[var(--color-text-muted)]">Loading patterns…</p>
-              )}
-
-              {Object.entries(patternGroups).map(([family, patterns]) => {
-                const meta     = FAMILY_META[family] ?? { label: family, active: "text-white border-white/30 bg-white/10", muted: "text-white/60" };
-                const famPats  = patterns.map((p) => p.name);
-                const allSel   = famPats.every((n) => selectedPatternNames.has(n));
-                const famOpen  = expandedFamilies.has(family);
-                const selCount = famPats.filter((n) => selectedPatternNames.has(n)).length;
-
-                const toggleFamily = () =>
-                  setExpandedFamilies((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(family)) next.delete(family); else next.add(family);
-                    return next;
-                  });
-
-                const toggleAll = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  setSelectedPatternNames((prev) => {
-                    const next = new Set(prev);
-                    if (allSel) famPats.forEach((n) => next.delete(n));
-                    else        famPats.forEach((n) => next.add(n));
-                    return next;
-                  });
-                };
-
-                return (
-                  <div key={family} className="rounded-lg border border-white/6 bg-white/2 overflow-hidden">
-                    {/* Family header row */}
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={toggleFamily}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleFamily(); } }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                      <ChevronDown className={cn(
-                        "size-3 text-white/30 transition-transform duration-150 shrink-0",
-                        !famOpen && "-rotate-90",
-                      )} />
-                      <span className={cn("text-[10px] font-semibold uppercase tracking-wider", meta.muted)}>
-                        {meta.label}
-                      </span>
-                      <span className="text-[9px] text-white/20">({patterns.length})</span>
-                      {selCount > 0 && (
-                        <span className={cn("text-[9px] font-medium ml-1", meta.muted)}>
-                          {selCount} selected
-                        </span>
-                      )}
-                      {famOpen && (
-                        <button
-                          onClick={toggleAll}
-                          className="ml-auto text-[9px] text-[var(--color-text-muted)] hover:text-white underline underline-offset-2"
-                        >
-                          {allSel ? "Deselect all" : "Select all"}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Chips — only when family is expanded */}
-                    {famOpen && (
-                      <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1">
-                        {patterns.map((p) => {
-                          const active = selectedPatternNames.has(p.name);
-                          return (
-                            <button
-                              key={p.name}
-                              onClick={() => {
-                                setSelectedPatternNames((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(p.name)) next.delete(p.name);
-                                  else next.add(p.name);
-                                  return next;
-                                });
-                              }}
-                              className={cn(
-                                "px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-all",
-                                active
-                                  ? meta.active
-                                  : "border-white/10 text-white/35 bg-transparent hover:text-white/55 hover:border-white/20",
-                              )}
-                            >
-                              {p.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <PatternPicker
+          groups={patternGroups}
+          loading={patternQuery.isLoading}
+          selected={selectedPatternIds}
+          onChange={setSelectedPatternIds}
+          mode={patternMode}
+          onModeChange={setPatternMode}
+        />
 
         {/* Post-scan filter — direction can't be known pre-scan */}
         {result && !loading && (
@@ -1147,6 +1104,25 @@ export default function EquityScannerPage() {
                 { value: "range",   label: "→ Range only"   },
               ]} />
             </div>
+
+            <MultiSelectFilter
+              label="Patterns"
+              allLabel="All patterns"
+              searchPlaceholder="Search patterns…"
+              options={patternFilterOptions}
+              selected={filterPatterns}
+              onChange={setFilterPatterns}
+            />
+
+            <MultiSelectFilter
+              label="Timeframe"
+              allLabel="All timeframes"
+              searchPlaceholder="Search timeframes…"
+              width="w-40"
+              options={tfFilterOptions}
+              selected={filterTfs}
+              onChange={setFilterTfs}
+            />
             <span className="text-[12px] text-[var(--color-text-muted)] self-end ml-auto">
               Showing <span className="text-white font-medium">{groupBySymbol(visible).length}</span> symbols
               {" · "}<span className="text-white font-medium">{visible.length}</span> setups
@@ -1183,6 +1159,9 @@ export default function EquityScannerPage() {
       {/* Results */}
       {!loading && result && (
         <>
+          {/* Coverage warning — "no setups" vs "half the universe failed to load" */}
+          <ScanQualityBanner summary={result.summary} totalSymbols={result.summary.total_symbols} />
+
           <SummaryStrip summary={result.summary} scanAt={scanAt ?? ""} />
 
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">

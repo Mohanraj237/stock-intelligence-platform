@@ -10,7 +10,7 @@ import type {
   ScanRequest, ScanResult,
   NewsItem, AnnouncementItem,
   UpcomingResult, EarningsItem,
-  PortfolioSummary, WatchlistRow, AppSettings,
+  PortfolioSummary, WatchlistRow, AppSettings, ScoringConfig,
   Rule, RuleSet, RuleMatchRow,
   Timeframe,
 } from "@/lib/types";
@@ -172,6 +172,11 @@ export const api = {
   patchSettings:    (s: Partial<AppSettings>) => patch<AppSettings>("/api/settings", s),
   generateReport:   (symbol: string, timeframe: Timeframe = "1D", region: Region = "IN") => post<{ filename: string; path: string }>("/api/reports/generate", { symbol, timeframe, region }),
   listReports:      () => get<{ filename: string; size: number; mtime: number }[]>("/api/reports/list"),
+
+  // Confluence scoring config
+  scoringConfig:      () => get<ScoringConfig>("/api/scoring-config"),
+  patchScoringConfig: (c: Partial<ScoringConfig>) => patch<ScoringConfig>("/api/scoring-config", c),
+  resetScoringConfig: () => post<ScoringConfig>("/api/scoring-config/reset", {}),
 };
 
 export type ApiClient = typeof api;
