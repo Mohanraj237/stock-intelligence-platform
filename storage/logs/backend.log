@@ -26942,3 +26942,46 @@
 2026-09-18 22:56:03,179 [WARNING] services.fno_data_service: FNO NSE API /api/allIndices failed: Expecting value: line 1 column 1 (char 0)
 2026-09-18 22:56:03,229 [WARNING] services.fno_data_service: FNO NSE API /api/quote-derivative → 404
 2026-09-18 22:56:03,229 [INFO] services.fno_data_service: Synthetic chain WAAREEENER: using Yahoo Finance spot 2560.70
+2026-09-19 12:09:16,432 [INFO] backend: Stock Intelligence Platform backend v2.0.0 starting (log: C:\Users\mohan\Stock App\stock-intelligence-platform\storage\logs\backend.log)
+2026-09-19 12:09:39,719 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:39,831 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:39,990 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:40,113 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:40,226 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:40,293 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:45,557 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:09:54,864 [INFO] services.screener_service: Screener.in session configured.
+2026-09-19 12:09:54,864 [INFO] services.screener_service: Screener.in session configured.
+2026-09-19 12:09:55,715 [INFO] backend: GET /api/stocks/RELIANCE/fundamentals -> 200 in 1336ms
+2026-09-19 12:10:02,687 [INFO] backend: GET /api/stocks/RELIANCE/ohlcv -> 200 in 8323ms
+2026-09-19 12:10:02,807 [INFO] backend: GET /api/patterns/detect/RELIANCE -> 200 in 7962ms
+2026-09-19 12:10:02,811 [INFO] backend: GET /api/stocks/RELIANCE/indicators -> 200 in 8432ms
+2026-09-19 12:10:03,851 [INFO] backend: GET /api/stocks/RELIANCE/peers -> 200 in 6325ms
+2026-09-19 12:10:03,910 [INFO] backend: GET /api/stocks/RELIANCE/verdict -> 200 in 9531ms
+2026-09-19 12:10:03,912 [INFO] backend: GET /api/stocks/RELIANCE/chart-analysis -> 200 in 6381ms
+2026-09-19 12:10:30,154 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,160 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,161 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,174 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,176 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,176 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,177 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,181 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:30,333 [WARNING] services.market_data_service: OHLCV history failed for RELIANCE: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE?interval=1d&range=6mo&includeAdjustedClose=true
+2026-09-19 12:10:30,364 [WARNING] services.market_data_service: OHLCV history failed for TEST_WL_SYMBOL: 404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/TEST_WL_SYMBOL?interval=1d&range=6mo&includeAdjustedClose=true
+2026-09-19 12:10:33,344 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:33,346 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:33,347 [WARNING] services.nse_service: NSE API /api/quote-equity → 403
+2026-09-19 12:10:52,035 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:10:52,099 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:10:52,161 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:10:52,221 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:10:52,288 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:10:52,345 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:11:06,594 [INFO] services.us_market_service: YF session refreshed, crumb=sWB6GE…
+2026-09-19 12:11:07,830 [INFO] backend: GET /api/market/indices -> 200 in 1641ms
+2026-09-19 12:11:21,744 [INFO] backend: GET /api/market/universe/S&P 500/quotes -> 200 in 1179ms
+2026-09-19 12:16:31,275 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:16:31,279 [WARNING] services.nse_service: NSE API /api/equity-stockIndices → 404
+2026-09-19 12:16:32,099 [INFO] backend: GET /api/market/universe/NIFTY 50/quotes -> 200 in 1034ms
+2026-09-19 12:17:52,425 [INFO] backend: Backend shutting down

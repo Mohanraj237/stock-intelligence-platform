@@ -1,9 +1,9 @@
 {
-  "trend_weight": 30,
-  "momentum_weight": 25,
-  "volume_weight": 15,
-  "candle_weight": 25,
+  "trend_weight": 40,
+  "momentum_weight": 20,
+  "volume_weight": 5,
+  "candle_weight": 30,
   "structural_weight": 5,
   "default_threshold": 80,
-  "updated_at": "2026-09-01T23:44:49.481892"
+  "updated_at": "2026-09-19T20:14:49.336013"
 }
